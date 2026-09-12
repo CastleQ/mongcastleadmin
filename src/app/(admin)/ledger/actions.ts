@@ -22,3 +22,9 @@ export async function deleteLedger(id: number, date: string) {
   if (error) throw new Error(error.message);
   redirect(`/?m=${date.slice(0, 7)}`);
 }
+
+export async function setSettled(id: number, settled: boolean) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("ledger").update({ settled }).eq("id", id);
+  if (error) throw new Error(error.message);
+}

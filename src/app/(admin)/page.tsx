@@ -21,7 +21,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/">) {
     .from("ledger")
     .select("id,date,package,channel,customer_name,content,headcount,settled")
     .eq("kind", "매출")
-    .eq("category", "공간대여")
+    .eq("category", "대여")
     .gte("date", info.start)
     .lte("date", info.end)
     .order("date");

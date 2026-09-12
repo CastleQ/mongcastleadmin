@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { NAV } from "../nav";
+import { NAV } from "../nav-items";
 
 // ponytail: 아직 안 만든 메뉴의 임시 화면. 진짜 페이지가 생기면 그쪽이 우선됨
 export default async function Stub({ params }: PageProps<"/[slug]">) {
