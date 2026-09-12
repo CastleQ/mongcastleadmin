@@ -39,6 +39,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/">) {
           <Link href={`/?m=${info.prev}`} className={btn}>‹<span className="hidden sm:inline"> 이전달</span></Link>
           <Link href="/" className={btn}>오늘</Link>
           <Link href={`/?m=${info.next}`} className={btn}><span className="hidden sm:inline">다음달 </span>›</Link>
+          <Link href="/ledger/new" className="rounded bg-zinc-900 px-3 py-1 text-sm text-white whitespace-nowrap hover:bg-zinc-700">+ 추가</Link>
         </div>
       </div>
 
@@ -54,21 +55,21 @@ export default async function CalendarPage({ searchParams }: PageProps<"/">) {
           return (
             <div key={i} className={`min-h-16 sm:min-h-24 border-r border-b border-zinc-200 p-1 ${date ? "" : "bg-zinc-50"} ${isToday ? "bg-yellow-50" : ""}`}>
               {date && (
-                <div className={`mb-1 text-right ${dow === 0 ? "text-red-500" : dow === 6 ? "text-blue-500" : "text-zinc-500"} ${isToday ? "font-bold" : ""}`}>
+                <Link href={`/ledger/new?date=${date}`} title="이 날짜에 추가" className={`mb-1 block text-right hover:underline ${dow === 0 ? "text-red-500" : dow === 6 ? "text-blue-500" : "text-zinc-500"} ${isToday ? "font-bold" : ""}`}>
                   {Number(date.slice(8))}
-                </div>
+                </Link>
               )}
               <div className="flex flex-col gap-0.5">
                 {(date ? byDate.get(date) ?? [] : []).map((r) => {
                   const kind = packageKind(r.package);
                   const who = r.customer_name || r.content || "";
                   return (
-                    <div key={r.id} className={`rounded px-1 py-0.5 leading-tight truncate ${COLOR[kind]}`} title={`${r.package ?? ""} ${who} ${r.channel ?? ""}${r.settled ? "" : " (미정산)"}`}>
+                    <Link key={r.id} href={`/ledger/${r.id}`} className={`block rounded px-1 py-0.5 leading-tight truncate hover:opacity-80 ${COLOR[kind]}`} title={`${r.package ?? ""} ${who} ${r.channel ?? ""}${r.settled ? "" : " (미정산)"}`}>
                       {!r.settled && <span className="text-red-600">● </span>}
                       <span className="font-semibold">{kind}</span>
                       <span className="hidden sm:inline"> {who}</span>
                       {r.channel && <span className="hidden lg:inline text-[10px] opacity-70"> · {r.channel.split(",")[0]}</span>}
-                    </div>
+                    </Link>
                   );
                 })}
               </div>
@@ -82,7 +83,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/">) {
           <span key={k} className="flex items-center gap-1"><span className={`inline-block h-3 w-3 rounded ${COLOR[k]}`} />{k}</span>
         ))}
         <span><span className="text-red-600">●</span> 미정산</span>
-        <span className="text-zinc-400">이번 달 예약 {rows.length}건</span>
+        <span className="text-zinc-400">{rows.length ? `이번 달 예약 ${rows.length}건` : "이 달엔 예약이 없어요. 날짜를 눌러 추가하세요."}</span>
       </div>
     </>
   );
