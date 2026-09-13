@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { monthInfo, todayKST } from "@/lib/calendar";
 import type { Ledger } from "@/lib/ledger";
-import { DEFAULT_FIXED_COSTS, DEFAULT_INVESTMENT, DEFAULT_TARGETS, SCENARIOS, byChannel, byContent, byDayType, byPackage, dailyCumulative, extraBuys, monthSales, monthStats, recovery, type Bucket, type Scenario, type Targets } from "@/lib/sales";
+import { DEFAULT_FIXED_COSTS, DEFAULT_INVESTMENT, DEFAULT_TARGETS, SCENARIOS, byChannel, byContent, byDayType, byPackage, dailyCumulative, dailyEntries, extraBuys, monthSales, monthStats, recovery, type Bucket, type Scenario, type Targets } from "@/lib/sales";
 import { DailyChart } from "./daily-chart";
 import { saveTargets } from "./actions";
 
@@ -32,6 +32,7 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
   const st = monthStats(monthSales(rows, month), month, salesTarget, today);
   const rec = recovery(rows, investment, today);
   const daily = dailyCumulative(rows, month);
+  const entries = dailyEntries(rows, month);
   const good = st.actual >= st.todayTarget;
 
   const btn = "rounded border border-zinc-300 px-3 py-1 text-sm whitespace-nowrap hover:bg-zinc-50";
@@ -71,7 +72,7 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
       {/* 이달 일별 누적 */}
       <section className="mb-6 rounded border border-zinc-200 p-3">
         <h3 className="mb-2 text-sm font-medium">이달 누적 매출 vs 목표 <span className="font-normal text-zinc-400">(일 단위, 정산 기준)</span></h3>
-        <DailyChart points={daily} days={st.days} elapsed={st.elapsed} target={salesTarget} />
+        <DailyChart points={daily} days={st.days} elapsed={st.elapsed} target={salesTarget} entries={entries} />
       </section>
 
       {/* 투자금 회수 */}

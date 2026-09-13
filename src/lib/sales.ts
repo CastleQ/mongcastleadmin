@@ -119,3 +119,15 @@ export function monthSales(rows: Ledger[], month: string): number {
 export function extraBuys(rows: Ledger[], month: string): number {
   return rows.filter((r) => r.settled && r.kind === "매입" && r.date.startsWith(month) && !FIXED_CATEGORIES.includes(r.category)).reduce((s, r) => s + r.amount, 0);
 }
+
+export type DayEntry = { name: string; content: string; amount: number; net: number };
+/** 그 달 날짜별 매출 거래 요약 (정산 기준) — 그래프 점 위 작은 창용 */
+export function dailyEntries(rows: Ledger[], month: string): Record<number, DayEntry[]> {
+  const out: Record<number, DayEntry[]> = {};
+  for (const r of rows) {
+    if (!r.settled || r.kind !== "매출" || !r.date.startsWith(month)) continue;
+    const d = Number(r.date.slice(8));
+    (out[d] ??= []).push({ name: r.customer_name || "이름 없음", content: r.content || r.package || "", amount: r.amount, net: r.net });
+  }
+  return out;
+}
