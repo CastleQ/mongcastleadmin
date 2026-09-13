@@ -94,14 +94,19 @@ export function recovery(rows: Ledger[], investment: number, today: string): Rec
   };
 }
 
-/** 그 달의 일 단위 누적 순이익. 거래 있는 날만 (day = 1..말일) */
+/** 그 달의 일 단위 누적 매출 실수령 (정산 기준, 매입 제외). 거래 있는 날만 (day = 1..말일) */
 export function dailyCumulative(rows: Ledger[], month: string): { day: number; cum: number }[] {
   const byDay = new Map<number, number>();
   for (const r of rows) {
-    if (!r.settled || !r.date.startsWith(month)) continue;
+    if (!r.settled || r.kind !== "매출" || !r.date.startsWith(month)) continue;
     const d = Number(r.date.slice(8));
     byDay.set(d, (byDay.get(d) ?? 0) + r.net);
   }
   let cum = 0;
   return [...byDay].sort((a, b) => a[0] - b[0]).map(([day, v]) => ({ day, cum: (cum += v) }));
+}
+
+/** 그 달 매입 합계 (정산 기준). 매출 목표선 = 순이익 목표 + 이 값 */
+export function monthBuys(rows: Ledger[], month: string): number {
+  return rows.filter((r) => r.settled && r.kind === "매입" && r.date.startsWith(month)).reduce((s, r) => s + r.amount, 0);
 }

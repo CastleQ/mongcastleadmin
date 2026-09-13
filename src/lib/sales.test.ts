@@ -13,7 +13,7 @@ const rows: Ledger[] = [
   { ...base, id: 2, date: "2026-09-05", net: 200000, content: "시계피" }, // 토
   { ...base, id: 3, date: "2026-09-08", net: 50000 },                  // 화
   { ...base, id: 4, date: "2026-09-10", net: 999999, settled: false }, // 미정산 → 제외
-  { ...base, id: 5, date: "2026-09-01", kind: "매입", category: "월세기타", net: -300000 },
+  { ...base, id: 5, date: "2026-09-01", kind: "매입", category: "월세기타", amount: 300000, net: -300000 },
   { ...base, id: 6, date: "2026-08-20", net: 150000 },
 ];
 
@@ -49,9 +49,10 @@ test("dayType / byDayType / byContent", () => {
 });
 
 test("dailyCumulative / recovery", async () => {
-  const { dailyCumulative, recovery } = await import("./sales.ts");
+  const { dailyCumulative, recovery, monthBuys } = await import("./sales.ts");
+  assert.equal(monthBuys(rows, "2026-09"), 300000);
   const d = dailyCumulative(rows, "2026-09");
-  assert.deepEqual(d, [{ day: 1, cum: -300000 }, { day: 4, cum: -200000 }, { day: 5, cum: 0 }, { day: 8, cum: 50000 }]);
+  assert.deepEqual(d, [{ day: 4, cum: 100000 }, { day: 5, cum: 300000 }, { day: 8, cum: 350000 }]); // 매출만, 매입 제외
   const r = recovery(rows, 1_000_000, "2026-09-15");
   assert.equal(r.total, 200000); // 8월 150000 + 9월 50000
   assert.equal(r.rate, 20);

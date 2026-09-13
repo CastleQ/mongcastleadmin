@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { monthInfo, todayKST } from "@/lib/calendar";
 import type { Ledger } from "@/lib/ledger";
-import { DEFAULT_INVESTMENT, DEFAULT_TARGETS, SCENARIOS, byChannel, byContent, byDayType, byPackage, dailyCumulative, monthStats, recovery, type Bucket, type Scenario, type Targets } from "@/lib/sales";
+import { DEFAULT_INVESTMENT, DEFAULT_TARGETS, SCENARIOS, byChannel, byContent, byDayType, byPackage, dailyCumulative, monthBuys, monthStats, recovery, type Bucket, type Scenario, type Targets } from "@/lib/sales";
 import { DailyChart } from "./daily-chart";
 import { saveTargets } from "./actions";
 
@@ -28,6 +28,8 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
   const investment = typeof inv?.value === "number" ? inv.value : DEFAULT_INVESTMENT;
   const rec = recovery(rows, investment, today);
   const daily = dailyCumulative(rows, month);
+  const buys = monthBuys(rows, month);
+  const salesTarget = st.target + buys; // 이만큼 팔아야 순이익 목표 달성
   const good = st.net >= st.todayTarget;
 
   const btn = "rounded border border-zinc-300 px-3 py-1 text-sm whitespace-nowrap hover:bg-zinc-50";
@@ -66,8 +68,8 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
 
       {/* 이달 일별 누적 */}
       <section className="mb-6 rounded border border-zinc-200 p-3">
-        <h3 className="mb-2 text-sm font-medium">이달 누적 순이익 vs {scenario} 목표 <span className="font-normal text-zinc-400">(일 단위, 정산 기준)</span></h3>
-        <DailyChart points={daily} days={st.days} elapsed={st.elapsed} target={st.target} scenario={scenario} />
+        <h3 className="mb-2 text-sm font-medium">이달 누적 매출 vs 목표 <span className="font-normal text-zinc-400">(일 단위, 정산 기준 · 목표 매출 = {scenario} 순이익 목표 {won(st.target)} + 이달 매입 {won(buys)})</span></h3>
+        <DailyChart points={daily} days={st.days} elapsed={st.elapsed} target={salesTarget} />
       </section>
 
       {/* 투자금 회수 */}
