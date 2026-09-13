@@ -21,7 +21,7 @@ function Choice({ name, options, value, onChange, required }: {
   return (
     <div className="flex flex-wrap gap-2">
       {options.map((o) => (
-        <label key={o} className="cursor-pointer">
+        <label key={o} className="relative cursor-pointer">
           <input type="radio" name={name} value={o} checked={value === o} required={required}
             onChange={() => onChange?.(o)} className="peer sr-only" />
           <span className="block rounded border border-zinc-300 px-3 py-1.5 text-sm peer-checked:border-zinc-900 peer-checked:bg-zinc-900 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-zinc-400">
@@ -38,7 +38,7 @@ function Toggle({ name, options, value, onChange }: { name: string; options: rea
   return (
     <div className="inline-flex rounded border border-zinc-900 overflow-hidden">
       {options.map((o) => (
-        <label key={o} className="cursor-pointer">
+        <label key={o} className="relative cursor-pointer">
           <input type="radio" name={name} value={o} checked={value === o} onChange={() => onChange(o)} className="peer sr-only" />
           <span className="block px-4 py-1.5 text-sm peer-checked:bg-zinc-900 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-zinc-400">{o}</span>
         </label>

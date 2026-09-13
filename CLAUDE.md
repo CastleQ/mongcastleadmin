@@ -19,3 +19,4 @@
 6. **비밀·개인정보가 든 SQL(`supabase/seed.sql`, `templates*.sql`, `info*.sql`)은 git에 넣지 않는다.** `.gitignore`에 이미 등록됨.
 7. **저장하는 기능엔 반드시 되돌리는 길을 함께 만든다.** "기본값 저장"에는 "기본값 지우기", 덮어쓰는 저장에는 기록·되돌리기. 되돌릴 방법이 없으면 사용자가 우회 입력(대괄호 직접 타이핑 등)을 시도해 데이터가 꼬인다.
 8. **모달은 `src/app/(admin)/modal.tsx`의 공용 `Modal`만 사용한다.** 직접 `<dialog>`를 쓰지 않는다. (드래그로 글자 선택 중 바깥에서 손을 떼도 닫히지 않게 "누른 곳·뗀 곳 모두 바깥"일 때만 닫는 로직이 들어 있음)
+9. **`sr-only`(absolute) 입력을 감싸는 label/span에는 반드시 `relative`를 준다.** 안 그러면 숨은 입력이 스크롤 상자 밖으로 튀어나가 페이지 폭을 늘려, 폰에서 축소되며 빈 공간이 생긴다. (거래 표의 정산 스위치에서 발생 — 원인 추적에 3회 배포 소요. 화면 폭 문제는 추측 말고 `document.documentElement.scrollWidth`와 요소별 `getBoundingClientRect().right`로 측정할 것)
