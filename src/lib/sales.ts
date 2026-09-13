@@ -15,20 +15,19 @@ export function monthNet(rows: Ledger[], month: string): number {
 }
 
 export type MonthStats = {
-  net: number; target: number; todayTarget: number;
+  actual: number; target: number; todayTarget: number;
   achievement: number; // 달성도 % (목표 대비)
   gap: number; gapPct: number; // 목표 대비 격차 (원, %)
   elapsed: number; days: number;
 };
 
-/** today: YYYY-MM-DD. 지난달이면 전체 목표, 이번달이면 오늘까지 비례 목표 */
-export function monthStats(rows: Ledger[], month: string, target: number, today: string): MonthStats {
-  const net = monthNet(rows, month);
+/** actual: 이달 실적(매출). today: YYYY-MM-DD. 지난달이면 전체 목표, 이번달이면 오늘까지 비례 목표 */
+export function monthStats(actual: number, month: string, target: number, today: string): MonthStats {
   const days = daysIn(month);
   const elapsed = monthOf(today) === month ? Number(today.slice(8)) : monthOf(today) > month ? days : 0;
   const todayTarget = Math.round((target * elapsed) / days);
   const pct = (n: number) => (target ? Math.round((n / target) * 1000) / 10 : 0);
-  return { net, target, todayTarget, achievement: pct(net), gap: net - target, gapPct: pct(net - target), elapsed, days };
+  return { actual, target, todayTarget, achievement: pct(actual), gap: actual - target, gapPct: pct(actual - target), elapsed, days };
 }
 
 /** 최근 n개월 (선택 달 포함, 오래된 순) 순이익 */
@@ -106,7 +105,17 @@ export function dailyCumulative(rows: Ledger[], month: string): { day: number; c
   return [...byDay].sort((a, b) => a[0] - b[0]).map(([day, v]) => ({ day, cum: (cum += v) }));
 }
 
-/** 그 달 매입 합계 (정산 기준). 매출 목표선 = 순이익 목표 + 이 값 */
-export function monthBuys(rows: Ledger[], month: string): number {
-  return rows.filter((r) => r.settled && r.kind === "매입" && r.date.startsWith(month)).reduce((s, r) => s + r.amount, 0);
+/** 시트 '사업계획서' 2. 월 고정비 합계 (월세·관리비·통신·CCTV·수도·소모품·대출이자). settings에 없을 때 기본값 */
+export const DEFAULT_FIXED_COSTS = 879_392;
+/** 고정비에 이미 포함된 매입 항목 — 거래탭에 적어도 목표에 다시 더하지 않음 */
+export const FIXED_CATEGORIES = ["월세기타", "광고비"];
+
+/** 그 달 매출 실수령 합계 (정산 기준) */
+export function monthSales(rows: Ledger[], month: string): number {
+  return rows.filter((r) => r.settled && r.kind === "매출" && r.date.startsWith(month)).reduce((s, r) => s + r.net, 0);
+}
+
+/** 그 달 추가 매입 (정산 기준, 고정비 항목 제외). 목표 매출 = 순이익 목표 + 고정비 + 이 값 */
+export function extraBuys(rows: Ledger[], month: string): number {
+  return rows.filter((r) => r.settled && r.kind === "매입" && r.date.startsWith(month) && !FIXED_CATEGORIES.includes(r.category)).reduce((s, r) => s + r.amount, 0);
 }

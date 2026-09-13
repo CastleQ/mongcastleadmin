@@ -23,12 +23,12 @@ test("monthNet: 정산분만, 매입은 음수로", () => {
 });
 
 test("monthStats: 달성도·격차·오늘자 목표", () => {
-  const s = monthStats(rows, "2026-09", 100000, "2026-09-15");
+  const s = monthStats(50000, "2026-09", 100000, "2026-09-15");
   assert.equal(s.achievement, 50);
   assert.equal(s.gap, -50000);
   assert.equal(s.gapPct, -50);
   assert.equal(s.todayTarget, 50000); // 15/30일
-  assert.equal(monthStats(rows, "2026-08", 100000, "2026-09-15").todayTarget, 100000); // 지난달은 전체
+  assert.equal(monthStats(0, "2026-08", 100000, "2026-09-15").todayTarget, 100000); // 지난달은 전체
 });
 
 test("monthlySeries: 오래된 순 n개월", () => {
@@ -49,8 +49,10 @@ test("dayType / byDayType / byContent", () => {
 });
 
 test("dailyCumulative / recovery", async () => {
-  const { dailyCumulative, recovery, monthBuys } = await import("./sales.ts");
-  assert.equal(monthBuys(rows, "2026-09"), 300000);
+  const { dailyCumulative, recovery, monthSales, extraBuys } = await import("./sales.ts");
+  assert.equal(monthSales(rows, "2026-09"), 350000);
+  assert.equal(extraBuys(rows, "2026-09"), 0); // 월세기타는 고정비라 제외
+  assert.equal(extraBuys([...rows, { ...base, id: 9, kind: "매입", category: "집기구매", amount: 40000 }], "2026-09"), 40000);
   const d = dailyCumulative(rows, "2026-09");
   assert.deepEqual(d, [{ day: 4, cum: 100000 }, { day: 5, cum: 300000 }, { day: 8, cum: 350000 }]); // 매출만, 매입 제외
   const r = recovery(rows, 1_000_000, "2026-09-15");

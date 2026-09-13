@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { monthInfo, todayKST } from "@/lib/calendar";
 import type { Ledger } from "@/lib/ledger";
-import { DEFAULT_INVESTMENT, DEFAULT_TARGETS, SCENARIOS, byChannel, byContent, byDayType, byPackage, dailyCumulative, monthBuys, monthStats, recovery, type Bucket, type Scenario, type Targets } from "@/lib/sales";
+import { DEFAULT_FIXED_COSTS, DEFAULT_INVESTMENT, DEFAULT_TARGETS, SCENARIOS, byChannel, byContent, byDayType, byPackage, dailyCumulative, extraBuys, monthSales, monthStats, recovery, type Bucket, type Scenario, type Targets } from "@/lib/sales";
 import { DailyChart } from "./daily-chart";
 import { saveTargets } from "./actions";
 
@@ -17,20 +17,22 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
   const info = monthInfo(month);
 
   const supabase = await createClient();
-  const [{ data: ledger }, { data: setting }, { data: inv }] = await Promise.all([
+  const [{ data: ledger }, { data: settings }] = await Promise.all([
     supabase.from("ledger").select("*").order("date"),
-    supabase.from("settings").select("value").eq("key", "monthly_targets").maybeSingle(),
-    supabase.from("settings").select("value").eq("key", "investment").maybeSingle(),
+    supabase.from("settings").select("key,value"),
   ]);
+  const setting = Object.fromEntries((settings ?? []).map((r) => [r.key as string, r.value as unknown]));
   const rows: Ledger[] = ledger ?? [];
-  const targets: Targets = { ...DEFAULT_TARGETS, ...((setting?.value as Partial<Targets>) ?? {}) };
-  const st = monthStats(rows, month, targets[scenario], today);
-  const investment = typeof inv?.value === "number" ? inv.value : DEFAULT_INVESTMENT;
+  const targets: Targets = { ...DEFAULT_TARGETS, ...((setting.monthly_targets as Partial<Targets>) ?? {}) };
+  const investment = typeof setting.investment === "number" ? setting.investment : DEFAULT_INVESTMENT;
+  const fixedCosts = typeof setting.fixed_costs === "number" ? setting.fixed_costs : DEFAULT_FIXED_COSTS;
+  // 목표 매출 = 순이익 목표 + 고정비 + 이달 추가 매입(고정비 항목 제외)
+  const extra = extraBuys(rows, month);
+  const salesTarget = targets[scenario] + fixedCosts + extra;
+  const st = monthStats(monthSales(rows, month), month, salesTarget, today);
   const rec = recovery(rows, investment, today);
   const daily = dailyCumulative(rows, month);
-  const buys = monthBuys(rows, month);
-  const salesTarget = st.target + buys; // 이만큼 팔아야 순이익 목표 달성
-  const good = st.net >= st.todayTarget;
+  const good = st.actual >= st.todayTarget;
 
   const btn = "rounded border border-zinc-300 px-3 py-1 text-sm whitespace-nowrap hover:bg-zinc-50";
   const q = (mm: string, ss: Scenario) => `/sales?m=${mm}&s=${ss}`;
@@ -55,12 +57,12 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
             <Link key={sc} href={q(month, sc)} className={`px-3 py-1 ${sc === scenario ? "bg-zinc-900 text-white" : "hover:bg-zinc-50"}`}>{sc}</Link>
           ))}
         </div>
-        <span className="text-zinc-400">월 목표 {won(targets[scenario])}원</span>
+        <span className="text-zinc-400">목표 매출 {won(salesTarget)}원 <span className="hidden sm:inline">= 순이익 목표 {won(targets[scenario])} + 고정비 {won(fixedCosts)}{extra ? ` + 추가 매입 ${won(extra)}` : ""}</span></span>
       </div>
 
       <dl className="mb-4 grid grid-cols-2 gap-px overflow-hidden rounded border border-zinc-200 bg-zinc-200 sm:grid-cols-5">
-        <Tile label="목표 순이익" value={`${won(st.target)}원`} />
-        <Tile label="현재 순이익 (정산 기준)" value={`${won(st.net)}원`} strong />
+        <Tile label="목표 매출" value={`${won(st.target)}원`} />
+        <Tile label="현재 매출 (정산 기준)" value={`${won(st.actual)}원`} strong />
         <Tile label="달성도" value={`${st.achievement}%`} tone={st.achievement >= 100 ? "good" : st.achievement >= 50 ? "" : "bad"} />
         <Tile label="목표 대비 격차" value={`${signed(st.gap)}원`} sub={`${signed(st.gapPct)}%`} tone={st.gap >= 0 ? "good" : "bad"} />
         <Tile label={st.elapsed < st.days ? `오늘자 목표 (${st.elapsed}/${st.days}일)` : "오늘자 목표 (마감)"} value={`${won(st.todayTarget)}원`} sub={good ? "▲ 페이스 앞섬" : "▼ 페이스 뒤짐"} tone={good ? "good" : "bad"} />
@@ -68,7 +70,7 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
 
       {/* 이달 일별 누적 */}
       <section className="mb-6 rounded border border-zinc-200 p-3">
-        <h3 className="mb-2 text-sm font-medium">이달 누적 매출 vs 목표 <span className="font-normal text-zinc-400">(일 단위, 정산 기준 · 목표 매출 = {scenario} 순이익 목표 {won(st.target)} + 이달 매입 {won(buys)})</span></h3>
+        <h3 className="mb-2 text-sm font-medium">이달 누적 매출 vs 목표 <span className="font-normal text-zinc-400">(일 단위, 정산 기준)</span></h3>
         <DailyChart points={daily} days={st.days} elapsed={st.elapsed} target={salesTarget} />
       </section>
 
@@ -89,7 +91,7 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
       </div>
 
       <details className="mt-6 max-w-xl rounded border border-zinc-200">
-        <summary className="cursor-pointer select-none px-3 py-2 text-sm text-zinc-600">목표 수정 (월 순이익 · 투자금)</summary>
+        <summary className="cursor-pointer select-none px-3 py-2 text-sm text-zinc-600">목표 수정 (월 순이익 목표 · 고정비 · 투자금)</summary>
         <form action={saveTargets} className="flex flex-wrap items-end gap-3 border-t border-zinc-200 p-3">
           {SCENARIOS.map((sc) => (
             <label key={sc} className="text-sm">
@@ -97,6 +99,10 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
               <input name={sc} type="text" inputMode="numeric" defaultValue={targets[sc]} className="w-32 rounded border border-zinc-300 px-3 py-2 text-base focus:border-zinc-900 focus:outline-none" />
             </label>
           ))}
+          <label className="text-sm">
+            <span className="mb-1 block text-zinc-600">월 고정비</span>
+            <input name="fixed_costs" type="text" inputMode="numeric" defaultValue={fixedCosts} className="w-32 rounded border border-zinc-300 px-3 py-2 text-base focus:border-zinc-900 focus:outline-none" />
+          </label>
           <label className="text-sm">
             <span className="mb-1 block text-zinc-600">회수 대상 투자금</span>
             <input name="investment" type="text" inputMode="numeric" defaultValue={investment} className="w-32 rounded border border-zinc-300 px-3 py-2 text-base focus:border-zinc-900 focus:outline-none" />
