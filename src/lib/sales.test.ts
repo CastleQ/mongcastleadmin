@@ -47,3 +47,14 @@ test("dayType / byDayType / byContent", () => {
   assert.equal(c[0].label, "홀덤"); // 누적 큰 순
   assert.equal(c[0].total, 300000);
 });
+
+test("dailyCumulative / recovery", async () => {
+  const { dailyCumulative, recovery } = await import("./sales.ts");
+  const d = dailyCumulative(rows, "2026-09");
+  assert.deepEqual(d, [{ day: 1, cum: -300000 }, { day: 4, cum: -200000 }, { day: 5, cum: 0 }, { day: 8, cum: 50000 }]);
+  const r = recovery(rows, 1_000_000, "2026-09-15");
+  assert.equal(r.total, 200000); // 8월 150000 + 9월 50000
+  assert.equal(r.rate, 20);
+  assert.equal(r.months, 2);
+  assert.equal(r.monthsLeft, 8); // 남은 80만 / 월평균 10만
+});

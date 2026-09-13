@@ -71,3 +71,37 @@ export const byDayType = (rows: Ledger[]) => bucketize(rows, (r) => dayType(r.da
 export const byContent = (rows: Ledger[]) => bucketize(rows, (r) => r.content?.trim() || "기타");
 export const byChannel = (rows: Ledger[]) => bucketize(rows, (r) => r.channel?.trim() || "기타");
 export const byPackage = (rows: Ledger[]) => bucketize(rows, (r) => r.package?.trim() || "기타");
+
+/** 회수 대상 투자금 (시트 '사업계획서' 1. 초기투자금: 총액 − 보증금). settings 표에 없을 때 기본값 */
+export const DEFAULT_INVESTMENT = 7_000_000;
+
+export type Recovery = { total: number; investment: number; rate: number; remaining: number; months: number; monthsLeft: number | null };
+
+/** 전 기간 누적 순이익(정산 기준)으로 투자금 회수 현황 */
+export function recovery(rows: Ledger[], investment: number, today: string): Recovery {
+  const done = rows.filter((r) => r.settled);
+  const total = done.reduce((s, r) => s + r.net, 0);
+  const first = done.map((r) => r.date).sort()[0];
+  const months = first ? Math.max(1, (Number(today.slice(0, 4)) - Number(first.slice(0, 4))) * 12 + Number(today.slice(5, 7)) - Number(first.slice(5, 7)) + 1) : 1;
+  const pace = total / months; // 월평균 순이익
+  const remaining = Math.max(0, investment - total);
+  return {
+    total, investment,
+    rate: investment ? Math.round((total / investment) * 1000) / 10 : 0,
+    remaining,
+    months,
+    monthsLeft: remaining === 0 ? 0 : pace > 0 ? Math.ceil(remaining / pace) : null,
+  };
+}
+
+/** 그 달의 일 단위 누적 순이익. 거래 있는 날만 (day = 1..말일) */
+export function dailyCumulative(rows: Ledger[], month: string): { day: number; cum: number }[] {
+  const byDay = new Map<number, number>();
+  for (const r of rows) {
+    if (!r.settled || !r.date.startsWith(month)) continue;
+    const d = Number(r.date.slice(8));
+    byDay.set(d, (byDay.get(d) ?? 0) + r.net);
+  }
+  let cum = 0;
+  return [...byDay].sort((a, b) => a[0] - b[0]).map(([day, v]) => ({ day, cum: (cum += v) }));
+}

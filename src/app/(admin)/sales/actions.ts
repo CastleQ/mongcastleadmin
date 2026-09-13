@@ -10,7 +10,12 @@ export async function saveTargets(formData: FormData) {
     SCENARIOS.map((s) => [s, Number(String(formData.get(s) ?? "").replace(/[^\d]/g, "")) || 0]),
   ) as Targets;
   const supabase = await createClient();
-  const { error } = await supabase.from("settings").upsert({ key: "monthly_targets", value, updated_at: new Date().toISOString() });
+  const investment = Number(String(formData.get("investment") ?? "").replace(/[^\d]/g, "")) || 0;
+  const now = new Date().toISOString();
+  const { error } = await supabase.from("settings").upsert([
+    { key: "monthly_targets", value, updated_at: now },
+    { key: "investment", value: investment, updated_at: now },
+  ]);
   if (error) throw new Error(error.message);
   revalidatePath("/sales");
 }

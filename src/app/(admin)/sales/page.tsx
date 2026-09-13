@@ -2,7 +2,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { monthInfo, todayKST } from "@/lib/calendar";
 import type { Ledger } from "@/lib/ledger";
-import { DEFAULT_TARGETS, SCENARIOS, byChannel, byContent, byDayType, byPackage, monthStats, monthlySeries, type Bucket, type Scenario, type Targets } from "@/lib/sales";
+import { DEFAULT_INVESTMENT, DEFAULT_TARGETS, SCENARIOS, byChannel, byContent, byDayType, byPackage, dailyCumulative, monthStats, recovery, type Bucket, type Scenario, type Targets } from "@/lib/sales";
+import { DailyChart } from "./daily-chart";
 import { saveTargets } from "./actions";
 
 const won = (n: number) => n.toLocaleString("ko-KR");
@@ -16,15 +17,17 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
   const info = monthInfo(month);
 
   const supabase = await createClient();
-  const [{ data: ledger }, { data: setting }] = await Promise.all([
+  const [{ data: ledger }, { data: setting }, { data: inv }] = await Promise.all([
     supabase.from("ledger").select("*").order("date"),
     supabase.from("settings").select("value").eq("key", "monthly_targets").maybeSingle(),
+    supabase.from("settings").select("value").eq("key", "investment").maybeSingle(),
   ]);
   const rows: Ledger[] = ledger ?? [];
   const targets: Targets = { ...DEFAULT_TARGETS, ...((setting?.value as Partial<Targets>) ?? {}) };
   const st = monthStats(rows, month, targets[scenario], today);
-  const series = monthlySeries(rows, month, 6);
-  const pending = rows.filter((r) => !r.settled && r.date.startsWith(month)).reduce((a, r) => a + r.net, 0);
+  const investment = typeof inv?.value === "number" ? inv.value : DEFAULT_INVESTMENT;
+  const rec = recovery(rows, investment, today);
+  const daily = dailyCumulative(rows, month);
   const good = st.net >= st.todayTarget;
 
   const btn = "rounded border border-zinc-300 px-3 py-1 text-sm whitespace-nowrap hover:bg-zinc-50";
@@ -34,11 +37,6 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
   const scaleMax = Math.max(targets.낙관, st.net, 1);
   const pct = (n: number) => `${Math.max(0, Math.min(100, (n / scaleMax) * 100))}%`;
 
-  // 6개월 막대 그래프 (축 하나: 순이익)
-  const W = 600, H = 180, PAD = 24, BASE = 130;
-  const maxAbs = Math.max(targets[scenario], ...series.map((x) => Math.abs(x.net)), 1);
-  const y = (v: number) => BASE - (v / maxAbs) * (BASE - PAD);
-  const bw = (W - PAD * 2) / series.length;
 
   return (
     <>
@@ -69,7 +67,6 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
         <Tile label="목표 대비 격차" value={`${signed(st.gap)}원`} sub={`${signed(st.gapPct)}%`} tone={st.gap >= 0 ? "good" : "bad"} />
         <Tile label={st.elapsed < st.days ? `오늘자 목표 (${st.elapsed}/${st.days}일)` : "오늘자 목표 (마감)"} value={`${won(st.todayTarget)}원`} sub={good ? "▲ 페이스 앞섬" : "▼ 페이스 뒤짐"} tone={good ? "good" : "bad"} />
       </dl>
-      {pending !== 0 && <p className="-mt-2 mb-4 text-xs text-zinc-500">미정산 {signed(pending)}원은 포함하지 않았어요. 정산 처리하면 반영됩니다.</p>}
 
       {/* 진행 막대: 보수/기본/낙관 눈금 */}
       <div className="mb-6">
@@ -84,28 +81,19 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
         <p className="mt-1 text-xs text-zinc-500">{won(st.net)}원 / 낙관 {won(targets.낙관)}원 기준 {Math.round((st.net / scaleMax) * 100)}%</p>
       </div>
 
-      {/* 최근 6개월 */}
+      {/* 이달 일별 누적 */}
       <section className="mb-6 rounded border border-zinc-200 p-3">
-        <h3 className="mb-2 text-sm font-medium">최근 6개월 순이익 <span className="font-normal text-zinc-400">· 점선 = {scenario} 목표</span></h3>
-        <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="최근 6개월 순이익 막대 그래프">
-          <line x1={PAD} x2={W - PAD} y1={BASE} y2={BASE} stroke="#d4d4d8" />
-          <line x1={PAD} x2={W - PAD} y1={y(targets[scenario])} y2={y(targets[scenario])} stroke="#71717a" strokeDasharray="4 4" />
-          {series.map((x, i) => {
-            const cx = PAD + bw * i + bw / 2, h = Math.abs(y(x.net) - BASE), top = x.net >= 0 ? y(x.net) : BASE;
-            const cur = x.month === month;
-            return (
-              <g key={x.month}>
-                <rect x={cx - bw * 0.3} y={top} width={bw * 0.6} height={Math.max(h, x.net ? 2 : 0)} rx={3}
-                  fill={x.net < 0 ? "#fca5a5" : cur ? "#18181b" : "#a1a1aa"}>
-                  <title>{x.month} 순이익 {won(x.net)}원</title>
-                </rect>
-                <text x={cx} y={x.net >= 0 ? top - 5 : top + h + 12} textAnchor="middle" fontSize="11" fill="#3f3f46">{x.net ? won(x.net) : ""}</text>
-                <text x={cx} y={H - 6} textAnchor="middle" fontSize="11" fill={cur ? "#18181b" : "#71717a"} fontWeight={cur ? 700 : 400}>{Number(x.month.slice(5))}월</text>
-              </g>
-            );
-          })}
-        </svg>
+        <h3 className="mb-2 text-sm font-medium">이달 누적 순이익 (일 단위, 정산 기준)</h3>
+        <DailyChart points={daily} days={st.days} elapsed={st.elapsed} target={st.target} scenario={scenario} />
       </section>
+
+      {/* 투자금 회수 */}
+      <dl className="mb-6 grid grid-cols-2 gap-px overflow-hidden rounded border border-zinc-200 bg-zinc-200 sm:grid-cols-4">
+        <Tile label="회수 대상 투자금" value={`${won(rec.investment)}원`} />
+        <Tile label={`누적 순이익 (${rec.months}개월)`} value={`${won(rec.total)}원`} strong />
+        <Tile label="회수율" value={`${rec.rate}%`} sub={`남은 금액 ${won(rec.remaining)}원`} tone={rec.rate >= 100 ? "good" : ""} />
+        <Tile label="예상 회수까지" value={rec.monthsLeft === 0 ? "회수 완료" : rec.monthsLeft === null ? "—" : `약 ${rec.monthsLeft}개월`} sub={rec.monthsLeft === null ? "월평균 순이익이 0 이하" : `월평균 ${won(Math.round(rec.total / rec.months))}원 기준`} />
+      </dl>
 
       {/* 누적 분석 */}
       <div className="grid gap-4 md:grid-cols-2">
@@ -116,7 +104,7 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
       </div>
 
       <details className="mt-6 max-w-xl rounded border border-zinc-200">
-        <summary className="cursor-pointer select-none px-3 py-2 text-sm text-zinc-600">월 목표 수정</summary>
+        <summary className="cursor-pointer select-none px-3 py-2 text-sm text-zinc-600">목표 수정 (월 순이익 · 투자금)</summary>
         <form action={saveTargets} className="flex flex-wrap items-end gap-3 border-t border-zinc-200 p-3">
           {SCENARIOS.map((sc) => (
             <label key={sc} className="text-sm">
@@ -124,6 +112,10 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
               <input name={sc} type="text" inputMode="numeric" defaultValue={targets[sc]} className="w-32 rounded border border-zinc-300 px-3 py-2 text-base focus:border-zinc-900 focus:outline-none" />
             </label>
           ))}
+          <label className="text-sm">
+            <span className="mb-1 block text-zinc-600">회수 대상 투자금</span>
+            <input name="investment" type="text" inputMode="numeric" defaultValue={investment} className="w-32 rounded border border-zinc-300 px-3 py-2 text-base focus:border-zinc-900 focus:outline-none" />
+          </label>
           <button type="submit" className="rounded bg-zinc-900 px-4 py-2 text-sm text-white hover:bg-zinc-700">목표 저장</button>
         </form>
       </details>
