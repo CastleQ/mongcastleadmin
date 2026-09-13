@@ -6,7 +6,7 @@ import { saveLedger } from "./actions";
 import { DeleteButton } from "./delete-button";
 import { Switch } from "./controls";
 
-type Props = { row?: Ledger; defaultDate?: string };
+type Props = { row?: Ledger; defaultDate?: string; from?: string };
 
 const input = "w-full rounded border border-zinc-300 bg-white px-3 py-2 text-base focus:border-zinc-900 focus:outline-none";
 const label = "block text-sm text-zinc-600 mb-1";
@@ -63,7 +63,7 @@ function SelectOther({ name, options, value, onChange }: { name: string; options
   );
 }
 
-export function LedgerForm({ row, defaultDate }: Props) {
+export function LedgerForm({ row, defaultDate, from }: Props) {
   const [kind, setKind] = useState<Ledger["kind"]>(row?.kind ?? "매출");
   const [category, setCategory] = useState<string | null>(row?.category ?? null);
   const [channel, setChannel] = useState<string | null>(row?.channel ?? null);
@@ -77,6 +77,7 @@ export function LedgerForm({ row, defaultDate }: Props) {
 
   return (
     <form action={saveLedger.bind(null, row?.id ?? null)} className="max-w-xl space-y-5">
+      {from && <input type="hidden" name="from" value={from} />}
       <datalist id="contents">{CONTENTS.map((c) => <option key={c} value={c} />)}</datalist>
 
       <div className="grid grid-cols-2 gap-3">
@@ -175,7 +176,7 @@ export function LedgerForm({ row, defaultDate }: Props) {
         <button type="submit" className="rounded bg-zinc-900 px-5 py-2.5 text-white hover:bg-zinc-700 focus-visible:ring-2 focus-visible:ring-zinc-400">
           {row ? "변경 저장" : "저장"}
         </button>
-        {row && <DeleteButton id={row.id} date={row.date} />}
+        {row && <DeleteButton id={row.id} date={row.date} from={from} />}
       </div>
     </form>
   );

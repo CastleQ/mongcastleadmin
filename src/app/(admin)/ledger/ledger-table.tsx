@@ -49,7 +49,7 @@ export function LedgerTable({ rows }: { rows: Ledger[] }) {
           {sorted.map((r, i) => {
             const sale = r.kind === "매출";
             return (
-              <tr key={r.id} onClick={() => router.push(`/ledger/${r.id}`)}
+              <tr key={r.id} onClick={() => router.push(`/ledger/${r.id}?from=ledger`)}
                 className={`cursor-pointer ${r.settled ? "hover:bg-zinc-50" : "bg-amber-50 hover:bg-amber-100"}`}>
                 <td className={`${td} text-zinc-400`}>{i + 1}</td>
                 <td className={td}>{r.date.slice(5).replace("-", "/")}</td>

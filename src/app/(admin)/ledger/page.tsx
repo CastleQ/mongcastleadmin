@@ -34,7 +34,7 @@ export default async function LedgerListPage({ searchParams }: PageProps<"/ledge
           <Link href={`/ledger?m=${info.prev}`} className={btn}>‹<span className="hidden sm:inline"> 이전달</span></Link>
           <Link href="/ledger" className={btn}>이번달</Link>
           <Link href={`/ledger?m=${info.next}`} className={btn}><span className="hidden sm:inline">다음달 </span>›</Link>
-          <Link href="/ledger/new" className="rounded bg-zinc-900 px-3 py-1 text-sm text-white whitespace-nowrap hover:bg-zinc-700">+ 추가</Link>
+          <Link href="/ledger/new?from=ledger" className="rounded bg-zinc-900 px-3 py-1 text-sm text-white whitespace-nowrap hover:bg-zinc-700">+ 추가</Link>
         </div>
       </div>
 
@@ -50,7 +50,7 @@ export default async function LedgerListPage({ searchParams }: PageProps<"/ledge
       )}
 
       {rows.length === 0 ? (
-        <p className="py-10 text-center text-zinc-500">이 달엔 거래가 없어요. <Link href="/ledger/new" className="underline">첫 거래를 추가</Link>하세요.</p>
+        <p className="py-10 text-center text-zinc-500">이 달엔 거래가 없어요. <Link href="/ledger/new?from=ledger" className="underline">첫 거래를 추가</Link>하세요.</p>
       ) : (
         <LedgerTable rows={rows} />
       )}
