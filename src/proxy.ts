@@ -19,7 +19,9 @@ export async function proxy(request: NextRequest) {
     },
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
+  // getClaims: 토큰을 서버 안에서 직접 검증 (매 요청마다 Supabase에 물어보지 않음 → 왕복 절약)
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims ?? null;
   const path = request.nextUrl.pathname;
 
   if (!user && path !== "/login" && !path.startsWith("/auth/")) {

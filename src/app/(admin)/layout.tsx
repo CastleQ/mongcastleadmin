@@ -4,7 +4,8 @@ import { SignOutButton } from "./sign-out-button";
 
 export default async function AdminLayout({ children }: LayoutProps<"/">) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data } = await supabase.auth.getClaims();
+  const email = typeof data?.claims.email === "string" ? data.claims.email : "";
 
   return (
     <>
@@ -12,7 +13,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/">) {
         <div className="mx-auto max-w-7xl flex items-center justify-between px-4 h-14">
           <h1 className="font-bold text-lg">몽캐슬 파티룸 <span className="text-zinc-400 font-normal text-sm">관리자</span></h1>
           <div className="flex items-center gap-3 text-sm">
-            <span className="hidden sm:inline text-zinc-300">{user?.email}</span>
+            <span className="hidden sm:inline text-zinc-300">{email}</span>
             <span className="rounded bg-zinc-700 px-2 py-0.5 text-xs">관리자</span>
             <SignOutButton />
           </div>
