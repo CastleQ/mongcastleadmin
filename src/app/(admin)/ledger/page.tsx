@@ -2,11 +2,9 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { monthInfo, todayKST } from "@/lib/calendar";
 import type { Ledger } from "@/lib/ledger";
-import { SettledToggle } from "./settled-toggle";
+import { LedgerTable } from "./ledger-table";
 
 const won = (n: number) => n.toLocaleString("ko-KR");
-const HEAD = ["no.", "예약일", "구분", "항목", "고객명", "고객연락처", "패키지", "이용시간", "결제방식", "입금액", "수수료", "기타지출", "실수령", "정산여부"];
-const NUM_COLS = new Set(["입금액", "수수료", "기타지출", "실수령"]);
 
 export default async function LedgerListPage({ searchParams }: PageProps<"/ledger">) {
   const { m } = await searchParams;
@@ -27,7 +25,6 @@ export default async function LedgerListPage({ searchParams }: PageProps<"/ledge
   const pending = rows.filter((r) => !r.settled);
   const pendingNet = pending.reduce((s, r) => s + r.net, 0);
   const btn = "rounded border border-zinc-300 px-3 py-1 text-sm whitespace-nowrap hover:bg-zinc-50";
-  const td = "px-2 py-2 whitespace-nowrap";
 
   return (
     <>
@@ -55,42 +52,9 @@ export default async function LedgerListPage({ searchParams }: PageProps<"/ledge
       {rows.length === 0 ? (
         <p className="py-10 text-center text-zinc-500">이 달엔 거래가 없어요. <Link href="/ledger/new" className="underline">첫 거래를 추가</Link>하세요.</p>
       ) : (
-        <div className="overflow-x-auto -mx-4 px-4">
-          <table className="w-full text-sm border-y border-zinc-200">
-            <thead>
-              <tr className="bg-zinc-50 text-xs text-zinc-500">
-                {HEAD.map((h) => <th key={h} className={`${td} font-medium ${NUM_COLS.has(h) ? "text-right" : "text-left"}`}>{h}</th>)}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100">
-              {rows.map((r, i) => {
-                const sale = r.kind === "매출";
-                const dim = r.settled ? "" : "text-zinc-400";
-                const edit = `/ledger/${r.id}`;
-                return (
-                  <tr key={r.id} className={r.settled ? "hover:bg-zinc-50" : "bg-amber-50 hover:bg-amber-100"}>
-                    <td className={`${td} text-zinc-400`}>{rows.length - i}</td>
-                    <td className={td}><Link href={edit} className="underline decoration-zinc-300 hover:decoration-zinc-900">{r.date.slice(5).replace("-", "/")}</Link></td>
-                    <td className={td}><span className={`rounded px-1.5 py-0.5 text-xs ${sale ? "bg-zinc-900 text-white" : "bg-red-50 text-red-700"}`}>{r.kind}</span></td>
-                    <td className={td}>{r.category}</td>
-                    <td className={td}><Link href={edit} className="font-medium hover:underline">{r.customer_name ?? "—"}</Link></td>
-                    <td className={`${td} text-zinc-500`}>{r.customer_phone ?? ""}</td>
-                    <td className={td}>{r.package ?? ""}</td>
-                    <td className={td}>{r.hours ? `${r.hours}h` : ""}</td>
-                    <td className={`${td} text-zinc-500`}>{r.payment_method ?? ""}</td>
-                    <td className={`${td} text-right tabular-nums ${dim}`}>{won(r.amount)}</td>
-                    <td className={`${td} text-right tabular-nums text-zinc-500`}>{r.fee ? won(r.fee) : ""}</td>
-                    <td className={`${td} text-right tabular-nums text-zinc-500`}>{r.other_expense ? won(r.other_expense) : ""}</td>
-                    <td className={`${td} text-right tabular-nums ${r.settled ? (sale ? "font-medium" : "text-red-600") : "text-zinc-400"}`}>{won(r.net)}</td>
-                    <td className={td}><SettledToggle id={r.id} settled={r.settled} /></td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <LedgerTable rows={rows} />
       )}
-      <p className="mt-3 text-xs text-zinc-500">{rows.length}건 · 정산 {done.length}건 · 미정산 {pending.length}건 · 예약일이나 고객명을 누르면 수정</p>
+      <p className="mt-3 text-xs text-zinc-500">{rows.length}건 · 정산 {done.length}건 · 미정산 {pending.length}건 · 행을 누르면 수정, 헤더를 누르면 정렬</p>
     </>
   );
 }
