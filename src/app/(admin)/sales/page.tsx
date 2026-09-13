@@ -65,14 +65,14 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
         <Tile label="목표 매출" value={`${won(st.target)}원`} />
         <Tile label="현재 매출 (정산 기준)" value={`${won(st.actual)}원`} strong />
         <Tile label="달성도" value={`${st.achievement}%`} tone={st.achievement >= 100 ? "good" : st.achievement >= 50 ? "" : "bad"} />
-        <Tile label="목표 대비 격차" value={`${signed(st.gap)}원`} sub={`${signed(st.gapPct)}%`} tone={st.gap >= 0 ? "good" : "bad"} />
-        <Tile label={st.elapsed < st.days ? `오늘자 목표 (${st.elapsed}/${st.days}일)` : "오늘자 목표 (마감)"} value={`${won(st.todayTarget)}원`} sub={good ? "▲ 페이스 앞섬" : "▼ 페이스 뒤짐"} tone={good ? "good" : "bad"} />
+        <Tile label="남은 목표 매출" value={st.gap >= 0 ? "목표 달성 ✓" : `${won(-st.gap)}원`} sub={`목표 대비 ${signed(st.gapPct)}%`} tone={st.gap >= 0 ? "good" : "bad"} />
+        <Tile label={st.elapsed < st.days ? `오늘까지 팔았어야 할 금액 (${st.elapsed}/${st.days}일)` : "월 마감 기준 목표"} value={`${won(st.todayTarget)}원`} sub={good ? `▲ ${won(st.actual - st.todayTarget)}원 앞섬` : `▼ ${won(st.todayTarget - st.actual)}원 뒤짐`} tone={good ? "good" : "bad"} />
       </dl>
 
       {/* 이달 일별 누적 */}
       <section className="mb-6 rounded border border-zinc-200 p-3">
         <h3 className="mb-2 text-sm font-medium">이달 누적 매출 vs 목표 <span className="font-normal text-zinc-400">(일 단위, 정산 기준)</span></h3>
-        <DailyChart points={daily} days={st.days} elapsed={st.elapsed} target={salesTarget} breakEven={fixedCosts + extra} entries={entries} />
+        <DailyChart points={daily} days={st.days} target={salesTarget} breakEven={fixedCosts + extra} entries={entries} />
       </section>
 
       {/* 투자금 회수 */}
