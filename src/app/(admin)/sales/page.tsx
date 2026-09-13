@@ -33,10 +33,6 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
   const btn = "rounded border border-zinc-300 px-3 py-1 text-sm whitespace-nowrap hover:bg-zinc-50";
   const q = (mm: string, ss: Scenario) => `/sales?m=${mm}&s=${ss}`;
 
-  // 진행 막대: 낙관 목표를 100%로
-  const scaleMax = Math.max(targets.낙관, st.net, 1);
-  const pct = (n: number) => `${Math.max(0, Math.min(100, (n / scaleMax) * 100))}%`;
-
 
   return (
     <>
@@ -68,22 +64,9 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
         <Tile label={st.elapsed < st.days ? `오늘자 목표 (${st.elapsed}/${st.days}일)` : "오늘자 목표 (마감)"} value={`${won(st.todayTarget)}원`} sub={good ? "▲ 페이스 앞섬" : "▼ 페이스 뒤짐"} tone={good ? "good" : "bad"} />
       </dl>
 
-      {/* 진행 막대: 보수/기본/낙관 눈금 */}
-      <div className="mb-6">
-        <div className="relative h-5 rounded bg-zinc-100">
-          <div className={`h-5 rounded ${st.net >= 0 ? "bg-zinc-900" : "bg-red-300"}`} style={{ width: pct(st.net) }} />
-          {SCENARIOS.map((sc) => (
-            <div key={sc} className="absolute top-0 h-5 border-l border-zinc-400" style={{ left: pct(targets[sc]) }}>
-              <span className={`absolute -top-5 -translate-x-1/2 whitespace-nowrap text-[11px] ${sc === scenario ? "font-bold text-zinc-900" : "text-zinc-400"}`}>{sc}</span>
-            </div>
-          ))}
-        </div>
-        <p className="mt-1 text-xs text-zinc-500">{won(st.net)}원 / 낙관 {won(targets.낙관)}원 기준 {Math.round((st.net / scaleMax) * 100)}%</p>
-      </div>
-
       {/* 이달 일별 누적 */}
       <section className="mb-6 rounded border border-zinc-200 p-3">
-        <h3 className="mb-2 text-sm font-medium">이달 누적 순이익 (일 단위, 정산 기준)</h3>
+        <h3 className="mb-2 text-sm font-medium">이달 누적 순이익 vs {scenario} 목표 <span className="font-normal text-zinc-400">(일 단위, 정산 기준)</span></h3>
         <DailyChart points={daily} days={st.days} elapsed={st.elapsed} target={st.target} scenario={scenario} />
       </section>
 
