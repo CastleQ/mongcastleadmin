@@ -4,12 +4,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import type { Ledger } from "@/lib/ledger";
+import type { Customer } from "@/lib/customers";
+import { CustomerWarning } from "../customer-warning";
 import { autoFill, fill, placeholders, type Template } from "@/lib/templates";
 import { moveTemplate } from "./actions";
 import { UseTemplate } from "./use-template";
 
 /** 문구 목록 + 클릭하면 모달로 채우기/복사. 이름 옆 복사, 오른쪽 ▲▼로 순서 변경 */
-export function TemplateList({ rows, ledger }: { rows: Template[]; ledger: Ledger | null }) {
+export function TemplateList({ rows, ledger, warn }: { rows: Template[]; ledger: Ledger | null; warn?: Customer | null }) {
   const router = useRouter();
   const [openId, setOpenId] = useState<number | null>(null);
   const [copiedId, setCopiedId] = useState<number | null>(null);
@@ -85,6 +87,8 @@ export function TemplateList({ rows, ledger }: { rows: Template[]; ledger: Ledge
               </div>
               <button type="button" onClick={() => setOpenId(null)} aria-label="닫기" className="shrink-0 rounded px-2 text-xl leading-none text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900">×</button>
             </div>
+
+            <div className="mb-4 empty:hidden"><CustomerWarning c={warn} /></div>
 
             <UseTemplate
               key={`${current.id}-${ledger?.id ?? ""}`}

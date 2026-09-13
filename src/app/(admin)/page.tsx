@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { monthGrid, monthInfo, packageKind, todayKST, type PackageKind, type Reservation } from "@/lib/calendar";
+import { customerKey, type Customer } from "@/lib/customers";
 
 const COLOR: Record<PackageKind, string> = {
   낮: "bg-amber-100 text-amber-900",
@@ -19,13 +20,15 @@ export default async function CalendarPage({ searchParams }: PageProps<"/">) {
   const supabase = await createClient();
   const { data } = await supabase
     .from("ledger")
-    .select("id,date,package,channel,customer_name,content,headcount,settled")
+    .select("id,date,package,channel,customer_name,customer_phone,content,headcount,settled")
     .eq("kind", "매출")
     .eq("category", "대여")
     .gte("date", info.start)
     .lte("date", info.end)
     .order("date");
   const rows: Reservation[] = data ?? [];
+  const { data: fl } = await supabase.from("customers").select("*").neq("grade", "일반");
+  const flagged = new Map<string, Customer>(((fl ?? []) as Customer[]).map((c) => [c.key, c]));
   const byDate = new Map<string, Reservation[]>();
   for (const r of rows) byDate.set(r.date, [...(byDate.get(r.date) ?? []), r]);
 
@@ -63,8 +66,10 @@ export default async function CalendarPage({ searchParams }: PageProps<"/">) {
                 {(date ? byDate.get(date) ?? [] : []).map((r) => {
                   const kind = packageKind(r.package);
                   const who = r.customer_name || r.content || "";
+                  const warn = flagged.get(customerKey(r) ?? "");
                   return (
-                    <Link key={r.id} href={`/ledger/${r.id}`} className={`block rounded px-1 py-0.5 leading-tight truncate hover:opacity-80 ${COLOR[kind]}`} title={`${r.package ?? ""} ${who} ${r.channel ?? ""}${r.settled ? "" : " (미정산)"}`}>
+                    <Link key={r.id} href={`/ledger/${r.id}`} className={`block rounded px-1 py-0.5 leading-tight truncate hover:opacity-80 ${COLOR[kind]}`} title={`${r.package ?? ""} ${who} ${r.channel ?? ""}${r.settled ? "" : " (미정산)"}${warn ? ` ⚠ ${warn.grade} 고객` : ""}`}>
+                      {warn && <span className={warn.grade === "블랙" ? "text-red-600" : "text-zinc-700"}>⚠ </span>}
                       {!r.settled && <span className="text-red-600">● </span>}
                       <span className="font-semibold">{kind}</span>
                       <span className="hidden sm:inline"> {who}</span>

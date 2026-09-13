@@ -4,6 +4,7 @@ export type Reservation = {
   package: string | null;
   channel: string | null;
   customer_name: string | null;
+  customer_phone: string | null;
   content: string | null;
   headcount: number | null;
   settled: boolean;

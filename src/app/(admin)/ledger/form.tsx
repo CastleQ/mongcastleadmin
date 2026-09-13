@@ -5,8 +5,10 @@ import { CATEGORIES, CHANNELS, CONTENTS, OTHER, PACKAGES, PAYMENTS, calcMoney, t
 import { saveLedger } from "./actions";
 import { DeleteButton } from "./delete-button";
 import { Switch } from "./controls";
+import { customerKey, type Customer } from "@/lib/customers";
+import { CustomerWarning } from "../customer-warning";
 
-type Props = { row?: Ledger; defaultDate?: string; from?: string };
+type Props = { row?: Ledger; defaultDate?: string; from?: string; flagged?: Customer[] };
 
 const input = "w-full rounded border border-zinc-300 bg-white px-3 py-2 text-base focus:border-zinc-900 focus:outline-none";
 const label = "block text-sm text-zinc-600 mb-1";
@@ -63,7 +65,7 @@ function SelectOther({ name, options, value, onChange }: { name: string; options
   );
 }
 
-export function LedgerForm({ row, defaultDate, from }: Props) {
+export function LedgerForm({ row, defaultDate, from, flagged = [] }: Props) {
   const [kind, setKind] = useState<Ledger["kind"]>(row?.kind ?? "매출");
   const [category, setCategory] = useState<string | null>(row?.category ?? null);
   const [channel, setChannel] = useState<string | null>(row?.channel ?? null);
@@ -71,7 +73,11 @@ export function LedgerForm({ row, defaultDate, from }: Props) {
   const [payment, setPayment] = useState<string | null>(row?.payment_method ?? "계좌이체");
   const [amount, setAmount] = useState(row?.amount ? String(row.amount) : "");
   const [other, setOther] = useState(row?.other_expense ? String(row.other_expense) : "");
+  const [name, setName] = useState(row?.customer_name ?? "");
+  const [phone, setPhone] = useState(row?.customer_phone ?? "");
   const sale = kind === "매출";
+  const key = customerKey({ customer_name: name, customer_phone: phone });
+  const warn = sale ? flagged.find((c) => c.key === key) : undefined;
   const toNum = (v: string) => Number(v.replace(/[^\d]/g, "")) || 0;
   const money = calcMoney(kind, toNum(amount), channel === OTHER ? null : channel, payment, toNum(other));
 
@@ -111,13 +117,15 @@ export function LedgerForm({ row, defaultDate, from }: Props) {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className={label} htmlFor="customer_name">{sale ? "고객명" : "거래처"}</label>
-          <input id="customer_name" name="customer_name" defaultValue={row?.customer_name ?? ""} className={input} />
+          <input id="customer_name" name="customer_name" value={name} onChange={(e) => setName(e.target.value)} className={input} />
         </div>
         <div>
           <label className={label} htmlFor="amount">입금액(원) <b className="text-red-500">*</b></label>
           <input id="amount" name="amount" type="text" inputMode="numeric" required value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="150000" className={input} />
         </div>
       </div>
+
+      <CustomerWarning c={warn} />
 
       <div>
         <span className={label}>결제방식 <b className="text-red-500">*</b></span>
@@ -145,7 +153,7 @@ export function LedgerForm({ row, defaultDate, from }: Props) {
               </div>
               <div>
                 <label className={label} htmlFor="customer_phone">연락처</label>
-                <input id="customer_phone" name="customer_phone" type="tel" defaultValue={row?.customer_phone ?? ""} className={input} />
+                <input id="customer_phone" name="customer_phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={input} />
               </div>
               <div>
                 <label className={label} htmlFor="content">콘텐츠</label>
