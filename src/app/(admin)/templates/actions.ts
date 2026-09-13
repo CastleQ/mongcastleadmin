@@ -52,3 +52,12 @@ export async function moveTemplate(id: number, dir: "up" | "down") {
   [ids[i], ids[j]] = [ids[j], ids[i]];
   await Promise.all(ids.map((tid, k) => supabase.from("templates").update({ sort_order: k + 1 }).eq("id", tid)));
 }
+
+/** 옛 버전으로 되돌리기 = 그 내용으로 다시 저장 (이것도 기록에 남음) */
+export async function restoreTemplateVersion(templateId: number, versionId: number) {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("template_versions").select("name,when_to,body,note").eq("id", versionId).eq("template_id", templateId).single();
+  if (error) throw new Error(error.message);
+  const { error: e2 } = await supabase.from("templates").update(data).eq("id", templateId);
+  if (e2) throw new Error(e2.message);
+}

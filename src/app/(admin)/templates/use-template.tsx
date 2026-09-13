@@ -24,7 +24,11 @@ export function UseTemplate({ templateId, body, phone, initial = {} }: Props) {
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
-  const remember = (key: string) => start(async () => { await saveSlotDefault(templateId, key, values[key]); router.refresh(); });
+  const remember = (key: string, value: string) => start(async () => {
+    await saveSlotDefault(templateId, key, value);
+    if (!value) setValues((v) => ({ ...v, [key]: "" }));
+    router.refresh();
+  });
 
   return (
     <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
@@ -37,13 +41,20 @@ export function UseTemplate({ templateId, body, phone, initial = {} }: Props) {
               const changed = v.trim() !== "" && v.trim() !== s.def;
               return (
                 <label key={s.key} className="block">
-                  <span className="mb-1 flex items-baseline justify-between text-sm text-zinc-600">
+                  <span className="mb-1 flex items-baseline justify-between gap-2 text-sm text-zinc-600">
                     <span>{s.key}{s.def && <span className="ml-1 text-xs text-zinc-400">기본값 {s.def}</span>}</span>
-                    {changed && (
-                      <button type="button" disabled={saving} onClick={() => remember(s.key)} className="text-xs text-zinc-500 underline hover:text-zinc-900">
-                        이 값을 기본값으로 저장
-                      </button>
-                    )}
+                    <span className="flex gap-3 text-xs">
+                      {changed && (
+                        <button type="button" disabled={saving} onClick={() => remember(s.key, v)} className="text-zinc-500 underline hover:text-zinc-900">
+                          이 값을 기본값으로 저장
+                        </button>
+                      )}
+                      {s.def && (
+                        <button type="button" disabled={saving} onClick={() => remember(s.key, "")} title="기본값을 없애고 매번 채우는 칸으로" className="text-zinc-400 underline hover:text-red-600">
+                          기본값 지우기
+                        </button>
+                      )}
+                    </span>
                   </span>
                   <input value={v} onChange={(e) => setValues({ ...values, [s.key]: e.target.value })}
                     className="w-full rounded border border-zinc-300 px-3 py-2 text-base focus:border-zinc-900 focus:outline-none" />

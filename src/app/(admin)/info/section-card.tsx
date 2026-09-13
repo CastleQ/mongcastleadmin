@@ -2,10 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { lineDiff } from "@/lib/diff";
 import type { InfoSection, InfoVersion } from "@/lib/markdown";
 import { fmtDateTime } from "@/lib/markdown";
 import { deleteSection, moveSection, restoreVersion, saveSection } from "./actions";
+import { HistoryTable } from "../history-table";
 
 type Props = { s: InfoSection; html: string; versions: InfoVersion[]; first: boolean; last: boolean };
 
@@ -66,49 +66,9 @@ export function SectionCard({ s, html, versions, first, last }: Props) {
 
             <details className="mt-4 rounded border border-zinc-200">
               <summary className="cursor-pointer select-none px-3 py-2 text-sm text-zinc-600">이전 수정 기록 보기 <span className="text-zinc-400">({versions.length}회)</span></summary>
-              <table className="w-full border-t border-zinc-200 text-sm">
-                <thead>
-                  <tr className="bg-zinc-50 text-xs text-zinc-500">
-                    <th className="w-10 px-2 py-1.5 text-center font-medium">no</th>
-                    <th className="w-32 px-2 py-1.5 text-left font-medium">수정날짜</th>
-                    <th className="px-2 py-1.5 text-left font-medium">수정된 내용</th>
-                    <th className="w-24 px-2 py-1.5 font-medium" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-100">
-                  {versions.map((v, i) => {
-                    const prev = versions[i + 1]; // 목록은 최신순 → 다음 항목이 직전 버전
-                    const d = prev ? lineDiff(prev.body, v.body) : null;
-                    const titleChanged = prev && prev.title !== v.title;
-                    return (
-                      <tr key={v.id} className={i === 0 ? "bg-zinc-50/60" : ""}>
-                        <td className="px-2 py-2 text-center text-zinc-400 tabular-nums">{versions.length - i}</td>
-                        <td className="px-2 py-2 whitespace-nowrap text-zinc-600">{fmtDateTime(v.saved_at)}{i === 0 && <span className="ml-1 text-[10px] text-zinc-400">현재</span>}</td>
-                        <td className="px-2 py-2">
-                          {!prev ? (
-                            <span className="text-zinc-500">처음 저장</span>
-                          ) : (
-                            <div className="space-y-0.5 text-xs">
-                              {titleChanged && <div>제목: {prev.title} → <b>{v.title}</b></div>}
-                              {d!.added.slice(0, 3).map((l, k) => <div key={`a${k}`} className="truncate text-emerald-700">+ {l}</div>)}
-                              {d!.removed.slice(0, 3).map((l, k) => <div key={`r${k}`} className="truncate text-red-600">− {l}</div>)}
-                              {d!.added.length + d!.removed.length > 6 && <div className="text-zinc-400">…외 {d!.added.length + d!.removed.length - 6}줄</div>}
-                              {!titleChanged && d!.added.length === 0 && d!.removed.length === 0 && <span className="text-zinc-400">(줄 단위 변화 없음 — 띄어쓰기·순서만)</span>}
-                            </div>
-                          )}
-                          <details className="mt-1 text-xs">
-                            <summary className="cursor-pointer text-zinc-400 hover:text-zinc-700">전체 보기</summary>
-                            <pre className="mt-1 max-h-60 overflow-auto whitespace-pre-wrap rounded bg-zinc-50 p-2 font-sans text-xs">{v.body}</pre>
-                          </details>
-                        </td>
-                        <td className="px-2 py-2 text-center">
-                          {i > 0 && <button type="button" disabled={pending} onClick={() => restore(v)} className={btn}>되돌리기</button>}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+              <div className="border-t border-zinc-200">
+                <HistoryTable versions={versions} pending={pending} onRestore={(v) => restore(versions.find((x) => x.id === v.id)!)} />
+              </div>
             </details>
           </>
         ) : (

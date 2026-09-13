@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import type { Ledger } from "@/lib/ledger";
 import type { Customer } from "@/lib/customers";
 import { CustomerWarning } from "../customer-warning";
 import { autoFill, fill, placeholders, type Template } from "@/lib/templates";
 import { moveTemplate } from "./actions";
 import { UseTemplate } from "./use-template";
+import { Modal } from "../modal";
 
 /** 문구 목록 + 클릭하면 모달로 채우기/복사. 이름 옆 복사, 오른쪽 ▲▼로 순서 변경 */
 export function TemplateList({ rows, ledger, warn }: { rows: Template[]; ledger: Ledger | null; warn?: Customer | null }) {
@@ -16,7 +17,6 @@ export function TemplateList({ rows, ledger, warn }: { rows: Template[]; ledger:
   const [openId, setOpenId] = useState<number | null>(null);
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [moving, start] = useTransition();
-  const dialog = useRef<HTMLDialogElement>(null);
   const current = rows.find((t) => t.id === openId) ?? null;
 
   // 목록에서 바로 복사: 기본값은 채우고, 나머지 [칸]은 그대로
@@ -26,13 +26,6 @@ export function TemplateList({ rows, ledger, warn }: { rows: Template[]; ledger:
     setTimeout(() => setCopiedId(null), 1500);
   };
   const move = (id: number, dir: "up" | "down") => start(async () => { await moveTemplate(id, dir); router.refresh(); });
-
-  useEffect(() => {
-    const d = dialog.current;
-    if (!d) return;
-    if (current && !d.open) d.showModal();
-    if (!current && d.open) d.close();
-  }, [current]);
 
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();
   const arrow = "flex h-10 w-10 items-center justify-center rounded border border-zinc-200 text-base text-zinc-500 hover:border-zinc-900 hover:bg-white hover:text-zinc-900 disabled:opacity-20 disabled:hover:border-zinc-200";
@@ -69,12 +62,7 @@ export function TemplateList({ rows, ledger, warn }: { rows: Template[]; ledger:
         })}
       </ol>
 
-      <dialog
-        ref={dialog}
-        onClose={() => setOpenId(null)}
-        onClick={(e) => { if (e.target === dialog.current) setOpenId(null); }}
-        className="m-auto w-[calc(100%-2rem)] max-w-4xl rounded-lg p-0 shadow-xl backdrop:bg-black/40"
-      >
+      <Modal open={!!current} onClose={() => setOpenId(null)}>
         {current && (
           <div className="max-h-[90vh] overflow-y-auto p-5 sm:p-6">
             <div className="mb-4 flex items-start justify-between gap-4">
@@ -104,7 +92,7 @@ export function TemplateList({ rows, ledger, warn }: { rows: Template[]; ledger:
             </div>
           </div>
         )}
-      </dialog>
+      </Modal>
     </>
   );
 }

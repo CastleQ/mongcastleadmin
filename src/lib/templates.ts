@@ -29,7 +29,8 @@ export function fill(body: string, values: Record<string, string>): string {
 /** 템플릿 본문에서 한 칸의 기본값을 바꿈: [칸] / [칸=옛값] → [칸=새값] */
 export function setDefault(body: string, key: string, value: string): string {
   const esc = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return body.replace(new RegExp(`\\[${esc}(?:=[^\\[\\]]*)?\\]`, "g"), `[${key}=${value}]`);
+  const v = value.replace(/[\[\]]/g, "").trim(); // 기본값 안의 대괄호는 제거 (중첩 방지)
+  return body.replace(new RegExp(`\\[${esc}(?:=[^\\[\\]]*)?\\]`, "g"), v ? `[${key}=${v}]` : `[${key}]`);
 }
 
 const DOW = ["일", "월", "화", "수", "목", "금", "토"];
