@@ -44,3 +44,4 @@ next-env.d.ts
 *.txt
 supabase/seed.sql
 supabase/templates*.sql
+supabase/info*.sql

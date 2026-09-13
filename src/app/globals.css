@@ -5,3 +5,21 @@ body {
   color: #1f2937;
   font-family: "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
 }
+
+/* 마크다운 문서 표시 */
+.md { line-height: 1.7; font-size: 0.925rem; }
+.md > :first-child { margin-top: 0; }
+.md h1, .md h2, .md h3, .md h4 { font-weight: 700; margin: 1.25em 0 0.5em; line-height: 1.3; }
+.md h1 { font-size: 1.25rem; } .md h2 { font-size: 1.125rem; } .md h3 { font-size: 1rem; } .md h4 { font-size: 0.95rem; }
+.md p { margin: 0.5em 0; }
+.md ul, .md ol { margin: 0.5em 0; padding-left: 1.4em; }
+.md ul { list-style: disc; } .md ol { list-style: decimal; }
+.md li { margin: 0.15em 0; }
+.md a { color: #2563eb; text-decoration: underline; }
+.md strong { font-weight: 700; }
+.md blockquote { border-left: 3px solid #e4e4e7; color: #52525b; margin: 0.75em 0; padding: 0.25em 1em; }
+.md code { background: #f4f4f5; border-radius: 3px; padding: 0.1em 0.35em; font-size: 0.9em; }
+.md hr { border: 0; border-top: 1px solid #e4e4e7; margin: 1.25em 0; }
+.md table { border-collapse: collapse; margin: 0.75em 0; width: 100%; display: block; overflow-x: auto; font-size: 0.9em; }
+.md th, .md td { border: 1px solid #e4e4e7; padding: 0.4em 0.7em; text-align: left; white-space: nowrap; }
+.md th { background: #fafafa; font-weight: 600; }
