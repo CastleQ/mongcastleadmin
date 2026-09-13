@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+html, body {
+  max-width: 100%;
+  overflow-x: hidden; /* 페이지는 가로로 안 넘침. 넓은 표는 자기 상자 안에서 스크롤 */
+}
+
 body {
   background: #f4f5f7;
   color: #1f2937;
