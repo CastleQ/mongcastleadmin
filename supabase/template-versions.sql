@@ -1,4 +1,5 @@
 -- 고객 응대 템플릿: 저장할 때마다 자동으로 사본을 남기는 기록 표 (정보 섹션과 같은 방식)
+drop trigger if exists templates_version on templates;
 drop table if exists template_versions;
 drop function if exists templates_version();
 
