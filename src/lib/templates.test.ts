@@ -4,22 +4,22 @@ import type { Ledger } from "./ledger.ts";
 import { autoFill, fill, fmtDate, placeholders, setDefault } from "./templates.ts";
 
 test("placeholders: 순서대로, 중복 제거, 기본값 인식", () => {
-  assert.deepEqual(placeholders("[날짜]\n[출입 비밀번호=0830*]\n[날짜]"), [
-    { key: "날짜", def: "" }, { key: "출입 비밀번호", def: "0830*" },
+  assert.deepEqual(placeholders("[날짜]\n[출입 비밀번호=1234*]\n[날짜]"), [
+    { key: "날짜", def: "" }, { key: "출입 비밀번호", def: "1234*" },
   ]);
   assert.deepEqual(placeholders("대괄호 없음"), []);
 });
 
 test("fill: 채운 값 > 기본값 > [칸]", () => {
-  assert.equal(fill("[날짜] / [비밀번호=0830*] / [총액]", { 날짜: "9/20(토)", 비밀번호: "" }), "9/20(토) / 0830* / [총액]");
-  assert.equal(fill("[비밀번호=0830*]", { 비밀번호: "1234*" }), "1234*");
+  assert.equal(fill("[날짜] / [비밀번호=1234*] / [총액]", { 날짜: "9/20(토)", 비밀번호: "" }), "9/20(토) / 1234* / [총액]");
+  assert.equal(fill("[비밀번호=1234*]", { 비밀번호: "1234*" }), "1234*");
 });
 
 test("setDefault: 기본값 추가/교체, 여러 곳 동시에, 지우기, 대괄호 방지", () => {
   assert.equal(setDefault("[비밀번호] 와 [비밀번호=old]", "비밀번호", "9999*"), "[비밀번호=9999*] 와 [비밀번호=9999*]");
-  assert.equal(setDefault("[출입 비밀번호=0830*]", "출입 비밀번호", "1111*"), "[출입 비밀번호=1111*]");
+  assert.equal(setDefault("[출입 비밀번호=1234*]", "출입 비밀번호", "1111*"), "[출입 비밀번호=1111*]");
   // 빈 값 → 기본값 지우기
-  assert.equal(setDefault("[출입 비밀번호=0830*]", "출입 비밀번호", ""), "[출입 비밀번호]");
+  assert.equal(setDefault("[출입 비밀번호=1234*]", "출입 비밀번호", ""), "[출입 비밀번호]");
   // 값에 대괄호가 있어도 중첩되지 않음
   assert.equal(setDefault("[패키지+금액(생략)]", "패키지+금액(생략)", "[패키지+금액]"), "[패키지+금액(생략)=패키지+금액]");
 });

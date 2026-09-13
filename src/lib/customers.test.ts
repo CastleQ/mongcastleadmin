@@ -10,7 +10,7 @@ const base: Ledger = {
 };
 
 test("normalizePhone / customerKey: 연락처 우선, 없으면 이름", () => {
-  assert.equal(normalizePhone("010-8481-7062"), "01084817062");
+  assert.equal(normalizePhone("010-1234-5678"), "01012345678");
   assert.equal(normalizePhone("없음"), null);
   assert.equal(customerKey({ customer_phone: "010 1234 5678", customer_name: "홍" }), "01012345678");
   assert.equal(customerKey({ customer_phone: null, customer_name: " 성규 " }), "name:성규");

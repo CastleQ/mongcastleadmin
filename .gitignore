@@ -45,3 +45,7 @@ next-env.d.ts
 supabase/seed.sql
 supabase/templates*.sql
 supabase/info*.sql
+
+# 개인 문서 (PC에만 보관, 공개 저장소 제외)
+HANDOVER_*.md
+*특장점 정리*.md
