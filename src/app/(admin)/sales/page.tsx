@@ -72,7 +72,7 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
       {/* 이달 일별 누적 */}
       <section className="mb-6 rounded border border-zinc-200 p-3">
         <h3 className="mb-2 text-sm font-medium">이달 누적 매출 vs 목표 <span className="font-normal text-zinc-400">(일 단위, 정산 기준)</span></h3>
-        <DailyChart points={daily} days={st.days} elapsed={st.elapsed} target={salesTarget} entries={entries} />
+        <DailyChart points={daily} days={st.days} elapsed={st.elapsed} target={salesTarget} breakEven={fixedCosts + extra} entries={entries} />
       </section>
 
       {/* 투자금 회수 */}

@@ -5,16 +5,17 @@ import type { DayEntry } from "@/lib/sales";
 
 type Props = {
   points: { day: number; cum: number }[]; days: number; elapsed: number; target: number;
+  breakEven: number; // 손익분기 매출 = 고정비 + 추가 매입
   entries: Record<number, DayEntry[]>;
 };
 
 /** 이달 누적 매출 꺾은선 (일 단위). 거래 있는 날만 점·날짜, 위치는 달력 위치 그대로. 점에 호버/터치하면 그날 거래 카드 */
-export function DailyChart({ points, days, elapsed, target, entries }: Props) {
+export function DailyChart({ points, days, elapsed, target, breakEven, entries }: Props) {
   const [active, setActive] = useState<number | null>(null);
   const W = 640, H = 240, L = 52, R = 16, T = 16, B = 28;
   const last = points[points.length - 1];
   const pace = last && elapsed > 0 ? (last.cum / elapsed) * days : 0; // 현재 페이스로 월말 예상
-  const maxV = Math.max(target, ...points.map((p) => p.cum), pace, 100_000);
+  const maxV = Math.max(target, breakEven, ...points.map((p) => p.cum), pace, 100_000);
   const minV = Math.min(0, ...points.map((p) => p.cum));
   const step = 100_000 * Math.max(1, Math.ceil((maxV - minV) / 100_000 / 8)); // 10만원 눈금, 8개 넘으면 20만·30만…
   const top = Math.ceil(maxV / step) * step, bottom = Math.floor(minV / step) * step;
@@ -42,6 +43,9 @@ export function DailyChart({ points, days, elapsed, target, entries }: Props) {
         {/* 목표: 1일 0 → 말일 목표 직선 */}
         <line x1={x(1)} y1={y(0)} x2={x(days)} y2={y(target)} stroke="#2563eb" strokeWidth="2" />
         <text x={x(days)} y={y(target) - 6} textAnchor="end" fontSize="10" fill="#2563eb">목표 매출 {won(target)}</text>
+        {/* 손익분기: 매출이 이 선을 넘어야 순이익 0 이상 */}
+        <line x1={L} x2={W - R} y1={y(breakEven)} y2={y(breakEven)} stroke="#71717a" strokeWidth="1" strokeDasharray="2 3" />
+        <text x={L + 4} y={y(breakEven) - 4} fontSize="10" fill="#71717a">손익분기 {won(breakEven)} (고정비+추가 매입)</text>
         {/* 현재 페이스 예상 (점선) */}
         {last && elapsed < days && pace !== last.cum && (
           <line x1={x(last.day)} y1={y(last.cum)} x2={x(days)} y2={y(pace)} stroke="#d97706" strokeWidth="1.5" strokeDasharray="4 3" />
@@ -64,6 +68,7 @@ export function DailyChart({ points, days, elapsed, target, entries }: Props) {
           <line x1={L} x2={L + 14} y1={H - 4} y2={H - 4} stroke="#18181b" strokeWidth="2" /><text x={L + 18} y={H - 1}>누적 매출</text>
           <line x1={L + 90} x2={L + 104} y1={H - 4} y2={H - 4} stroke="#2563eb" strokeWidth="2" /><text x={L + 108} y={H - 1}>목표</text>
           <line x1={L + 150} x2={L + 164} y1={H - 4} y2={H - 4} stroke="#d97706" strokeWidth="1.5" strokeDasharray="4 3" /><text x={L + 168} y={H - 1}>현재 페이스 예상</text>
+          <line x1={L + 260} x2={L + 274} y1={H - 4} y2={H - 4} stroke="#71717a" strokeDasharray="2 3" /><text x={L + 278} y={H - 1}>손익분기</text>
         </g>
       </svg>
 
