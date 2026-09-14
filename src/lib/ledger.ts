@@ -29,15 +29,15 @@ export const PACKAGES = ["낮", "밤", "밤+밤샘", "전일", "기타"] as cons
 export const PAYMENTS = ["계좌이체", "플랫폼결제", "카드결제", "현금"] as const;
 export const CONTENTS = ["홀덤", "시계피", "머더미스터리", "보드게임"];
 
-export const DEPOSIT = 50_000;
+export const DEPOSIT = 50_000; // 기본값. 실제 값은 settings prices.보증금 (인자로 받음)
 const FEE_RATE: Record<string, number> = { 네이버플레이스: 0.0319, 스페이스클라우드: 0.1, 아워플레이스: 0.1 };
 
 export type Money = { deposit: number; fee: number; net: number };
 
 /** 입금액·채널·결제방식으로 보증금/수수료/실수령 계산 */
-export function calcMoney(kind: Ledger["kind"], amount: number, channel: string | null, payment: string | null, other = 0): Money {
+export function calcMoney(kind: Ledger["kind"], amount: number, channel: string | null, payment: string | null, other = 0, depositAmount = DEPOSIT): Money {
   if (kind === "매입") return { deposit: 0, fee: 0, net: -amount };
-  const deposit = channel && CHANNELS.includes(channel) && channel !== "지인" ? DEPOSIT : 0; // 기타·미입력은 보증금 없음
+  const deposit = channel && CHANNELS.includes(channel) && channel !== "지인" ? depositAmount : 0; // 기타·미입력은 보증금 없음
   const base = Math.max(0, amount - deposit);
   const rate = payment === "플랫폼결제" ? (FEE_RATE[channel ?? ""] ?? 0) : 0;
   const fee = Math.round(base * rate);
@@ -50,7 +50,7 @@ export function pickOther(selected: string | null, typed: string | null): string
 }
 
 /** 폼 값(전부 문자열) → 저장할 행 */
-export function parseLedgerForm(f: FormData): LedgerInput {
+export function parseLedgerForm(f: FormData, depositAmount = DEPOSIT): LedgerInput {
   const s = (k: string) => (f.get(k) as string | null)?.trim() || null;
   const n = (k: string) => { const v = s(k); return v === null ? null : Number(v.replace(/[^\d.-]/g, "")) || 0; };
   const kind = s("kind") === "매입" ? "매입" : "매출";
@@ -59,7 +59,7 @@ export function parseLedgerForm(f: FormData): LedgerInput {
   const other = n("other_expense") ?? 0;
   const channel = pickOther(s("channel"), s("channel_other"));
   const payment = s("payment_method") ?? "계좌이체";
-  const { fee, net } = calcMoney(kind, amount, channel, payment, other);
+  const { fee, net } = calcMoney(kind, amount, channel, payment, other, depositAmount);
   return {
     date: s("date") ?? "",
     kind,

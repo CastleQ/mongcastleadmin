@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import type { Ledger } from "@/lib/ledger";
 import { fmtDate, type Template } from "@/lib/templates";
 import { TemplateList } from "./template-list";
+import { loadPrices } from "@/lib/settings";
+import { fillPrices } from "@/lib/prices";
 import { customerKey, type Customer } from "@/lib/customers";
 import { CustomerWarning } from "@/app/(site)/customer-warning";
 
@@ -22,7 +24,9 @@ export default async function TemplatesPage({ searchParams }: PageProps<"/templa
     if (key) { const { data: c } = await supabase.from("customers").select("*").eq("key", key).maybeSingle(); warn = c; }
   }
   const { data } = await supabase.from("templates").select("*").order("sort_order").order("id");
-  const rows: Template[] = data ?? [];
+  // 본문의 {{평일 낮}} 같은 가격 자리표를 현재 요금표로 채움 (편집 화면은 원문 유지)
+  const prices = await loadPrices();
+  const rows: Template[] = (data ?? []).map((t: Template) => ({ ...t, body: fillPrices(t.body, prices) }));
 
   return (
     <>

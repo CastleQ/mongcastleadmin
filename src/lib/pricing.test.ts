@@ -24,3 +24,11 @@ test("suggestAmount: 공휴일·공휴일 전날·기타 채널", async () => {
   assert.equal(suggestAmount("2026-09-16", "낮", "인스타")?.deposit, 0); // 기타 채널은 보증금 없음
   assert.equal(suggestAmount("2026-09-16", "낮", null)?.deposit, 0);
 });
+
+test("prices: 자리표 치환·설정값 반영", async () => {
+  const { fillPrices, mergePrices, DEFAULT_PRICES } = await import("./prices.ts");
+  assert.equal(fillPrices("낮 {{평일 낮}}원, 밤샘 +{{밤샘}}, 모름 {{없음}}", DEFAULT_PRICES), "낮 50,000원, 밤샘 +30,000, 모름 {{없음}}");
+  const custom = mergePrices({ 기본: { 낮: [55_000, 55_000, 110_000] }, 보증금: 60_000 });
+  assert.equal(custom.기본.밤[0], 70_000); // 빠진 건 기본값
+  assert.equal(suggestAmount("2026-09-16", "낮", "네이버플레이스", custom)?.total, 55_000 + 60_000);
+});

@@ -8,8 +8,9 @@ import { Switch } from "./controls";
 import { customerKey, type Customer } from "@/lib/customers";
 import { CustomerWarning } from "@/app/(site)/customer-warning";
 import { suggestAmount } from "@/lib/pricing";
+import { DEFAULT_PRICES, type Prices } from "@/lib/prices";
 
-type Props = { row?: Ledger; defaultDate?: string; from?: string; flagged?: Customer[] };
+type Props = { row?: Ledger; defaultDate?: string; from?: string; flagged?: Customer[]; prices?: Prices };
 
 const input = "w-full rounded border border-zinc-300 bg-white px-3 py-2 text-base focus:border-zinc-900 focus:outline-none";
 const label = "block text-sm text-zinc-600 mb-1";
@@ -66,7 +67,7 @@ function SelectOther({ name, options, value, onChange }: { name: string; options
   );
 }
 
-export function LedgerForm({ row, defaultDate, from, flagged = [] }: Props) {
+export function LedgerForm({ row, defaultDate, from, flagged = [], prices = DEFAULT_PRICES }: Props) {
   const [kind, setKind] = useState<Ledger["kind"]>(row?.kind ?? "매출");
   const [category, setCategory] = useState<string | null>(row?.category ?? null);
   const [channel, setChannel] = useState<string | null>(row?.channel ?? null);
@@ -82,12 +83,12 @@ export function LedgerForm({ row, defaultDate, from, flagged = [] }: Props) {
   const key = customerKey({ customer_name: name, customer_phone: phone });
   const warn = sale ? flagged.find((c) => c.key === key) : undefined;
   const toNum = (v: string) => Number(v.replace(/[^\d]/g, "")) || 0;
-  const money = calcMoney(kind, toNum(amount), channel === OTHER ? null : channel, payment, toNum(other));
-  const suggestion = sale ? suggestAmount(date, pkg, channel === OTHER ? null : channel) : null;
+  const money = calcMoney(kind, toNum(amount), channel === OTHER ? null : channel, payment, toNum(other), prices.보증금);
+  const suggestion = sale ? suggestAmount(date, pkg, channel === OTHER ? null : channel, prices) : null;
 
   // 패키지·예약일·채널이 바뀌면 입금액 제안. 손으로 고친 값은 덮어쓰지 않음 (빈칸이거나 직전 제안값 그대로일 때만)
   const applySuggestion = (next: { date?: string; pkg?: string | null; channel?: string | null }) => {
-    const sg = suggestAmount(next.date ?? date, next.pkg ?? pkg, (next.channel ?? channel) === OTHER ? null : (next.channel ?? channel));
+    const sg = suggestAmount(next.date ?? date, next.pkg ?? pkg, (next.channel ?? channel) === OTHER ? null : (next.channel ?? channel), prices);
     if (!sg) return;
     if (amount === "" || toNum(amount) === suggested) { setAmount(String(sg.total)); setSuggested(sg.total); }
   };

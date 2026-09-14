@@ -3,12 +3,13 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { parseLedgerForm } from "@/lib/ledger";
+import { loadPrices } from "@/lib/settings";
 
 /** 저장/삭제 후 돌아갈 화면. 허용된 곳만 (ledger → 거래 탭, 그 외 → 달력) */
 const backTo = (from: string | null, date: string) => `${from === "ledger" ? "/ledger" : "/reservations"}?m=${date.slice(0, 7)}`;
 
 export async function saveLedger(id: number | null, formData: FormData) {
-  const row = parseLedgerForm(formData);
+  const row = parseLedgerForm(formData, (await loadPrices()).보증금);
   if (!row.date) throw new Error("날짜를 입력하세요");
   const supabase = await createClient();
   const q = id === null

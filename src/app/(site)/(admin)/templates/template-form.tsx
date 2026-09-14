@@ -23,7 +23,7 @@ export function TemplateForm({ row, nextOrder }: { row?: Template; nextOrder?: n
         <input id="when_to" name="when_to" defaultValue={row?.when_to ?? ""} placeholder="예: 예약 후 보증금 입금 확인 시" className={input} />
       </div>
       <div>
-        <label className={label} htmlFor="body">템플릿 <b className="text-red-500">*</b> <span className="text-zinc-400">— 매번 바꿀 부분은 [대괄호]로</span></label>
+        <label className={label} htmlFor="body">템플릿 <b className="text-red-500">*</b> <span className="text-zinc-400">— 매번 바꿀 부분은 [대괄호], 가격은 {"{{평일 낮}} {{주말 밤}} {{밤샘}} {{보증금}}"} 자리표(정보 페이지 가격과 연동)</span></label>
         <textarea id="body" name="body" required rows={14} defaultValue={row?.body ?? ""} className={input + " font-sans leading-relaxed"} />
       </div>
       <div>
