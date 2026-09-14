@@ -28,7 +28,7 @@ test("parseLedgerForm: 기타(직접입력), 매출 기본값, 매입은 예약�
   assert.equal(r.channel, "인스타");
   assert.equal(r.category, "대여");
   assert.equal(r.amount, 120000);
-  assert.equal(r.net, 70000);
+  assert.equal(r.net, 120000); // 기타 채널은 보증금 없음 → 실수령 = 입금액
   assert.equal(r.settled, true);
 
   const b = new FormData();

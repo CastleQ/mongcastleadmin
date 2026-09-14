@@ -1,5 +1,5 @@
-import { DEPOSIT } from "./ledger.ts";
-import { dayType } from "./sales.ts";
+import { CHANNELS, DEPOSIT } from "./ledger.ts";
+import { dayType } from "./holidays.ts";
 
 /** 요금표 (원). 값 바뀌면 여기만 고치면 됨. 순서: [월~목, 금, 토·일] */
 const PRICE = {
@@ -18,13 +18,16 @@ export function suggestAmount(date: string, pkg: string | null, channel: string 
   const key = overnight ? "밤" : pkg;
   if (key !== "낮" && key !== "밤" && key !== "전일") return null;
   const day = dayType(date);
+  const [y, m, d] = date.split("-").map(Number);
+  const isFri = new Date(y, m - 1, d).getDay() === 5;
+  const dayLabel = day === "금요일" && !isFri ? "공휴일 전날" : day;
   const col = day === "평일" ? 0 : day === "금요일" ? 1 : 2;
   const table = channel && PLATFORM_CHANNELS.includes(channel) ? PRICE.플랫폼 : PRICE.기본;
   const base = table[key][col];
   const extra = overnight ? OVERNIGHT : 0;
-  const deposit = channel === "지인" ? 0 : DEPOSIT;
+  const deposit = channel && CHANNELS.includes(channel) && channel !== "지인" ? DEPOSIT : 0; // 기타·미입력은 보증금 없음
   return {
     base, overnight: extra, deposit, total: base + extra + deposit,
-    label: `${day} ${key} ${base.toLocaleString("ko-KR")}${extra ? ` + 밤샘 ${extra.toLocaleString("ko-KR")}` : ""}${deposit ? ` + 보증금 ${deposit.toLocaleString("ko-KR")}` : ""}`,
+    label: `${dayLabel} ${key} ${base.toLocaleString("ko-KR")}${extra ? ` + 밤샘 ${extra.toLocaleString("ko-KR")}` : ""}${deposit ? ` + 보증금 ${deposit.toLocaleString("ko-KR")}` : ""}`,
   };
 }

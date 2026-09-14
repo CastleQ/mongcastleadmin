@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { monthGrid, monthInfo, packageKind, todayKST, type PackageKind, type Reservation } from "@/lib/calendar";
 import { customerKey, type Customer } from "@/lib/customers";
+import { HOLIDAYS } from "@/lib/holidays";
 
 const COLOR: Record<PackageKind, string> = {
   낮: "bg-amber-100 text-amber-900",
@@ -55,11 +56,13 @@ export default async function CalendarPage({ searchParams }: PageProps<"/reserva
         {monthGrid(info.year, info.month).map((date, i) => {
           const dow = i % 7;
           const isToday = date === today;
+          const holiday = date ? HOLIDAYS[date] : undefined;
           return (
             <div key={i} className={`min-h-16 sm:min-h-24 border-r border-b border-zinc-200 p-1 ${date ? "" : "bg-zinc-50"} ${isToday ? "bg-yellow-50" : ""}`}>
               {date && (
-                <Link href={`/ledger/new?date=${date}`} title="이 날짜에 추가" className={`mb-1 block text-right hover:underline ${dow === 0 ? "text-red-500" : dow === 6 ? "text-blue-500" : "text-zinc-500"} ${isToday ? "font-bold" : ""}`}>
-                  {Number(date.slice(8))}
+                <Link href={`/ledger/new?date=${date}`} title="이 날짜에 추가" className={`mb-1 flex items-baseline justify-between gap-1 hover:underline ${dow === 0 || holiday ? "text-red-500" : dow === 6 ? "text-blue-500" : "text-zinc-500"} ${isToday ? "font-bold" : ""}`}>
+                  <span className="hidden truncate text-[10px] font-normal sm:inline">{holiday ?? ""}</span>
+                  <span>{Number(date.slice(8))}</span>
                 </Link>
               )}
               <div className="flex flex-col gap-0.5">

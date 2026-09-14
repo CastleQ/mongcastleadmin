@@ -1,4 +1,6 @@
 import type { Ledger } from "./ledger.ts";
+import { dayType } from "./holidays.ts";
+export { dayType };
 
 export const SCENARIOS = ["보수", "기본", "낙관"] as const;
 export type Scenario = (typeof SCENARIOS)[number];
@@ -59,12 +61,6 @@ function bucketize(rows: Ledger[], keyOf: (r: Ledger) => string | null, order?: 
 }
 
 export const DAY_TYPES = ["평일", "금요일", "주말"];
-/** 월~목 평일 / 금 / 토·일 주말 (예약일 기준) */
-export function dayType(date: string): string {
-  const [y, m, d] = date.split("-").map(Number);
-  const dow = new Date(y, m - 1, d).getDay();
-  return dow === 5 ? "금요일" : dow === 0 || dow === 6 ? "주말" : "평일";
-}
 
 export const byDayType = (rows: Ledger[]) => bucketize(rows, (r) => dayType(r.date), DAY_TYPES);
 export const byContent = (rows: Ledger[]) => bucketize(rows, (r) => r.content?.trim() || "기타");

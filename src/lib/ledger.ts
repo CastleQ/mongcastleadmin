@@ -37,7 +37,7 @@ export type Money = { deposit: number; fee: number; net: number };
 /** 입금액·채널·결제방식으로 보증금/수수료/실수령 계산 */
 export function calcMoney(kind: Ledger["kind"], amount: number, channel: string | null, payment: string | null, other = 0): Money {
   if (kind === "매입") return { deposit: 0, fee: 0, net: -amount };
-  const deposit = channel === "지인" ? 0 : DEPOSIT;
+  const deposit = channel && CHANNELS.includes(channel) && channel !== "지인" ? DEPOSIT : 0; // 기타·미입력은 보증금 없음
   const base = Math.max(0, amount - deposit);
   const rate = payment === "플랫폼결제" ? (FEE_RATE[channel ?? ""] ?? 0) : 0;
   const fee = Math.round(base * rate);
