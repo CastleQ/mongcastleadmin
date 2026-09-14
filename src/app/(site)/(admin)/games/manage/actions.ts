@@ -4,6 +4,9 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { GAME_KINDS, type Game } from "@/lib/games";
 
+/** 저장/삭제 후 열었던 필터 화면으로 */
+const backTo = (kind: FormDataEntryValue | string | null) => GAME_KINDS.includes(kind as Game["kind"]) ? `/games/manage?kind=${kind}` : "/games/manage";
+
 function parse(f: FormData): Omit<Game, "id" | "image_url"> {
   const s = (k: string) => (f.get(k) as string | null)?.trim() || null;
   const n = (k: string) => { const v = s(k); return v === null ? null : Number(v.replace(/[^\d]/g, "")) || null; };
@@ -58,12 +61,12 @@ export async function saveGame(id: number | null, formData: FormData) {
     : supabase.from("games").update({ ...row, image_url }).eq("id", id);
   const { error } = await q;
   if (error) throw new Error(error.message);
-  redirect("/games/manage");
+  redirect(backTo(formData.get("back")));
 }
 
-export async function deleteGame(id: number) {
+export async function deleteGame(id: number, back: string | null) {
   const supabase = await createClient();
   const { error } = await supabase.from("games").delete().eq("id", id);
   if (error) throw new Error(error.message);
-  redirect("/games/manage");
+  redirect(backTo(back));
 }

@@ -5,10 +5,11 @@ import { DeleteGameButton } from "./delete-button";
 const input = "w-full rounded border border-zinc-300 px-3 py-2 text-base focus:border-zinc-900 focus:outline-none";
 const label = "block text-sm text-zinc-600 mb-1";
 
-export function GameForm({ row }: { row?: Game }) {
+export function GameForm({ row, back }: { row?: Game; back?: string }) {
   const mm = row?.kind === "머더미스터리";
   return (
     <form action={saveGame.bind(null, row?.id ?? null)} className="max-w-2xl space-y-4">
+      {back && <input type="hidden" name="back" value={back} />}
       <div className="grid gap-3 sm:grid-cols-[auto_1fr]">
         <div>
           <span className={label}>종류</span>
@@ -74,7 +75,7 @@ export function GameForm({ row }: { row?: Game }) {
 
       <div className="flex items-center justify-between pt-2">
         <button type="submit" className="rounded bg-zinc-900 px-5 py-2.5 text-white hover:bg-zinc-700">{row ? "변경 저장" : "게임 저장"}</button>
-        {row && <DeleteGameButton id={row.id} name={row.name} />}
+        {row && <DeleteGameButton id={row.id} name={row.name} back={back} />}
       </div>
     </form>
   );
