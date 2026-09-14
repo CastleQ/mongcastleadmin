@@ -15,6 +15,8 @@ export type Game = {
   link: string | null;
   synopsis: string | null;
   note: string | null;
+  image_url: string | null;
+  bgg_id: number | null;
 };
 
 export const GAME_KINDS = ["보드게임", "머더미스터리"] as const;

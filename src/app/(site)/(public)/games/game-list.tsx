@@ -21,7 +21,12 @@ export function GameList({ games }: { games: Game[] }) {
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {shown.map((g) => (
-            <li key={g.id} className="rounded-lg border border-zinc-200 p-3">
+            <li key={g.id} className="overflow-hidden rounded-lg border border-zinc-200">
+              {g.image_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={g.image_url} alt={g.name} className="aspect-[4/3] w-full object-cover" loading="lazy" />
+              )}
+              <div className="p-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <div className="font-bold">{g.name}{g.expansion && <span className="ml-1 font-normal text-zinc-500">+ {g.expansion}</span>}</div>
@@ -42,7 +47,7 @@ export function GameList({ games }: { games: Game[] }) {
                   <p className="mt-1 whitespace-pre-wrap text-zinc-600">{g.synopsis}</p>
                 </details>
               )}
-              {g.note && <div className="mt-1 text-xs text-amber-700">※ {g.note}</div>}
+              </div>
             </li>
           ))}
         </ul>
