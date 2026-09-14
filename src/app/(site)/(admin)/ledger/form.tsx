@@ -7,6 +7,7 @@ import { DeleteButton } from "./delete-button";
 import { Switch } from "./controls";
 import { customerKey, type Customer } from "@/lib/customers";
 import { CustomerWarning } from "@/app/(site)/customer-warning";
+import { suggestAmount } from "@/lib/pricing";
 
 type Props = { row?: Ledger; defaultDate?: string; from?: string; flagged?: Customer[] };
 
@@ -71,7 +72,9 @@ export function LedgerForm({ row, defaultDate, from, flagged = [] }: Props) {
   const [channel, setChannel] = useState<string | null>(row?.channel ?? null);
   const [pkg, setPkg] = useState<string | null>(row?.package ?? null);
   const [payment, setPayment] = useState<string | null>(row?.payment_method ?? "계좌이체");
+  const [date, setDate] = useState(row?.date ?? defaultDate ?? "");
   const [amount, setAmount] = useState(row?.amount ? String(row.amount) : "");
+  const [suggested, setSuggested] = useState<number | null>(null); // 마지막으로 자동 기입한 금액
   const [other, setOther] = useState(row?.other_expense ? String(row.other_expense) : "");
   const [name, setName] = useState(row?.customer_name ?? "");
   const [phone, setPhone] = useState(row?.customer_phone ?? "");
@@ -80,6 +83,14 @@ export function LedgerForm({ row, defaultDate, from, flagged = [] }: Props) {
   const warn = sale ? flagged.find((c) => c.key === key) : undefined;
   const toNum = (v: string) => Number(v.replace(/[^\d]/g, "")) || 0;
   const money = calcMoney(kind, toNum(amount), channel === OTHER ? null : channel, payment, toNum(other));
+  const suggestion = sale ? suggestAmount(date, pkg, channel === OTHER ? null : channel) : null;
+
+  // 패키지·예약일·채널이 바뀌면 입금액 제안. 손으로 고친 값은 덮어쓰지 않음 (빈칸이거나 직전 제안값 그대로일 때만)
+  const applySuggestion = (next: { date?: string; pkg?: string | null; channel?: string | null }) => {
+    const sg = suggestAmount(next.date ?? date, next.pkg ?? pkg, (next.channel ?? channel) === OTHER ? null : (next.channel ?? channel));
+    if (!sg) return;
+    if (amount === "" || toNum(amount) === suggested) { setAmount(String(sg.total)); setSuggested(sg.total); }
+  };
 
   return (
     <form action={saveLedger.bind(null, row?.id ?? null)} className="max-w-xl space-y-5">
@@ -93,7 +104,7 @@ export function LedgerForm({ row, defaultDate, from, flagged = [] }: Props) {
         </div>
         <div>
           <label className={label} htmlFor="date">{sale ? "예약일" : "날짜"} <b className="text-red-500">*</b></label>
-          <input id="date" name="date" type="date" required defaultValue={row?.date ?? defaultDate} className={input} />
+          <input id="date" name="date" type="date" required value={date} onChange={(e) => { setDate(e.target.value); applySuggestion({ date: e.target.value }); }} className={input} />
         </div>
       </div>
 
@@ -105,13 +116,13 @@ export function LedgerForm({ row, defaultDate, from, flagged = [] }: Props) {
       {sale && (
         <div>
           <span className={label}>패키지 <b className="text-red-500">*</b></span>
-          <Choice name="package" options={PACKAGES} value={pkg} onChange={setPkg} required />
+          <Choice name="package" options={PACKAGES} value={pkg} onChange={(v) => { setPkg(v); applySuggestion({ pkg: v }); }} required />
         </div>
       )}
 
       <div>
         <span className={label}>인입 채널</span>
-        <SelectOther name="channel" options={CHANNELS} value={channel} onChange={setChannel} />
+        <SelectOther name="channel" options={CHANNELS} value={channel} onChange={(v) => { setChannel(v); applySuggestion({ channel: v }); }} />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -122,6 +133,14 @@ export function LedgerForm({ row, defaultDate, from, flagged = [] }: Props) {
         <div>
           <label className={label} htmlFor="amount">입금액(원) <b className="text-red-500">*</b></label>
           <input id="amount" name="amount" type="text" inputMode="numeric" required value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="150000" className={input} />
+          {suggestion && (
+            <p className="mt-1 text-xs text-zinc-500">
+              제안 {suggestion.total.toLocaleString("ko-KR")}원 <span className="text-zinc-400">({suggestion.label})</span>
+              {toNum(amount) !== suggestion.total && (
+                <button type="button" onClick={() => { setAmount(String(suggestion.total)); setSuggested(suggestion.total); }} className="ml-2 underline hover:text-zinc-900">적용</button>
+              )}
+            </p>
+          )}
         </div>
       </div>
 
