@@ -11,7 +11,7 @@ export default async function SiteLayout({ children }: LayoutProps<"/">) {
     <>
       <header className="bg-zinc-900 text-white">
         <div className="mx-auto max-w-7xl flex items-center justify-between px-4 h-14">
-          <Link href={isAdmin ? "/reservations" : "/"} className="font-bold text-lg">
+          <Link href="/" className="font-bold text-lg">
             몽캐슬 파티룸 {isAdmin && <span className="text-zinc-400 font-normal text-sm">관리자</span>}
           </Link>
           <div className="flex items-center gap-3 text-sm">

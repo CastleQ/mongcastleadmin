@@ -2,7 +2,7 @@ export type NavItem = { href: string; label: string };
 
 /** 로그인 없이 누구나 */
 export const PUBLIC_NAV: NavItem[] = [
-  { href: "/", label: "이용 가이드" },
+  { href: "/guide", label: "이용 가이드" },
   { href: "/games", label: "보유 게임" },
 ];
 
