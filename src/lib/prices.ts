@@ -2,39 +2,45 @@
 export const DAYS = ["평일", "금", "주말"] as const; // 금 = 금요일·공휴일 전날, 주말 = 토·일·공휴일
 export const PKGS = ["낮", "밤", "전일"] as const;
 export type Triple = [number, number, number]; // [평일, 금, 주말]
-export type Tier = Record<(typeof PKGS)[number], Triple>;
-export type Prices = { 기본: Tier; 플랫폼: Tier; 밤샘: number; 보증금: number };
-
-export const DEFAULT_PRICES: Prices = {
-  기본: { 낮: [50_000, 50_000, 100_000], 밤: [70_000, 110_000, 170_000], 전일: [100_000, 180_000, 260_000] },
-  플랫폼: { 낮: [40_000, 40_000, 110_000], 밤: [80_000, 110_000, 170_000], 전일: [100_000, 180_000, 260_000] },
-  밤샘: 30_000,
-  보증금: 50_000,
+export type Prices = {
+  낮: Triple; 밤: Triple; 전일: Triple;
+  밤샘: number;   // 밤 패키지 옵션
+  보증금: number; // 청소보증금 (입금액 포함, 지인·기타 채널 없음)
+  기준인원: number; 인원추가: number; // 기준인원 초과 시 1인당 (전일은 무료)
 };
 
-/** settings에서 읽은 값이 일부만 있어도 기본값으로 메움 */
+/** 저가(개인 연락·계좌이체) 기준 */
+export const DEFAULT_PRICES: Prices = {
+  낮: [40_000, 40_000, 100_000],
+  밤: [70_000, 110_000, 170_000],
+  전일: [100_000, 180_000, 260_000],
+  밤샘: 30_000,
+  보증금: 50_000,
+  기준인원: 10, 인원추가: 10_000,
+};
+
+type Legacy = { 기본?: Partial<Record<(typeof PKGS)[number], Triple>>; 플랫폼?: Partial<Record<(typeof PKGS)[number], Triple>> };
+const isTriple = (v: unknown): v is Triple => Array.isArray(v) && v.length === 3 && v.every((n) => typeof n === "number");
+
+/** settings 값이 일부만 있거나 옛 형식(기본/플랫폼 2단)이어도 → 저가 기준 한 줄로 */
 export function mergePrices(v: unknown): Prices {
-  const p = (v ?? {}) as Partial<Prices>;
-  const tier = (t: Partial<Tier> | undefined, d: Tier): Tier => ({
-    낮: t?.낮 ?? d.낮, 밤: t?.밤 ?? d.밤, 전일: t?.전일 ?? d.전일,
-  });
-  return {
-    기본: tier(p.기본, DEFAULT_PRICES.기본),
-    플랫폼: tier(p.플랫폼, DEFAULT_PRICES.플랫폼),
-    밤샘: typeof p.밤샘 === "number" ? p.밤샘 : DEFAULT_PRICES.밤샘,
-    보증금: typeof p.보증금 === "number" ? p.보증금 : DEFAULT_PRICES.보증금,
+  const p = (v ?? {}) as Partial<Prices> & Legacy;
+  const pick = (pkg: (typeof PKGS)[number]): Triple => {
+    if (isTriple(p[pkg])) return p[pkg];
+    const a = p.기본?.[pkg], b = p.플랫폼?.[pkg];
+    if (isTriple(a) && isTriple(b)) return [0, 1, 2].map((i) => Math.min(a[i], b[i])) as Triple;
+    return isTriple(a) ? a : isTriple(b) ? b : DEFAULT_PRICES[pkg];
   };
+  const num = (k: keyof Prices) => (typeof p[k] === "number" ? (p[k] as number) : (DEFAULT_PRICES[k] as number));
+  return { 낮: pick("낮"), 밤: pick("밤"), 전일: pick("전일"), 밤샘: num("밤샘"), 보증금: num("보증금"), 기준인원: num("기준인원"), 인원추가: num("인원추가") };
 }
 
 const won = (n: number) => n.toLocaleString("ko-KR");
 
-/** 템플릿 자리표 → 값. {{평일 낮}} {{주말 밤}} {{플랫폼 금 낮}} {{밤샘}} {{보증금}} */
+/** 템플릿 자리표 → 값. {{평일 낮}} {{금 밤}} {{주말 전일}} {{밤샘}} {{보증금}} {{기준인원}} {{인원추가}} */
 export function priceTokens(p: Prices): Record<string, string> {
-  const out: Record<string, string> = { 밤샘: won(p.밤샘), 보증금: won(p.보증금) };
-  for (const pkg of PKGS) DAYS.forEach((day, i) => {
-    out[`${day} ${pkg}`] = won(p.기본[pkg][i]);
-    out[`플랫폼 ${day} ${pkg}`] = won(p.플랫폼[pkg][i]);
-  });
+  const out: Record<string, string> = { 밤샘: won(p.밤샘), 보증금: won(p.보증금), 기준인원: String(p.기준인원), 인원추가: won(p.인원추가) };
+  for (const pkg of PKGS) DAYS.forEach((day, i) => { out[`${day} ${pkg}`] = won(p[pkg][i]); });
   return out;
 }
 

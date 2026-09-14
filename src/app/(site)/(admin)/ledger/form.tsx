@@ -76,6 +76,7 @@ export function LedgerForm({ row, defaultDate, from, flagged = [], prices = DEFA
   const [date, setDate] = useState(row?.date ?? defaultDate ?? "");
   const [amount, setAmount] = useState(row?.amount ? String(row.amount) : "");
   const [suggested, setSuggested] = useState<number | null>(null); // 마지막으로 자동 기입한 금액
+  const [headcount, setHeadcount] = useState(row?.headcount ? String(row.headcount) : "");
   const [other, setOther] = useState(row?.other_expense ? String(row.other_expense) : "");
   const [name, setName] = useState(row?.customer_name ?? "");
   const [phone, setPhone] = useState(row?.customer_phone ?? "");
@@ -84,11 +85,12 @@ export function LedgerForm({ row, defaultDate, from, flagged = [], prices = DEFA
   const warn = sale ? flagged.find((c) => c.key === key) : undefined;
   const toNum = (v: string) => Number(v.replace(/[^\d]/g, "")) || 0;
   const money = calcMoney(kind, toNum(amount), channel === OTHER ? null : channel, payment, toNum(other), prices.보증금);
-  const suggestion = sale ? suggestAmount(date, pkg, channel === OTHER ? null : channel, prices) : null;
+  const suggestion = sale ? suggestAmount(date, pkg, channel === OTHER ? null : channel, prices, toNum(headcount) || null) : null;
 
   // 패키지·예약일·채널이 바뀌면 입금액 제안. 손으로 고친 값은 덮어쓰지 않음 (빈칸이거나 직전 제안값 그대로일 때만)
-  const applySuggestion = (next: { date?: string; pkg?: string | null; channel?: string | null }) => {
-    const sg = suggestAmount(next.date ?? date, next.pkg ?? pkg, (next.channel ?? channel) === OTHER ? null : (next.channel ?? channel), prices);
+  const applySuggestion = (next: { date?: string; pkg?: string | null; channel?: string | null; headcount?: string }) => {
+    const ch = next.channel ?? channel;
+    const sg = suggestAmount(next.date ?? date, next.pkg ?? pkg, ch === OTHER ? null : ch, prices, toNum(next.headcount ?? headcount) || null);
     if (!sg) return;
     if (amount === "" || toNum(amount) === suggested) { setAmount(String(sg.total)); setSuggested(sg.total); }
   };
@@ -181,7 +183,7 @@ export function LedgerForm({ row, defaultDate, from, flagged = [], prices = DEFA
               </div>
               <div>
                 <label className={label} htmlFor="headcount">인원</label>
-                <input id="headcount" name="headcount" type="number" inputMode="numeric" defaultValue={row?.headcount ?? ""} className={input} />
+                <input id="headcount" name="headcount" type="number" inputMode="numeric" value={headcount} onChange={(e) => { setHeadcount(e.target.value); applySuggestion({ headcount: e.target.value }); }} className={input} />
               </div>
               <div>
                 <label className={label} htmlFor="hours">이용시간(h)</label>

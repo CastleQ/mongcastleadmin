@@ -56,8 +56,10 @@ export async function restoreVersion(sectionId: number, versionId: number) {
 export async function savePrices(formData: FormData) {
   const { DAYS, PKGS, mergePrices } = await import("@/lib/prices");
   const num = (k: string) => Number(String(formData.get(k) ?? "").replace(/[^0-9]/g, "")) || 0;
-  const tier = (t: "기본" | "플랫폼") => Object.fromEntries(PKGS.map((p) => [p, DAYS.map((_, i) => num(`${t}.${p}.${i}`))]));
-  const value = mergePrices({ 기본: tier("기본"), 플랫폼: tier("플랫폼"), 밤샘: num("밤샘"), 보증금: num("보증금") });
+  const value = mergePrices({
+    ...Object.fromEntries(PKGS.map((p) => [p, DAYS.map((_, i) => num(`${p}.${i}`))])),
+    밤샘: num("밤샘"), 보증금: num("보증금"), 기준인원: num("기준인원"), 인원추가: num("인원추가"),
+  });
   const supabase = await createClient();
   const { error } = await supabase.from("settings").upsert({ key: "prices", value, updated_at: new Date().toISOString() });
   if (error) throw new Error(error.message);
