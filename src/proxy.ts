@@ -1,7 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isAdminPath } from "@/app/(site)/nav-items";
 
-// 경비원: 로그인 안 했으면 /login으로, 로그인했는데 /login이면 /로
+// 세션 쿠키 갱신 + 관리자 구역은 로그인 필수. (관리자인지는 (admin)/layout에서, 데이터는 RLS가 지킴)
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
   const supabase = createServerClient(
@@ -24,11 +25,11 @@ export async function proxy(request: NextRequest) {
   const user = data?.claims ?? null;
   const path = request.nextUrl.pathname;
 
-  if (!user && path !== "/login" && !path.startsWith("/auth/")) {
+  if (!user && (isAdminPath(path) || path.startsWith("/api/"))) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
   if (user && path === "/login") {
-    return NextResponse.redirect(new URL("/", request.url));
+    return NextResponse.redirect(new URL("/reservations", request.url));
   }
   return response;
 }

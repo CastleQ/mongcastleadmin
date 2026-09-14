@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import type { Ledger } from "@/lib/ledger";
 import type { Customer } from "@/lib/customers";
-import { CustomerWarning } from "../customer-warning";
+import { CustomerWarning } from "@/app/(site)/customer-warning";
 import { autoFill, fill, placeholders, type Template } from "@/lib/templates";
 import { moveTemplate } from "./actions";
 import { UseTemplate } from "./use-template";
-import { Modal } from "../modal";
+import { Modal } from "@/app/(site)/modal";
 
 /** 문구 목록 + 클릭하면 모달로 채우기/복사. 이름 옆 복사, 오른쪽 ▲▼로 순서 변경 */
 export function TemplateList({ rows, ledger, warn }: { rows: Template[]; ledger: Ledger | null; warn?: Customer | null }) {

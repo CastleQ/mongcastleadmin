@@ -4,7 +4,7 @@ import type { Ledger } from "@/lib/ledger";
 import { fmtDate, type Template } from "@/lib/templates";
 import { TemplateList } from "./template-list";
 import { customerKey, type Customer } from "@/lib/customers";
-import { CustomerWarning } from "../customer-warning";
+import { CustomerWarning } from "@/app/(site)/customer-warning";
 
 export default async function TemplatesPage({ searchParams }: PageProps<"/templates">) {
   const { ledger } = await searchParams;

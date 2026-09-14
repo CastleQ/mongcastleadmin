@@ -6,7 +6,7 @@ import { saveLedger } from "./actions";
 import { DeleteButton } from "./delete-button";
 import { Switch } from "./controls";
 import { customerKey, type Customer } from "@/lib/customers";
-import { CustomerWarning } from "../customer-warning";
+import { CustomerWarning } from "@/app/(site)/customer-warning";
 
 type Props = { row?: Ledger; defaultDate?: string; from?: string; flagged?: Customer[] };
 

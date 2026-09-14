@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { fmtDateTime } from "@/lib/markdown";
-import { HistoryTable, type HistoryItem } from "../history-table";
+import { HistoryTable, type HistoryItem } from "@/app/(site)/history-table";
 import { restoreTemplateVersion } from "./actions";
 
 /** 템플릿 편집 페이지 아래: 이전 수정 기록 + 되돌리기 */

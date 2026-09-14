@@ -11,7 +11,7 @@ const COLOR: Record<PackageKind, string> = {
 };
 const DOW = ["일", "월", "화", "수", "목", "금", "토"];
 
-export default async function CalendarPage({ searchParams }: PageProps<"/">) {
+export default async function CalendarPage({ searchParams }: PageProps<"/reservations">) {
   const { m } = await searchParams;
   const today = todayKST();
   const month = typeof m === "string" && /^\d{4}-\d{2}$/.test(m) ? m : today.slice(0, 7);
@@ -39,9 +39,9 @@ export default async function CalendarPage({ searchParams }: PageProps<"/">) {
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg sm:text-xl font-bold whitespace-nowrap"><span className="hidden sm:inline">예약 현황 · </span>{info.year}년 {info.month}월</h2>
         <div className="flex gap-1">
-          <Link href={`/?m=${info.prev}`} className={btn}>‹<span className="hidden sm:inline"> 이전달</span></Link>
-          <Link href="/" className={btn}>오늘</Link>
-          <Link href={`/?m=${info.next}`} className={btn}><span className="hidden sm:inline">다음달 </span>›</Link>
+          <Link href={`/reservations?m=${info.prev}`} className={btn}>‹<span className="hidden sm:inline"> 이전달</span></Link>
+          <Link href="/reservations" className={btn}>오늘</Link>
+          <Link href={`/reservations?m=${info.next}`} className={btn}><span className="hidden sm:inline">다음달 </span>›</Link>
           <Link href="/ledger/new" className="rounded bg-zinc-900 px-3 py-1 text-sm text-white whitespace-nowrap hover:bg-zinc-700">+ 추가</Link>
         </div>
       </div>

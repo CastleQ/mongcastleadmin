@@ -5,7 +5,7 @@ import { useState, useTransition } from "react";
 import type { InfoSection, InfoVersion } from "@/lib/markdown";
 import { fmtDateTime } from "@/lib/markdown";
 import { deleteSection, moveSection, restoreVersion, saveSection } from "./actions";
-import { HistoryTable } from "../history-table";
+import { HistoryTable } from "@/app/(site)/history-table";
 
 type Props = { s: InfoSection; html: string; versions: InfoVersion[]; first: boolean; last: boolean };
 
