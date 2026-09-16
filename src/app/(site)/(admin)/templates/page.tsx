@@ -45,7 +45,7 @@ export default async function TemplatesPage({ searchParams }: PageProps<"/templa
       {rows.length === 0 ? (
         <p className="py-10 text-center text-zinc-500">문구가 없어요. <Link href="/templates/new" className="underline">첫 문구를 추가</Link>하세요.</p>
       ) : (
-        <TemplateList rows={rows} ledger={r} warn={warn} />
+        <TemplateList rows={rows} ledger={r} warn={warn} prices={prices} />
       )}
       <p className="mt-3 text-xs text-zinc-500">문구를 누르면 채우기·복사 창이 열려요. 템플릿 안의 <code className="rounded bg-zinc-100 px-1">[대괄호]</code>는 보낼 때마다 채우는 칸, <code className="rounded bg-zinc-100 px-1">[칸=기본값]</code>은 미리 채워지는 칸.</p>
     </>

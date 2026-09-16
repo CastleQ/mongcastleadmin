@@ -39,16 +39,28 @@ export function fmtDate(iso: string): string {
   return `${m}월 ${d}일(${DOW[new Date(y, m - 1, d).getDay()]})`;
 }
 
-/** 예약 정보로 칸 이름을 보고 자동 채움 (이름에 포함된 단어 기준) */
+/** 칸 이름으로 입력 방식 결정 (채우기 화면·자동 채움 공용) */
+export const isDateKey = (key: string) => key.includes("날짜") || key.includes("예약일");
+export const isPackageKey = (key: string) => key.includes("패키지");
+export const isOptionKey = (key: string) => /^옵션\s*\d*$/.test(key);
+export const isTotalKey = (key: string) => key.includes("총액");
+
+/**
+ * 예약 정보로 칸 이름을 보고 자동 채움 (이름에 포함된 단어 기준).
+ * 날짜 칸은 YYYY-MM-DD(달력 입력용), 패키지 '밤+밤샘'은 패키지 밤 + 옵션 밤샘으로 나눔, 보증금·지인은 옵션 칸에 차례로
+ */
 export function autoFill(slots: Slot[], r: Ledger): Record<string, string> {
   const won = (n: number) => n.toLocaleString("ko-KR") + "원";
   const { deposit } = calcMoney(r.kind, r.amount, r.channel, r.payment_method);
+  const overnight = r.package === "밤+밤샘";
+  const options = [overnight ? "밤샘" : "", deposit ? "청소보증금" : "", r.channel === "지인" ? "지인할인" : ""].filter(Boolean);
   const out: Record<string, string> = {};
   for (const { key } of slots) {
-    if (key.includes("날짜") || key.includes("예약일")) out[key] = fmtDate(r.date);
-    else if (key.includes("패키지")) out[key] = r.package ? `${r.package} 패키지${r.payment_method === "플랫폼결제" ? " (플랫폼 결제 완료)" : ""}` : "";
+    if (isDateKey(key)) out[key] = r.date;
+    else if (isOptionKey(key)) out[key] = options.shift() ?? "";
+    else if (isPackageKey(key)) out[key] = overnight ? "밤" : r.package ?? "";
     else if (key.includes("보증금")) out[key] = deposit ? `청소보증금 ${won(deposit)}` : "";
-    else if (key.includes("총액") || key.includes("금액")) out[key] = won(r.amount);
+    else if (isTotalKey(key) || key.includes("금액")) out[key] = won(r.amount);
     else if (key.includes("고객") || key.includes("이름")) out[key] = r.customer_name ?? "";
     else if (key.includes("인원")) out[key] = r.headcount ? `${r.headcount}명` : "";
   }

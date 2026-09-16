@@ -31,12 +31,16 @@ test("autoFill: 예약 정보로 칸 채우기", () => {
     settled: false, amount: 120000, fee: 0, other_expense: 0, net: 70000, payment_method: "계좌이체", note: null,
   };
   assert.equal(fmtDate("2026-09-20"), "9월 20일(일)");
-  const v = autoFill(placeholders("[날짜] [패키지+금액] [옵션 및 보증금+금액] [총액] [고객명] [인원] [기타]"), r);
-  assert.equal(v["날짜"], "9월 20일(일)");
-  assert.equal(v["패키지+금액"], "밤 패키지");
-  assert.equal(v["옵션 및 보증금+금액"], "청소보증금 50,000원");
+  const v = autoFill(placeholders("[날짜] [패키지] [옵션1] [옵션2] [옵션3] [총액] [고객명] [인원] [기타]"), r);
+  assert.equal(v["날짜"], "2026-09-20"); // 달력 입력용 ISO
+  assert.equal(v["패키지"], "밤");
+  assert.equal(v["옵션1"], "청소보증금");
+  assert.equal(v["옵션2"], "");
   assert.equal(v["총액"], "120,000원");
   assert.equal(v["고객명"], "홍길동");
   assert.equal(v["인원"], "12명");
   assert.equal(v["기타"], undefined);
+  // 밤+밤샘 · 지인 → 패키지 밤, 옵션 밤샘·지인할인 (지인은 보증금 없음)
+  const w = autoFill(placeholders("[패키지] [옵션1] [옵션2] [옵션3]"), { ...r, package: "밤+밤샘", channel: "지인" });
+  assert.deepEqual([w["패키지"], w["옵션1"], w["옵션2"], w["옵션3"]], ["밤", "밤샘", "지인할인", ""]);
 });

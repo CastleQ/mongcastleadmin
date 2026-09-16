@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import type { Ledger } from "@/lib/ledger";
 import type { Customer } from "@/lib/customers";
+import type { Prices } from "@/lib/prices";
 import { CustomerWarning } from "@/app/(site)/customer-warning";
 import { autoFill, fill, placeholders, type Template } from "@/lib/templates";
 import { moveTemplate } from "./actions";
@@ -12,7 +13,7 @@ import { UseTemplate } from "./use-template";
 import { Modal } from "@/app/(site)/modal";
 
 /** 문구 목록 + 클릭하면 모달로 채우기/복사. 이름 옆 복사, 오른쪽 ▲▼로 순서 변경 */
-export function TemplateList({ rows, ledger, warn }: { rows: Template[]; ledger: Ledger | null; warn?: Customer | null }) {
+export function TemplateList({ rows, ledger, warn, prices }: { rows: Template[]; ledger: Ledger | null; warn?: Customer | null; prices: Prices }) {
   const router = useRouter();
   const [openId, setOpenId] = useState<number | null>(null);
   const [copiedId, setCopiedId] = useState<number | null>(null);
@@ -83,6 +84,7 @@ export function TemplateList({ rows, ledger, warn }: { rows: Template[]; ledger:
               templateId={current.id}
               body={current.body}
               phone={ledger?.customer_phone}
+              prices={prices}
               initial={ledger ? autoFill(placeholders(current.body), ledger) : undefined}
             />
 
