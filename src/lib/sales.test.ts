@@ -61,3 +61,12 @@ test("dailyCumulative / recovery", async () => {
   assert.equal(r.months, 2);
   assert.equal(r.monthsLeft, 8); // 남은 80만 / 월평균 10만
 });
+
+test("assumeReserved: 오늘 이후 미정산 매출만 정산된 것으로, 지난 미정산·매입은 그대로", async () => {
+  const { assumeReserved, monthSales } = await import("./sales.ts");
+  const withPast: Ledger[] = [...rows, { ...base, id: 7, date: "2026-09-02", net: 77777, settled: false }, { ...base, id: 8, date: "2026-09-20", kind: "매입", category: "집기구매", amount: 1, net: -1, settled: false }];
+  assert.equal(monthSales(assumeReserved(withPast, "2026-09-09"), "2026-09"), 350000 + 999999); // 9/10 예약만 포함, 9/2 미정산 제외
+  assert.equal(monthSales(assumeReserved(withPast, "2026-09-10"), "2026-09"), 350000 + 999999); // 오늘 포함
+  assert.equal(monthSales(assumeReserved(withPast, "2026-09-11"), "2026-09"), 350000);
+  assert.equal(assumeReserved(withPast, "2026-09-01").find((r) => r.id === 8)?.settled, false); // 매입은 건드리지 않음
+});

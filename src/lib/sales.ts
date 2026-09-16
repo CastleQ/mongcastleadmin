@@ -16,6 +16,15 @@ export function monthNet(rows: Ledger[], month: string): number {
   return rows.filter((r) => r.settled && monthOf(r.date) === month).reduce((s, r) => s + r.net, 0);
 }
 
+/**
+ * "예약 포함" 보기: 오늘 이후의 미정산 매출(예약은 됐는데 입금·정산 전)은 그대로 들어온다고 가정 → 정산된 것처럼 바꿔
+ * 같은 계산식(monthSales·dailyCumulative·bucketize…)에 넣음. 지난 날짜의 미정산은 그대로 제외 (노쇼·미입금일 수 있음)
+ */
+export const isReserved = (r: Ledger, today: string) => !r.settled && r.kind === "매출" && r.date >= today;
+export function assumeReserved(rows: Ledger[], today: string): Ledger[] {
+  return rows.map((r) => (isReserved(r, today) ? { ...r, settled: true } : r));
+}
+
 export type MonthStats = {
   actual: number; target: number; todayTarget: number;
   achievement: number; // 달성도 % (목표 대비)
@@ -116,14 +125,14 @@ export function extraBuys(rows: Ledger[], month: string): number {
   return rows.filter((r) => r.settled && r.kind === "매입" && r.date.startsWith(month) && !FIXED_CATEGORIES.includes(r.category)).reduce((s, r) => s + r.amount, 0);
 }
 
-export type DayEntry = { name: string; content: string; amount: number; net: number };
+export type DayEntry = { id: number; name: string; content: string; amount: number; net: number };
 /** 그 달 날짜별 매출 거래 요약 (정산 기준) — 그래프 점 위 작은 창용 */
 export function dailyEntries(rows: Ledger[], month: string): Record<number, DayEntry[]> {
   const out: Record<number, DayEntry[]> = {};
   for (const r of rows) {
     if (!r.settled || r.kind !== "매출" || !r.date.startsWith(month)) continue;
     const d = Number(r.date.slice(8));
-    (out[d] ??= []).push({ name: r.customer_name || "이름 없음", content: r.content || r.package || "", amount: r.amount, net: r.net });
+    (out[d] ??= []).push({ id: r.id, name: r.customer_name || "이름 없음", content: r.content || r.package || "", amount: r.amount, net: r.net });
   }
   return out;
 }

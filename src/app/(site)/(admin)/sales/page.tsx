@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { monthInfo, todayKST } from "@/lib/calendar";
 import type { Ledger } from "@/lib/ledger";
-import { DEFAULT_FIXED_COSTS, DEFAULT_INVESTMENT, DEFAULT_TARGETS, SCENARIOS, byChannel, byContent, byDayType, byPackage, dailyCumulative, dailyEntries, extraBuys, monthSales, monthStats, recovery, type Bucket, type Scenario, type Targets } from "@/lib/sales";
+import { DEFAULT_FIXED_COSTS, DEFAULT_INVESTMENT, DEFAULT_TARGETS, SCENARIOS, assumeReserved, isReserved, byChannel, byContent, byDayType, byPackage, dailyCumulative, dailyEntries, extraBuys, monthSales, monthStats, recovery, type Bucket, type Scenario, type Targets } from "@/lib/sales";
 import { DailyChart } from "./daily-chart";
 import { saveTargets } from "./actions";
 
@@ -10,10 +10,11 @@ const won = (n: number) => n.toLocaleString("ko-KR");
 const signed = (n: number) => (n > 0 ? "+" : "") + won(n);
 
 export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
-  const { m, s } = await searchParams;
+  const { m, s, r: rParam } = await searchParams;
   const today = todayKST();
   const month = typeof m === "string" && /^\d{4}-\d{2}$/.test(m) ? m : today.slice(0, 7);
   const scenario: Scenario = SCENARIOS.includes(s as Scenario) ? (s as Scenario) : "기본";
+  const withReserved = rParam === "1"; // 예약 포함 보기: 오늘 이후 미정산 매출도 들어온다고 가정
   const info = monthInfo(month);
 
   const supabase = await createClient();
@@ -22,7 +23,10 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
     supabase.from("settings").select("key,value"),
   ]);
   const setting = Object.fromEntries((settings ?? []).map((r) => [r.key as string, r.value as unknown]));
-  const rows: Ledger[] = ledger ?? [];
+  const real: Ledger[] = ledger ?? [];
+  const rows = withReserved ? assumeReserved(real, today) : real; // 아래 계산은 전부 이 rows 기준
+  const reservedRows = real.filter((r) => isReserved(r, today) && r.date.startsWith(month));
+  const reservedNet = reservedRows.reduce((s, r) => s + r.net, 0);
   const targets: Targets = { ...DEFAULT_TARGETS, ...((setting.monthly_targets as Partial<Targets>) ?? {}) };
   const investment = typeof setting.investment === "number" ? setting.investment : DEFAULT_INVESTMENT;
   const fixedCosts = typeof setting.fixed_costs === "number" ? setting.fixed_costs : DEFAULT_FIXED_COSTS;
@@ -31,12 +35,14 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
   const salesTarget = targets[scenario] + fixedCosts + extra;
   const st = monthStats(monthSales(rows, month), month, salesTarget, today);
   const rec = recovery(rows, investment, today);
-  const daily = dailyCumulative(rows, month);
+  const daily = dailyCumulative(real, month); // 검정 실선은 항상 실제 정산 기준
+  const reservedDaily = withReserved ? dailyCumulative(rows, month) : undefined; // 회색 점선: 예약 포함
   const entries = dailyEntries(rows, month);
   const good = st.actual >= st.todayTarget;
+  const basis = withReserved ? "예약 포함" : "정산 기준";
 
   const btn = "rounded border border-zinc-300 px-3 py-1 text-sm whitespace-nowrap hover:bg-zinc-50";
-  const q = (mm: string, ss: Scenario) => `/sales?m=${mm}&s=${ss}`;
+  const q = (mm: string, ss: Scenario, rr = withReserved) => `/sales?m=${mm}&s=${ss}${rr ? "&r=1" : ""}`;
 
 
   return (
@@ -61,9 +67,22 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
         <span className="text-zinc-400">목표 매출 {won(salesTarget)}원 <span className="hidden sm:inline">= 순이익 목표 {won(targets[scenario])} + 고정비 {won(fixedCosts)}{extra ? ` + 추가 매입 ${won(extra)}` : ""}</span></span>
       </div>
 
+      <div className="mb-4 flex flex-wrap items-center gap-2 text-sm">
+        <span className="text-zinc-500">집계</span>
+        <div className="inline-flex overflow-hidden rounded border border-zinc-900">
+          <Link href={q(month, scenario, false)} className={`px-3 py-1 ${!withReserved ? "bg-zinc-900 text-white" : "hover:bg-zinc-50"}`}>정산 완료만</Link>
+          <Link href={q(month, scenario, true)} className={`px-3 py-1 ${withReserved ? "bg-zinc-900 text-white" : "hover:bg-zinc-50"}`}>예약 포함</Link>
+        </div>
+        <span className="text-zinc-400">
+          {withReserved
+            ? `오늘 이후 미정산 예약 ${reservedRows.length}건 · 실수령 +${won(reservedNet)}원이 그대로 들어온다고 가정 (지난 날짜 미정산은 제외)`
+            : reservedRows.length ? `이달 오늘 이후 미정산 예약 ${reservedRows.length}건 (+${won(reservedNet)}원) 은 빠져 있어요` : "정산완료 ✓ 표시된 거래만"}
+        </span>
+      </div>
+
       <dl className="mb-4 grid grid-cols-2 gap-px overflow-hidden rounded border border-zinc-200 bg-zinc-200 sm:grid-cols-5">
         <Tile label="목표 매출" value={`${won(st.target)}원`} />
-        <Tile label="현재 매출 (정산 기준)" value={`${won(st.actual)}원`} strong />
+        <Tile label={`현재 매출 (${basis})`} value={`${won(st.actual)}원`} strong />
         <Tile label="달성도" value={`${st.achievement}%`} tone={st.achievement >= 100 ? "good" : st.achievement >= 50 ? "" : "bad"} />
         <Tile label="남은 목표 매출" value={st.gap >= 0 ? "목표 달성 ✓" : `${won(-st.gap)}원`} sub={`목표 대비 ${signed(st.gapPct)}%`} tone={st.gap >= 0 ? "good" : "bad"} />
         <Tile label={st.elapsed < st.days ? `오늘까지 팔았어야 할 금액 (${st.elapsed}/${st.days}일)` : "월 마감 기준 목표"} value={`${won(st.todayTarget)}원`} sub={good ? `▲ ${won(st.actual - st.todayTarget)}원 앞섬` : `▼ ${won(st.todayTarget - st.actual)}원 뒤짐`} tone={good ? "good" : "bad"} />
@@ -71,8 +90,8 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
 
       {/* 이달 일별 누적 */}
       <section className="mb-6 rounded border border-zinc-200 p-3">
-        <h3 className="mb-2 text-sm font-medium">이달 누적 매출 vs 목표 <span className="font-normal text-zinc-400">(일 단위, 정산 기준)</span></h3>
-        <DailyChart points={daily} days={st.days} target={salesTarget} breakEven={fixedCosts + extra} entries={entries} />
+        <h3 className="mb-2 text-sm font-medium">이달 누적 매출 vs 목표 <span className="font-normal text-zinc-400">(일 단위, {basis})</span></h3>
+        <DailyChart points={daily} reserved={reservedDaily} pendingIds={reservedRows.map((r) => r.id)} days={st.days} target={salesTarget} breakEven={fixedCosts + extra} entries={entries} />
       </section>
 
       {/* 투자금 회수 */}
@@ -85,7 +104,7 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
 
       {/* 누적 분석 */}
       <div className="grid gap-4 md:grid-cols-2">
-        <Breakdown title="요일별 평균 매출 (누적, 정산 기준)" rows={byDayType(rows)} showAvg />
+        <Breakdown title={`요일별 평균 매출 (누적, ${basis})`} rows={byDayType(rows)} showAvg />
         <Breakdown title="콘텐츠별 누적 매출" rows={byContent(rows)} />
         <Breakdown title="채널별 누적 매출" rows={byChannel(rows)} />
         <Breakdown title="패키지별 누적 매출" rows={byPackage(rows)} />
