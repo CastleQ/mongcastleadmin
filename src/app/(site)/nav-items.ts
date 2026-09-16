@@ -2,13 +2,13 @@ export type NavItem = { href: string; label: string };
 
 /** 로그인 없이 누구나 */
 export const PUBLIC_NAV: NavItem[] = [
+  { href: "/reservations", label: "예약현황" },
   { href: "/guide", label: "이용 가이드" },
   { href: "/games", label: "보유 게임" },
 ];
 
 /** 관리자만 */
 export const ADMIN_NAV: NavItem[] = [
-  { href: "/reservations", label: "예약현황" },
   { href: "/ledger", label: "거래" },
   { href: "/sales", label: "매출현황" },
   { href: "/customers", label: "고객관리" },
