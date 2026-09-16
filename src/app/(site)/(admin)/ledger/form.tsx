@@ -10,7 +10,7 @@ import { CustomerWarning } from "@/app/(site)/customer-warning";
 import { suggestAmount } from "@/lib/pricing";
 import { DEFAULT_PRICES, type Prices } from "@/lib/prices";
 
-type Props = { row?: Ledger; defaultDate?: string; from?: string; flagged?: Customer[]; prices?: Prices };
+type Props = { row?: Ledger; defaultDate?: string; defaultPackage?: string; from?: string; flagged?: Customer[]; prices?: Prices };
 
 const input = "w-full rounded border border-zinc-300 bg-white px-3 py-2 text-base focus:border-zinc-900 focus:outline-none";
 const label = "block text-sm text-zinc-600 mb-1";
@@ -67,15 +67,17 @@ function SelectOther({ name, options, value, onChange }: { name: string; options
   );
 }
 
-export function LedgerForm({ row, defaultDate, from, flagged = [], prices = DEFAULT_PRICES }: Props) {
+export function LedgerForm({ row, defaultDate, defaultPackage, from, flagged = [], prices = DEFAULT_PRICES }: Props) {
+  // 달력 빈 슬롯에서 들어오면 패키지·항목(대여)·입금액까지 미리 채움
+  const initial = !row && defaultDate && defaultPackage ? suggestAmount(defaultDate, defaultPackage, null, prices) : null;
   const [kind, setKind] = useState<Ledger["kind"]>(row?.kind ?? "매출");
-  const [category, setCategory] = useState<string | null>(row?.category ?? null);
+  const [category, setCategory] = useState<string | null>(row?.category ?? (initial ? "대여" : null));
   const [channel, setChannel] = useState<string | null>(row?.channel ?? null);
-  const [pkg, setPkg] = useState<string | null>(row?.package ?? null);
+  const [pkg, setPkg] = useState<string | null>(row?.package ?? (initial ? defaultPackage ?? null : null));
   const [payment, setPayment] = useState<string | null>(row?.payment_method ?? "계좌이체");
   const [date, setDate] = useState(row?.date ?? defaultDate ?? "");
-  const [amount, setAmount] = useState(row?.amount ? String(row.amount) : "");
-  const [suggested, setSuggested] = useState<number | null>(null); // 마지막으로 자동 기입한 금액
+  const [amount, setAmount] = useState(row?.amount ? String(row.amount) : initial ? String(initial.total) : "");
+  const [suggested, setSuggested] = useState<number | null>(initial?.total ?? null); // 마지막으로 자동 기입한 금액
   const [headcount, setHeadcount] = useState(row?.headcount ? String(row.headcount) : "");
   const [other, setOther] = useState(row?.other_expense ? String(row.other_expense) : "");
   const [name, setName] = useState(row?.customer_name ?? "");

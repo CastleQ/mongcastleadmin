@@ -12,6 +12,9 @@ export type Reservation = {
 
 export type PackageKind = "낮" | "밤" | "전일" | "기타";
 
+/** 달력에서 오늘 날짜 숫자 강조: 진한 파란 세로 막대 (관리자·손님 달력 공용) */
+export const TODAY_MARK = "border-l-[3px] border-blue-700 pl-1 font-bold text-blue-700";
+
 export function packageKind(pkg: string | null): PackageKind {
   if (!pkg) return "기타";
   if (pkg.startsWith("낮") || pkg.startsWith("주간")) return "낮";

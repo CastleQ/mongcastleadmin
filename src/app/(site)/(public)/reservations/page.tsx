@@ -2,17 +2,18 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 import { loadPublicSettings } from "@/lib/settings";
-import { monthGrid, monthInfo, packageKind, todayKST, type PackageKind, type Reservation } from "@/lib/calendar";
+import { monthGrid, monthInfo, packageKind, todayKST, TODAY_MARK, type PackageKind, type Reservation } from "@/lib/calendar";
 import { customerKey, type Customer } from "@/lib/customers";
 import { HOLIDAYS } from "@/lib/holidays";
-import { SLOTS, slotStates } from "@/lib/availability";
+import { OPEN_COLOR, SLOTS, slotStates } from "@/lib/availability";
 import { PublicCells } from "./public-cells";
 
+/** 예약된 칩은 진하게(가능 슬롯의 연한 초록과 확실히 구분) */
 const COLOR: Record<PackageKind, string> = {
-  낮: "bg-amber-100 text-amber-900",
-  밤: "bg-indigo-100 text-indigo-900",
-  전일: "bg-emerald-100 text-emerald-900",
-  기타: "bg-zinc-200 text-zinc-800",
+  낮: "bg-amber-300 text-amber-950",
+  밤: "bg-indigo-300 text-indigo-950",
+  전일: "bg-emerald-400 text-emerald-950",
+  기타: "bg-zinc-300 text-zinc-900",
 };
 const DOW = ["일", "월", "화", "수", "목", "금", "토"];
 /** 슬롯 타일: 폰=세로 3열(세로쓰기), PC=가로 3행 */
@@ -59,10 +60,9 @@ export default async function CalendarPage({ searchParams }: PageProps<"/reserva
           <PublicCells cells={cells} byDate={byDate} today={today} prices={prices} contact={contact} />
         </div>
         <div className="mt-3 flex flex-wrap gap-3 text-xs text-zinc-600">
-          <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded bg-emerald-100" />가능 (눌러서 문의)</span>
-          <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded bg-rose-100" />예약됨</span>
-          <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded bg-zinc-100" />불가</span>
-          <span className="text-zinc-400">전일은 낮·밤이 모두 비어 있을 때만 가능해요.</span>
+          {SLOTS.map((s) => <span key={s} className="flex items-center gap-1"><span className={`inline-block h-3 w-3 rounded ${OPEN_COLOR[s]}`} />{s} 가능</span>)}
+          <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded bg-zinc-200" />예약 불가</span>
+          <span className="text-zinc-400">색 있는 칸을 누르면 가격과 문의 연락처가 나와요. 전일은 낮·밤이 모두 비어 있을 때만 가능해요.</span>
         </div>
       </>
     );
@@ -94,9 +94,9 @@ export default async function CalendarPage({ searchParams }: PageProps<"/reserva
           return (
             <div key={i} className={`min-h-16 sm:min-h-24 border-r border-b border-zinc-200 p-1 ${date ? "" : "bg-zinc-50"} ${isToday ? "bg-yellow-50" : ""}`}>
               {date && (
-                <Link href={`/ledger/new?date=${date}`} title="이 날짜에 추가" className={`mb-1 flex items-baseline justify-between gap-1 hover:underline ${dow === 0 || holiday ? "text-red-500" : dow === 6 ? "text-blue-500" : "text-zinc-500"} ${isToday ? "font-bold" : ""}`}>
+                <Link href={`/ledger/new?date=${date}`} title="이 날짜에 추가" className={`mb-1 flex items-baseline justify-between gap-1 hover:underline ${dow === 0 || holiday ? "text-red-500" : dow === 6 ? "text-blue-500" : "text-zinc-500"}`}>
                   <span className="hidden truncate text-[10px] font-normal sm:inline">{holiday ?? ""}</span>
-                  <span>{Number(date.slice(8))}</span>
+                  <span className={isToday ? TODAY_MARK : ""}>{Number(date.slice(8))}</span>
                 </Link>
               )}
               {date && (() => {
@@ -122,7 +122,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/reserva
                       {SLOTS.map((s) => {
                         const booked = dayRows.filter((r) => packageKind(r.package) === s);
                         if (booked.length) return <div key={s} className="flex flex-1 flex-col gap-0.5">{booked.map(chip)}</div>;
-                        if (states[s] === "가능") return <Link key={s} href={`/ledger/new?date=${date}`} title={`${s} 예약 추가`} className={`${SLOT} bg-emerald-50 text-emerald-700 hover:bg-emerald-100`}><span className="font-semibold">{s}</span><span className="hidden sm:inline"> 가능</span></Link>;
+                        if (states[s] === "가능") return <Link key={s} href={`/ledger/new?date=${date}&package=${s}`} title={`${s} 예약 추가`} className={`${SLOT} bg-emerald-50 text-emerald-700 hover:bg-emerald-100`}><span className="font-semibold">{s}</span><span className="hidden sm:inline"> 가능</span></Link>;
                         return <div key={s} className={`${SLOT} bg-zinc-100 text-zinc-400`}><span className="font-semibold">{s}</span><span className="hidden sm:inline"> {states[s]}</span></div>;
                       })}
                     </div>
