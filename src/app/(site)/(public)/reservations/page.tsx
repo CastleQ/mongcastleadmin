@@ -5,6 +5,7 @@ import { loadPublicSettings } from "@/lib/settings";
 import { monthGrid, monthInfo, packageKind, todayKST, type PackageKind, type Reservation } from "@/lib/calendar";
 import { customerKey, type Customer } from "@/lib/customers";
 import { HOLIDAYS } from "@/lib/holidays";
+import { SLOTS, slotStates } from "@/lib/availability";
 import { PublicCells } from "./public-cells";
 
 const COLOR: Record<PackageKind, string> = {
@@ -14,6 +15,8 @@ const COLOR: Record<PackageKind, string> = {
   기타: "bg-zinc-200 text-zinc-800",
 };
 const DOW = ["일", "월", "화", "수", "목", "금", "토"];
+/** 슬롯 타일: 폰=세로 3열(세로쓰기), PC=가로 3행 */
+const SLOT = "flex h-12 flex-1 items-center justify-center rounded text-[10px] leading-tight [writing-mode:vertical-rl] sm:block sm:h-auto sm:truncate sm:px-1 sm:py-0.5 sm:text-xs sm:[writing-mode:horizontal-tb]";
 
 /** 누구나 보는 달력. 관리자는 고객명·미정산·수정 링크까지, 그 외는 낮·밤·전일 빈자리 + 문의 창 */
 export default async function CalendarPage({ searchParams }: PageProps<"/reservations">) {
@@ -96,13 +99,15 @@ export default async function CalendarPage({ searchParams }: PageProps<"/reserva
                   <span>{Number(date.slice(8))}</span>
                 </Link>
               )}
-              <div className="flex flex-col gap-0.5">
-                {(date ? byDate.get(date) ?? [] : []).map((r) => {
+              {date && (() => {
+                const dayRows = byDate.get(date) ?? [];
+                const states = slotStates(dayRows.map((r) => r.package));
+                const chip = (r: Reservation) => {
                   const kind = packageKind(r.package);
                   const who = r.customer_name || r.content || "";
                   const warn = flagged.get(customerKey(r) ?? "");
                   return (
-                    <Link key={r.id} href={`/ledger/${r.id}`} className={`block rounded px-1 py-0.5 leading-tight truncate hover:opacity-80 ${COLOR[kind]}`} title={`${r.package ?? ""} ${who} ${r.channel ?? ""}${r.settled ? "" : " (미정산)"}${warn ? ` ⚠ ${warn.grade} 고객` : ""}`}>
+                    <Link key={r.id} href={`/ledger/${r.id}`} className={`${SLOT} hover:opacity-80 ${COLOR[kind]}`} title={`${r.package ?? ""} ${who} ${r.channel ?? ""}${r.settled ? "" : " (미정산)"}${warn ? ` ⚠ ${warn.grade} 고객` : ""}`}>
                       {warn && <span className={warn.grade === "블랙" ? "text-red-600" : "text-zinc-700"}>⚠ </span>}
                       {!r.settled && <span className="text-red-600">● </span>}
                       <span className="font-semibold">{kind}</span>
@@ -110,8 +115,21 @@ export default async function CalendarPage({ searchParams }: PageProps<"/reserva
                       {r.channel && <span className="hidden lg:inline text-[10px] opacity-70"> · {r.channel.split(",")[0]}</span>}
                     </Link>
                   );
-                })}
-              </div>
+                };
+                return (
+                  <>
+                    <div className="flex flex-row gap-0.5 sm:flex-col">
+                      {SLOTS.map((s) => {
+                        const booked = dayRows.filter((r) => packageKind(r.package) === s);
+                        if (booked.length) return <div key={s} className="flex flex-1 flex-col gap-0.5">{booked.map(chip)}</div>;
+                        if (states[s] === "가능") return <Link key={s} href={`/ledger/new?date=${date}`} title={`${s} 예약 추가`} className={`${SLOT} bg-emerald-50 text-emerald-700 hover:bg-emerald-100`}><span className="font-semibold">{s}</span><span className="hidden sm:inline"> 가능</span></Link>;
+                        return <div key={s} className={`${SLOT} bg-zinc-100 text-zinc-400`}><span className="font-semibold">{s}</span><span className="hidden sm:inline"> {states[s]}</span></div>;
+                      })}
+                    </div>
+                    {dayRows.filter((r) => packageKind(r.package) === "기타").map(chip)}
+                  </>
+                );
+              })()}
             </div>
           );
         })}
@@ -122,6 +140,8 @@ export default async function CalendarPage({ searchParams }: PageProps<"/reserva
           <span key={k} className="flex items-center gap-1"><span className={`inline-block h-3 w-3 rounded ${COLOR[k]}`} />{k}</span>
         ))}
         <span><span className="text-red-600">●</span> 미정산</span>
+        <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded border border-emerald-200 bg-emerald-50" />가능 (눌러서 추가)</span>
+        <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded bg-zinc-100" />불가</span>
         <span className="text-zinc-400">{rows.length ? `이번 달 예약 ${rows.length}건` : "이 달엔 예약이 없어요. 날짜를 눌러 추가하세요."}</span>
       </div>
     </>
