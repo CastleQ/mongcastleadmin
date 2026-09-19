@@ -22,7 +22,8 @@ export function Chip({ r, className, alignRight, children }: Props) {
   }, [open]);
 
   const bg = r.kind === "매입" ? "bg-orange-50 border-orange-200" : r.settled ? "bg-white border-zinc-200" : "bg-zinc-200 border-zinc-400";
-  const line = "flex justify-between gap-3";
+  const line = "whitespace-nowrap"; // 왼쪽부터 붙여 쓰고 항목 사이는 세로 구분선
+  const sep = <span className="mx-1.5 text-zinc-400">|</span>;
 
   return (
     <div className="relative flex flex-1 flex-col" onPointerEnter={(e) => { if (e.pointerType === "mouse") setOpen(true); }} onPointerLeave={() => setOpen(false)} onPointerDown={(e) => e.stopPropagation()}>
@@ -31,16 +32,16 @@ export function Chip({ r, className, alignRight, children }: Props) {
         {children}
       </Link>
       {open && (
-        <div role="tooltip" className={`absolute top-full z-20 mt-1 w-56 rounded-lg border p-2.5 text-left text-xs leading-relaxed shadow-lg ${bg} ${alignRight ? "right-0" : "left-0"} [writing-mode:horizontal-tb]`}>
+        <div role="tooltip" className={`absolute top-full z-20 mt-1 w-max max-w-64 rounded-lg border p-2.5 text-left text-xs leading-relaxed shadow-lg ${bg} ${alignRight ? "right-0" : "left-0"} [writing-mode:horizontal-tb]`}>
           {r.kind === "매입" ? (
             <>
-              <p className={line}><span className="font-semibold">매입 · {r.category}</span><span className="tabular-nums">{won(r.amount)}</span></p>
+              <p className={line}><span className="font-semibold">매입 · {r.category}</span>{sep}<span className="tabular-nums">{won(r.amount)}</span></p>
               {r.channel && <p className="text-zinc-600">{r.channel}</p>}
             </>
           ) : (
             <>
-              <p className={line}><span className="font-semibold">{r.customer_name || "이름 없음"}</span><span className="text-zinc-600">{r.customer_phone || ""}</span></p>
-              <p className={line}><span>{r.package || "패키지 없음"}</span><span className="tabular-nums">{won(r.amount)}{r.settled ? "" : " (미정산)"}</span></p>
+              <p className={line}><span className="font-semibold">{r.customer_name || "이름 없음"}</span>{r.customer_phone && <>{sep}<span className="text-zinc-600">{r.customer_phone}</span></>}</p>
+              <p className={line}><span>{r.package || "패키지 없음"}</span>{sep}<span className="tabular-nums">{won(r.amount)}{r.settled ? "" : " (미정산)"}</span></p>
               {r.content && <p className="text-zinc-600">{r.content}{r.headcount ? ` · ${r.headcount}명` : ""}</p>}
             </>
           )}
