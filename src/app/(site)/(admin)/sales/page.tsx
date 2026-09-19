@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { monthInfo, todayKST } from "@/lib/calendar";
 import type { Ledger } from "@/lib/ledger";
-import { DEFAULT_FIXED_COSTS, DEFAULT_INVESTMENT, DEFAULT_TARGETS, SCENARIOS, assumeReserved, isReserved, byChannel, byContent, byDayType, byPackage, dailyCumulative, dailyEntries, extraBuys, monthSales, monthStats, recovery, type Bucket, type Scenario, type Targets } from "@/lib/sales";
+import { DEFAULT_FIXED_COSTS, DEFAULT_INVESTMENT, DEFAULT_TARGETS, SCENARIOS, assumeReserved, isReserved, byChannel, byContent, byDayType, byPackage, dailyCumulative, dailyEntries, extraBuys, monthNet, monthSales, monthStats, recovery, type Bucket, type Scenario, type Targets } from "@/lib/sales";
 import { DailyChart } from "./daily-chart";
 import { saveTargets } from "./actions";
 
@@ -38,7 +38,7 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
   const daily = dailyCumulative(real, month); // 검정 실선은 항상 실제 정산 기준
   const reservedDaily = withReserved ? dailyCumulative(rows, month) : undefined; // 회색 점선: 예약 포함
   const entries = dailyEntries(rows, month);
-  const good = st.actual >= st.todayTarget;
+  const net = monthNet(rows, month); // 이달 순이익 = 매출 실수령 − 매입 (같은 집계 기준)
   const basis = withReserved ? "예약 포함" : "정산 기준";
 
   const btn = "rounded border border-zinc-300 px-3 py-1 text-sm whitespace-nowrap hover:bg-zinc-50";
@@ -83,9 +83,9 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
       <dl className="mb-4 grid grid-cols-2 gap-px overflow-hidden rounded border border-zinc-200 bg-zinc-200 sm:grid-cols-5">
         <Tile label="목표 매출" value={`${won(st.target)}원`} />
         <Tile label={`현재 매출 (${basis})`} value={`${won(st.actual)}원`} strong />
+        <Tile label="현재 순이익" value={`${won(net)}원`} sub="매출 실수령 − 이달 매입" tone={net >= 0 ? "good" : "bad"} />
         <Tile label="달성도" value={`${st.achievement}%`} tone={st.achievement >= 100 ? "good" : st.achievement >= 50 ? "" : "bad"} />
         <Tile label="남은 목표 매출" value={st.gap >= 0 ? "목표 달성 ✓" : `${won(-st.gap)}원`} sub={`목표 대비 ${signed(st.gapPct)}%`} tone={st.gap >= 0 ? "good" : "bad"} />
-        <Tile label={st.elapsed < st.days ? `오늘까지 팔았어야 할 금액 (${st.elapsed}/${st.days}일)` : "월 마감 기준 목표"} value={`${won(st.todayTarget)}원`} sub={good ? `▲ ${won(st.actual - st.todayTarget)}원 앞섬` : `▼ ${won(st.todayTarget - st.actual)}원 뒤짐`} tone={good ? "good" : "bad"} />
       </dl>
 
       {/* 이달 일별 누적 */}
@@ -97,7 +97,7 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
       {/* 투자금 회수 */}
       <dl className="mb-6 grid grid-cols-2 gap-px overflow-hidden rounded border border-zinc-200 bg-zinc-200 sm:grid-cols-4">
         <Tile label="회수 대상 투자금" value={`${won(rec.investment)}원`} />
-        <Tile label={`누적 순이익 (${rec.months}개월, 이번 달까지)`} value={`${won(rec.total)}원`} sub="다음 달 이후 미리 적은 월세·선입금은 제외" strong />
+        <Tile label="누적 순이익" value={`${won(rec.total)}원`} sub={rec.since ? `${rec.since}~현재` : ""} strong />
         <Tile label="회수율" value={`${rec.rate}%`} sub={`남은 금액 ${won(rec.remaining)}원`} tone={rec.rate >= 100 ? "good" : ""} />
         <Tile label="예상 회수까지" value={rec.monthsLeft === 0 ? "회수 완료" : rec.monthsLeft === null ? "—" : `약 ${rec.monthsLeft}개월`} sub={rec.monthsLeft === null ? "월평균 순이익이 0 이하" : `월평균 ${won(Math.round(rec.total / rec.months))}원 기준`} />
       </dl>

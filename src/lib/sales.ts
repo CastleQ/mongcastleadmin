@@ -79,7 +79,7 @@ export const byPackage = (rows: Ledger[]) => bucketize(rows, (r) => r.package?.t
 /** 회수 대상 투자금 (시트 '사업계획서' 1. 초기투자금: 총액 − 보증금). settings 표에 없을 때 기본값 */
 export const DEFAULT_INVESTMENT = 7_000_000;
 
-export type Recovery = { total: number; investment: number; rate: number; remaining: number; months: number; monthsLeft: number | null };
+export type Recovery = { total: number; investment: number; rate: number; remaining: number; months: number; monthsLeft: number | null; since: string | null /* 첫 정산 달 "26.08" */ };
 
 /** 전 기간 누적 순이익(정산 기준)으로 투자금 회수 현황. 이번 달까지만 — 다음 달 월세·선입금처럼 미리 적어둔 건은 그 달이 와야 합산 */
 export function recovery(rows: Ledger[], investment: number, today: string): Recovery {
@@ -95,6 +95,7 @@ export function recovery(rows: Ledger[], investment: number, today: string): Rec
     remaining,
     months,
     monthsLeft: remaining === 0 ? 0 : pace > 0 ? Math.ceil(remaining / pace) : null,
+    since: first ? `${first.slice(2, 4)}.${first.slice(5, 7)}` : null,
   };
 }
 
