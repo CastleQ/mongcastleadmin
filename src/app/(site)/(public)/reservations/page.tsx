@@ -8,6 +8,9 @@ import { HOLIDAYS } from "@/lib/holidays";
 import { OPEN_COLOR, SLOTS, slotStates } from "@/lib/availability";
 import { PublicCells } from "./public-cells";
 import { Chip } from "./chip";
+import { LedgerTable } from "@/app/(site)/(admin)/ledger/ledger-table";
+import { searchLedger } from "@/lib/search";
+import type { Ledger } from "@/lib/ledger";
 
 /** 예약된 칩은 진하게(가능 슬롯의 연한 초록과 확실히 구분) */
 const COLOR: Record<PackageKind, string> = {
@@ -22,7 +25,9 @@ const SLOT = "flex h-12 flex-1 items-center justify-center rounded text-[10px] l
 
 /** 누구나 보는 달력. 관리자는 고객명·미정산·수정 링크까지, 그 외는 낮·밤·전일 빈자리 + 문의 창 */
 export default async function CalendarPage({ searchParams }: PageProps<"/reservations">) {
-  const { m } = await searchParams;
+  const { m, q, hl } = await searchParams;
+  const query = typeof q === "string" ? q.trim() : "";
+  const highlightId = typeof hl === "string" && /^\d+$/.test(hl) ? Number(hl) : null; // 검색 결과에서 넘어온 칩
   const today = todayKST();
   const month = typeof m === "string" && /^\d{4}-\d{2}$/.test(m) ? m : today.slice(0, 7);
   const info = monthInfo(month);
@@ -45,6 +50,30 @@ export default async function CalendarPage({ searchParams }: PageProps<"/reserva
   const dowRow = DOW.map((d, i) => (
     <div key={d} className={`border-r border-b border-zinc-200 bg-zinc-50 py-2 text-center font-medium ${i === 0 ? "text-red-500" : i === 6 ? "text-blue-500" : ""}`}>{d}</div>
   ));
+  // 관리자 검색창: Enter → /reservations?q=… (전 기간 거래에서 이름·번호·콘텐츠·채널·비고·패키지·항목)
+  const searchBox = isAdmin && (
+    <form action="/reservations" className="mb-4 flex gap-1">
+      <input name="q" defaultValue={query} placeholder="고객명 · 연락처 · 콘텐츠 · 비고 검색" aria-label="예약 검색"
+        className="w-full max-w-md rounded border border-zinc-300 px-3 py-1.5 text-sm focus:border-zinc-900 focus:outline-none" />
+      <button type="submit" className={btn}>검색</button>
+      {query && <Link href="/reservations" className={btn} title="검색 지우고 달력으로">✕</Link>}
+    </form>
+  );
+
+  if (query && isAdmin) {
+    const { data } = await supabase.from("ledger").select("*").order("date", { ascending: false });
+    const hits = searchLedger((data ?? []) as Ledger[], query);
+    return (
+      <>
+        {header}
+        {searchBox}
+        <p className="mb-2 text-sm text-zinc-500">"{query}" 검색 결과 {hits.length}건 · 행을 누르면 그 달 달력에서 강조해 보여줘요</p>
+        {hits.length === 0
+          ? <p className="py-10 text-center text-zinc-500">맞는 거래가 없어요.</p>
+          : <LedgerTable rows={hits} rowHref={(r) => `/reservations?m=${r.date.slice(0, 7)}&hl=${r.id}`} />}
+      </>
+    );
+  }
 
   if (!isAdmin) {
     const [{ data }, { prices, contact }] = await Promise.all([
@@ -86,6 +115,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/reserva
   return (
     <>
       {header}
+      {searchBox}
       <div className="grid grid-cols-7 border-l border-t border-zinc-200 text-xs sm:text-sm">
         {dowRow}
         {cells.map((date, i) => {
@@ -111,7 +141,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/reserva
                   const who = r.customer_name || r.content || "";
                   const warn = flagged.get(customerKey(r) ?? "");
                   return (
-                    <Chip key={r.id} r={r} alignRight={alignRight} className={`${SLOT} hover:opacity-80 ${COLOR[kind]}`}>
+                    <Chip key={r.id} r={r} alignRight={alignRight} highlight={r.id === highlightId} dim={highlightId !== null && r.id !== highlightId} className={`${SLOT} hover:opacity-80 ${COLOR[kind]}`}>
                       {warn && <span className={warn.grade === "블랙" ? "text-red-600" : "text-zinc-700"} title={`⚠ ${warn.grade} 고객`}>⚠ </span>}
                       {!r.settled && <span className="text-red-600">● </span>}
                       <span className="font-semibold">{kind}</span>
@@ -132,7 +162,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/reserva
                     </div>
                     {dayRows.filter((r) => packageKind(r.package) === "기타").map(chip)}
                     {buys.map((r) => (
-                      <Chip key={r.id} r={r} alignRight={alignRight} className={`${SLOT} mt-0.5 bg-orange-100 text-orange-900 hover:opacity-80`}>
+                      <Chip key={r.id} r={r} alignRight={alignRight} highlight={r.id === highlightId} dim={highlightId !== null && r.id !== highlightId} className={`${SLOT} mt-0.5 bg-orange-100 text-orange-900 hover:opacity-80`}>
                         <span className="font-semibold">매입</span><span className="hidden sm:inline"> {r.category}</span>
                       </Chip>
                     ))}

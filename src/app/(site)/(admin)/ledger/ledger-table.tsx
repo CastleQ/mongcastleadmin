@@ -22,7 +22,8 @@ function compare(a: Ledger, b: Ledger, key: SortKey): number {
   return typeof x === "number" && typeof y === "number" ? x - y : String(x).localeCompare(String(y), "ko");
 }
 
-export function LedgerTable({ rows }: { rows: Ledger[] }) {
+/** rowHref: 행을 눌렀을 때 갈 곳 (기본은 거래 수정. 달력 검색 결과에서는 그 달 달력으로) */
+export function LedgerTable({ rows, rowHref = (r) => `/ledger/${r.id}?from=ledger` }: { rows: Ledger[]; rowHref?: (r: Ledger) => string }) {
   const router = useRouter();
   const [sort, setSort] = useState<{ key: SortKey; asc: boolean }>({ key: "date", asc: false });
   const sorted = [...rows].sort((a, b) => (compare(a, b, sort.key) || b.id - a.id) * (sort.asc ? 1 : -1));
@@ -49,7 +50,7 @@ export function LedgerTable({ rows }: { rows: Ledger[] }) {
           {sorted.map((r, i) => {
             const sale = r.kind === "매출";
             return (
-              <tr key={r.id} onClick={() => router.push(`/ledger/${r.id}?from=ledger`)}
+              <tr key={r.id} onClick={() => router.push(rowHref(r))}
                 className={`cursor-pointer ${r.settled ? "hover:bg-zinc-50" : "bg-amber-50 hover:bg-amber-100"}`}>
                 <td className={`${td} text-zinc-400`}>{i + 1}</td>
                 <td className={td}>{r.date.slice(5).replace("-", "/")}</td>
