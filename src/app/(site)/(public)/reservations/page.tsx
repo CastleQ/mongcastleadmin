@@ -70,7 +70,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/reserva
         <p className="mb-2 text-sm text-zinc-500">"{query}" 검색 결과 {hits.length}건 · 행을 누르면 그 달 달력에서 강조해 보여줘요</p>
         {hits.length === 0
           ? <p className="py-10 text-center text-zinc-500">맞는 거래가 없어요.</p>
-          : <LedgerTable rows={hits} rowHref={(r) => `/reservations?m=${r.date.slice(0, 7)}&hl=${r.id}`} />}
+          : <LedgerTable rows={hits} rowLink="calendar" />}
       </>
     );
   }

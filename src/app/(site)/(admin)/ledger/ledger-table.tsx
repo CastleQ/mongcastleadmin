@@ -22,8 +22,9 @@ function compare(a: Ledger, b: Ledger, key: SortKey): number {
   return typeof x === "number" && typeof y === "number" ? x - y : String(x).localeCompare(String(y), "ko");
 }
 
-/** rowHref: 행을 눌렀을 때 갈 곳 (기본은 거래 수정. 달력 검색 결과에서는 그 달 달력으로) */
-export function LedgerTable({ rows, rowHref = (r) => `/ledger/${r.id}?from=ledger` }: { rows: Ledger[]; rowHref?: (r: Ledger) => string }) {
+/** rowLink: 행을 눌렀을 때 갈 곳 — ledger(거래 수정, 기본) / calendar(그 달 달력에서 칩 강조) */
+export function LedgerTable({ rows, rowLink = "ledger" }: { rows: Ledger[]; rowLink?: "ledger" | "calendar" }) {
+  const rowHref = (r: Ledger) => rowLink === "calendar" ? `/reservations?m=${r.date.slice(0, 7)}&hl=${r.id}` : `/ledger/${r.id}?from=ledger`;
   const router = useRouter();
   const [sort, setSort] = useState<{ key: SortKey; asc: boolean }>({ key: "date", asc: false });
   const sorted = [...rows].sort((a, b) => (compare(a, b, sort.key) || b.id - a.id) * (sort.asc ? 1 : -1));
