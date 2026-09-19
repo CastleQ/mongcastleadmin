@@ -97,7 +97,7 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
       {/* 투자금 회수 */}
       <dl className="mb-6 grid grid-cols-2 gap-px overflow-hidden rounded border border-zinc-200 bg-zinc-200 sm:grid-cols-4">
         <Tile label="회수 대상 투자금" value={`${won(rec.investment)}원`} />
-        <Tile label={`누적 순이익 (${rec.months}개월)`} value={`${won(rec.total)}원`} strong />
+        <Tile label={`누적 순이익 (${rec.months}개월, 이번 달까지)`} value={`${won(rec.total)}원`} sub="다음 달 이후 미리 적은 월세·선입금은 제외" strong />
         <Tile label="회수율" value={`${rec.rate}%`} sub={`남은 금액 ${won(rec.remaining)}원`} tone={rec.rate >= 100 ? "good" : ""} />
         <Tile label="예상 회수까지" value={rec.monthsLeft === 0 ? "회수 완료" : rec.monthsLeft === null ? "—" : `약 ${rec.monthsLeft}개월`} sub={rec.monthsLeft === null ? "월평균 순이익이 0 이하" : `월평균 ${won(Math.round(rec.total / rec.months))}원 기준`} />
       </dl>

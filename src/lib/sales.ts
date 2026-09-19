@@ -81,9 +81,9 @@ export const DEFAULT_INVESTMENT = 7_000_000;
 
 export type Recovery = { total: number; investment: number; rate: number; remaining: number; months: number; monthsLeft: number | null };
 
-/** 전 기간 누적 순이익(정산 기준)으로 투자금 회수 현황 */
+/** 전 기간 누적 순이익(정산 기준)으로 투자금 회수 현황. 이번 달까지만 — 다음 달 월세·선입금처럼 미리 적어둔 건은 그 달이 와야 합산 */
 export function recovery(rows: Ledger[], investment: number, today: string): Recovery {
-  const done = rows.filter((r) => r.settled);
+  const done = rows.filter((r) => r.settled && monthOf(r.date) <= monthOf(today));
   const total = done.reduce((s, r) => s + r.net, 0);
   const first = done.map((r) => r.date).sort()[0];
   const months = first ? Math.max(1, (Number(today.slice(0, 4)) - Number(first.slice(0, 4))) * 12 + Number(today.slice(5, 7)) - Number(first.slice(5, 7)) + 1) : 1;

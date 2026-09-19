@@ -60,6 +60,10 @@ test("dailyCumulative / recovery", async () => {
   assert.equal(r.rate, 20);
   assert.equal(r.months, 2);
   assert.equal(r.monthsLeft, 8); // 남은 80만 / 월평균 10만
+  // 다음 달 월세·선입금을 미리 정산 Y로 적어도 이번 달까지만 합산
+  const future: Ledger[] = [...rows, { ...base, id: 10, date: "2026-10-01", kind: "매입", category: "월세기타", amount: 775000, net: -775000 }, { ...base, id: 11, date: "2026-11-05", net: 200000 }];
+  assert.equal(recovery(future, 1_000_000, "2026-09-15").total, 200000);
+  assert.equal(recovery(future, 1_000_000, "2026-10-15").total, 200000 - 775000);
 });
 
 test("assumeReserved: 오늘 이후 미정산 매출만 정산된 것으로, 지난 미정산·매입은 그대로", async () => {
