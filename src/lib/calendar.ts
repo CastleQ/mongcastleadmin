@@ -1,12 +1,16 @@
 export type Reservation = {
   id: number;
   date: string; // YYYY-MM-DD
+  kind: "매출" | "매입";
+  category: string;
   package: string | null;
   channel: string | null;
   customer_name: string | null;
   customer_phone: string | null;
   content: string | null;
   headcount: number | null;
+  amount: number;
+  note: string | null;
   settled: boolean;
 };
 

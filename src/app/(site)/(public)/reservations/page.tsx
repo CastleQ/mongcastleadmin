@@ -7,6 +7,7 @@ import { customerKey, type Customer } from "@/lib/customers";
 import { HOLIDAYS } from "@/lib/holidays";
 import { OPEN_COLOR, SLOTS, slotStates } from "@/lib/availability";
 import { PublicCells } from "./public-cells";
+import { Chip } from "./chip";
 
 /** 예약된 칩은 진하게(가능 슬롯의 연한 초록과 확실히 구분) */
 const COLOR: Record<PackageKind, string> = {
@@ -70,9 +71,8 @@ export default async function CalendarPage({ searchParams }: PageProps<"/reserva
 
   const { data } = await supabase
     .from("ledger")
-    .select("id,date,package,channel,customer_name,customer_phone,content,headcount,settled")
-    .eq("kind", "매출")
-    .eq("category", "대여")
+    .select("id,date,kind,category,package,channel,customer_name,customer_phone,content,headcount,amount,note,settled")
+    .or("kind.eq.매입,and(kind.eq.매출,category.eq.대여)") // 대여 매출 + 매입(월세·집기 등, 주황 칩)
     .gte("date", info.start)
     .lte("date", info.end)
     .order("date");
@@ -81,6 +81,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/reserva
   const flagged = new Map<string, Customer>(((fl ?? []) as Customer[]).map((c) => [c.key, c]));
   const byDate = new Map<string, Reservation[]>();
   for (const r of rows) byDate.set(r.date, [...(byDate.get(r.date) ?? []), r]);
+  const sales = rows.filter((r) => r.kind === "매출").length;
 
   return (
     <>
@@ -100,20 +101,23 @@ export default async function CalendarPage({ searchParams }: PageProps<"/reserva
                 </Link>
               )}
               {date && (() => {
-                const dayRows = byDate.get(date) ?? [];
+                const all = byDate.get(date) ?? [];
+                const dayRows = all.filter((r) => r.kind === "매출");
+                const buys = all.filter((r) => r.kind === "매입");
                 const states = slotStates(dayRows.map((r) => r.package));
+                const alignRight = dow >= 4; // 목~토는 팝오버를 오른쪽 맞춤 (화면 밖으로 안 나가게)
                 const chip = (r: Reservation) => {
                   const kind = packageKind(r.package);
                   const who = r.customer_name || r.content || "";
                   const warn = flagged.get(customerKey(r) ?? "");
                   return (
-                    <Link key={r.id} href={`/ledger/${r.id}`} className={`${SLOT} hover:opacity-80 ${COLOR[kind]}`} title={`${r.package ?? ""} ${who} ${r.channel ?? ""}${r.settled ? "" : " (미정산)"}${warn ? ` ⚠ ${warn.grade} 고객` : ""}`}>
-                      {warn && <span className={warn.grade === "블랙" ? "text-red-600" : "text-zinc-700"}>⚠ </span>}
+                    <Chip key={r.id} r={r} alignRight={alignRight} className={`${SLOT} hover:opacity-80 ${COLOR[kind]}`}>
+                      {warn && <span className={warn.grade === "블랙" ? "text-red-600" : "text-zinc-700"} title={`⚠ ${warn.grade} 고객`}>⚠ </span>}
                       {!r.settled && <span className="text-red-600">● </span>}
                       <span className="font-semibold">{kind}</span>
                       <span className="hidden sm:inline"> {who}</span>
                       {r.channel && <span className="hidden lg:inline text-[10px] opacity-70"> · {r.channel.split(",")[0]}</span>}
-                    </Link>
+                    </Chip>
                   );
                 };
                 return (
@@ -127,6 +131,11 @@ export default async function CalendarPage({ searchParams }: PageProps<"/reserva
                       })}
                     </div>
                     {dayRows.filter((r) => packageKind(r.package) === "기타").map(chip)}
+                    {buys.map((r) => (
+                      <Chip key={r.id} r={r} alignRight={alignRight} className={`${SLOT} mt-0.5 bg-orange-100 text-orange-900 hover:opacity-80`}>
+                        <span className="font-semibold">매입</span><span className="hidden sm:inline"> {r.category}</span>
+                      </Chip>
+                    ))}
                   </>
                 );
               })()}
@@ -139,10 +148,11 @@ export default async function CalendarPage({ searchParams }: PageProps<"/reserva
         {(Object.keys(COLOR) as PackageKind[]).map((k) => (
           <span key={k} className="flex items-center gap-1"><span className={`inline-block h-3 w-3 rounded ${COLOR[k]}`} />{k}</span>
         ))}
+        <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded bg-orange-100" />매입</span>
         <span><span className="text-red-600">●</span> 미정산</span>
         <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded border border-emerald-200 bg-emerald-50" />가능 (눌러서 추가)</span>
         <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded bg-zinc-100" />불가</span>
-        <span className="text-zinc-400">{rows.length ? `이번 달 예약 ${rows.length}건` : "이 달엔 예약이 없어요. 날짜를 눌러 추가하세요."}</span>
+        <span className="text-zinc-400">{sales ? `이번 달 예약 ${sales}건` : "이 달엔 예약이 없어요. 날짜를 눌러 추가하세요."}</span>
       </div>
     </>
   );
