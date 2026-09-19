@@ -21,7 +21,7 @@ export function Chip({ r, className, alignRight, children }: Props) {
     return () => document.removeEventListener("pointerdown", close);
   }, [open]);
 
-  const bg = r.kind === "매입" ? "bg-orange-50 border-orange-200" : r.settled ? "bg-white border-zinc-200" : "bg-zinc-100 border-zinc-300";
+  const bg = r.kind === "매입" ? "bg-orange-50 border-orange-200" : r.settled ? "bg-white border-zinc-200" : "bg-zinc-200 border-zinc-400";
   const line = "flex justify-between gap-3";
 
   return (
