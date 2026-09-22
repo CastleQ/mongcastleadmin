@@ -9,6 +9,7 @@ import { OPEN_COLOR, SLOTS, slotStates } from "@/lib/availability";
 import { PublicCells } from "./public-cells";
 import { Chip } from "./chip";
 import { SearchBox } from "./search-box";
+import { MonthWheel } from "./month-wheel";
 import { LedgerTable } from "@/app/(site)/(admin)/ledger/ledger-table";
 import { searchLedger } from "@/lib/search";
 import type { Ledger } from "@/lib/ledger";
@@ -79,10 +80,10 @@ export default async function CalendarPage({ searchParams }: PageProps<"/reserva
     return (
       <>
         {header}
-        <div className="grid grid-cols-7 border-l border-t border-zinc-200 text-xs sm:text-sm">
+        <MonthWheel prevHref={`/reservations?m=${info.prev}`} nextHref={`/reservations?m=${info.next}`} className="grid grid-cols-7 border-l border-t border-zinc-200 text-xs sm:text-sm">
           {dowRow}
           <PublicCells cells={cells} byDate={byDate} today={today} prices={prices} contact={contact} />
-        </div>
+        </MonthWheel>
         <div className="mt-3 flex flex-wrap gap-3 text-xs text-zinc-600">
           {SLOTS.map((s) => <span key={s} className="flex items-center gap-1"><span className={`inline-block h-3 w-3 rounded ${OPEN_COLOR[s]}`} />{s} 가능</span>)}
           <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded bg-zinc-200" />예약 불가</span>
@@ -110,7 +111,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/reserva
     <>
       {header}
       {searchBox}
-      <div className="grid grid-cols-7 border-l border-t border-zinc-200 text-xs sm:text-sm">
+      <MonthWheel prevHref={`/reservations?m=${info.prev}`} nextHref={`/reservations?m=${info.next}`} className="grid grid-cols-7 border-l border-t border-zinc-200 text-xs sm:text-sm">
         {dowRow}
         {cells.map((date, i) => {
           const dow = i % 7;
@@ -166,7 +167,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/reserva
             </div>
           );
         })}
-      </div>
+      </MonthWheel>
 
       <div className="mt-3 flex flex-wrap gap-3 text-xs text-zinc-600">
         {(Object.keys(COLOR) as PackageKind[]).map((k) => (
