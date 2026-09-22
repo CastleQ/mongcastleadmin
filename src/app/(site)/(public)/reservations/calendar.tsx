@@ -50,6 +50,9 @@ export function Calendar({ month: initialMonth, today, isAdmin, rows, flagged = 
     const url = m === today.slice(0, 7) ? "/reservations" : `/reservations?m=${m}`;
     window.history.pushState(null, "", url);
   };
+  // 서버가 다른 달을 넘겨주면(검색 결과 클릭 등) 따라감
+  useEffect(() => { setMonth(initialMonth); }, [initialMonth]);
+
   useEffect(() => {
     const onPop = () => {
       const m = new URLSearchParams(window.location.search).get("m");
