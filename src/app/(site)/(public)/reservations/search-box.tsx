@@ -53,7 +53,7 @@ export function SearchBox({ initial = "" }: { initial?: string }) {
       <form action="/reservations" className="flex gap-1">
         <input name="q" value={q} autoComplete="off" placeholder="고객명 · 연락처 · 콘텐츠 · 비고 검색" aria-label="예약 검색"
           onFocus={() => { load(); setOpen(true); }}
-          onChange={(e) => { setQ(e.target.value); setCursor(-1); setOpen(true); }}
+          onChange={(e) => { load(); setQ(e.target.value); setCursor(-1); setOpen(true); }}
           onKeyDown={onKey}
           className="w-full rounded border border-zinc-300 px-3 py-1.5 text-sm focus:border-zinc-900 focus:outline-none" />
         <button type="submit" className="rounded border border-zinc-300 px-3 py-1 text-sm whitespace-nowrap hover:bg-zinc-50">검색</button>
