@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { Ledger } from "./ledger.ts";
-import { autoFill, fill, fmtDate, placeholders, setDefault } from "./templates.ts";
+import { autoFill, fill, fmtDate, placeholders, setDefault, shortDate } from "./templates.ts";
 
 test("placeholders: 순서대로, 중복 제거, 기본값 인식", () => {
   assert.deepEqual(placeholders("[날짜]\n[출입 비밀번호=1234*]\n[날짜]"), [
@@ -31,6 +31,7 @@ test("autoFill: 예약 정보로 칸 채우기", () => {
     settled: false, amount: 120000, fee: 0, other_expense: 0, net: 70000, payment_method: "계좌이체", note: null,
   };
   assert.equal(fmtDate("2026-09-20"), "9월 20일(일)");
+  assert.equal(shortDate("2026-09-20"), "26/09/20(일)");
   const v = autoFill(placeholders("[날짜] [패키지] [옵션1] [옵션2] [옵션3] [총액] [고객명] [인원] [기타]"), r);
   assert.equal(v["날짜"], "2026-09-20"); // 달력 입력용 ISO
   assert.equal(v["패키지"], "밤");

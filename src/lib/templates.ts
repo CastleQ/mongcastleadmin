@@ -34,6 +34,13 @@ export function setDefault(body: string, key: string, value: string): string {
 }
 
 const DOW = ["일", "월", "화", "수", "목", "금", "토"];
+
+/** "2026-09-20" → "26/09/20(일)" — 목록에서 자리 폭이 일정하게 */
+export function shortDate(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return `${iso.slice(2, 4)}/${iso.slice(5, 7)}/${iso.slice(8)}(${DOW[new Date(y, m - 1, d).getDay()]})`;
+}
+
 export function fmtDate(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
   return `${m}월 ${d}일(${DOW[new Date(y, m - 1, d).getDay()]})`;
