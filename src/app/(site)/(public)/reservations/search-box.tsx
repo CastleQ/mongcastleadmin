@@ -71,12 +71,12 @@ export function SearchBox({ initial = "" }: { initial?: string }) {
               {shown.map((r, i) => (
                 <li key={r.id}>
                   <button type="button" onClick={() => go(r)} onPointerEnter={() => setCursor(i)}
-                    className={`flex w-full items-baseline gap-2 px-3 py-1.5 text-left ${i === cursor ? "bg-zinc-100" : "hover:bg-zinc-50"}`}>
+                    className={`flex w-full items-baseline gap-2 px-3 py-1.5 text-center ${i === cursor ? "bg-zinc-100" : "hover:bg-zinc-50"}`}>
                     <span className="w-24 shrink-0 text-zinc-500">{shortDate(r.date)}</span>
                     <span className="w-16 shrink-0 truncate">{r.kind === "매입" ? r.category : r.package ?? ""}</span>
                     <span className="min-w-0 flex-1 truncate font-medium">{r.customer_name || r.content || r.channel || ""}</span>
-                    {!r.settled && <span className="shrink-0 text-red-600">●</span>}
-                    <span className="shrink-0 tabular-nums text-zinc-500">{won(r.amount)}</span>
+                    <span className="w-3 shrink-0 text-red-600">{r.settled ? "" : "●"}</span>
+                    <span className="w-20 shrink-0 tabular-nums text-zinc-500">{won(r.amount)}</span>
                   </button>
                 </li>
               ))}
