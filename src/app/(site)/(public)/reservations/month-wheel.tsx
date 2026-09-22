@@ -18,7 +18,7 @@ export function MonthWheel({ prevHref, nextHref, className, children }: Props) {
   const acc = useRef(0);
   const until = useRef(0);
 
-  useEffect(() => { router.prefetch(prevHref); router.prefetch(nextHref); }, [router, prevHref, nextHref]);
+  // 미리 받기는 헤더의 ‹ › Link(prefetch)가 담당 — 같은 주소라 휠도 그 캐시를 씀
 
   useEffect(() => {
     const el = box.current;
