@@ -8,6 +8,7 @@ import { HOLIDAYS } from "@/lib/holidays";
 import { OPEN_COLOR, SLOTS, slotStates } from "@/lib/availability";
 import { PublicCells } from "./public-cells";
 import { Chip } from "./chip";
+import { SearchBox } from "./search-box";
 import { LedgerTable } from "@/app/(site)/(admin)/ledger/ledger-table";
 import { searchLedger } from "@/lib/search";
 import type { Ledger } from "@/lib/ledger";
@@ -50,15 +51,8 @@ export default async function CalendarPage({ searchParams }: PageProps<"/reserva
   const dowRow = DOW.map((d, i) => (
     <div key={d} className={`border-r border-b border-zinc-200 bg-zinc-50 py-2 text-center font-medium ${i === 0 ? "text-red-500" : i === 6 ? "text-blue-500" : ""}`}>{d}</div>
   ));
-  // 관리자 검색창: Enter → /reservations?q=… (전 기간 거래에서 이름·번호·콘텐츠·채널·비고·패키지·항목)
-  const searchBox = isAdmin && (
-    <form action="/reservations" className="mb-4 flex gap-1">
-      <input name="q" defaultValue={query} placeholder="고객명 · 연락처 · 콘텐츠 · 비고 검색" aria-label="예약 검색"
-        className="w-full max-w-md rounded border border-zinc-300 px-3 py-1.5 text-sm focus:border-zinc-900 focus:outline-none" />
-      <button type="submit" className={btn}>검색</button>
-      {query && <Link href="/reservations" className={btn} title="검색 지우고 달력으로">✕</Link>}
-    </form>
-  );
+  // 관리자 검색창: 타자마다 즉시 목록, Enter → /reservations?q=… 전체 표
+  const searchBox = isAdmin && <SearchBox initial={query} />;
 
   if (query && isAdmin) {
     const { data } = await supabase.from("ledger").select("*").order("date", { ascending: false });
