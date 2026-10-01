@@ -1,5 +1,5 @@
 import { suggestAmount } from "./pricing.ts";
-import type { Prices } from "./prices.ts";
+import { FRIEND_DISCOUNT_RATE, type Prices } from "./prices.ts";
 
 /** 입금안내 템플릿의 패키지 드롭다운 (밤샘은 옵션으로) */
 export const QUOTE_PACKAGES = ["낮", "밤", "전일"] as const;
@@ -9,7 +9,7 @@ export type QuoteOption = { label: string; add: number; rate: number };
 export const quoteOptions = (p: Prices): QuoteOption[] => [
   { label: "밤샘", add: p.밤샘, rate: 1 },
   { label: "청소보증금", add: p.보증금, rate: 1 },
-  { label: "지인할인", add: 0, rate: 0.8 },
+  { label: "지인할인", add: 0, rate: FRIEND_DISCOUNT_RATE },
   { label: "시계피 사회", add: 100_000, rate: 1 },
 ];
 

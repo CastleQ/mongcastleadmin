@@ -2,11 +2,22 @@ import type { Ledger } from "./ledger.ts";
 import { dayType } from "./holidays.ts";
 export { dayType };
 
-export const SCENARIOS = ["보수", "기본", "낙관"] as const;
-export type Scenario = (typeof SCENARIOS)[number];
-export type Targets = Record<Scenario, number>;
-/** 시트 '사업계획서' 3. 월 손익분석의 월순이익 (settings 표에 없을 때 기본값) */
-export const DEFAULT_TARGETS: Targets = { 보수: 419008, 기본: 685408, 낙관: 1340608 };
+/** 월 순이익 목표 (settings 표에 없을 때 기본값). 시트 '사업계획서' 3. 월 손익분석의 '기본' 월순이익 */
+export const DEFAULT_TARGET = 685_408;
+
+/**
+ * settings의 monthly_targets 읽기.
+ * 보수·기본·낙관 3단 시나리오를 없애고 '기본' 하나로 통일했으므로,
+ * DB에 옛 3단 형식({보수,기본,낙관})이 남아 있어도 '기본' 값만 쓴다.
+ */
+export function readTarget(v: unknown): number {
+  if (typeof v === "number") return v;
+  if (v && typeof v === "object") {
+    const basic = (v as Record<string, unknown>)["기본"];
+    if (typeof basic === "number") return basic;
+  }
+  return DEFAULT_TARGET;
+}
 
 const monthOf = (d: string) => d.slice(0, 7);
 const daysIn = (m: string) => { const [y, mo] = m.split("-").map(Number); return new Date(y, mo, 0).getDate(); };

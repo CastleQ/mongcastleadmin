@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { monthInfo, todayKST } from "@/lib/calendar";
 import type { Ledger } from "@/lib/ledger";
-import { DEFAULT_FIXED_COSTS, DEFAULT_INVESTMENT, DEFAULT_TARGETS, SCENARIOS, assumeReserved, isReserved, byChannel, byContent, byDayType, byPackage, dailyCumulative, dailyEntries, extraBuys, monthNet, monthSales, monthStats, recovery, type Bucket, type Scenario, type Targets } from "@/lib/sales";
+import { DEFAULT_FIXED_COSTS, DEFAULT_INVESTMENT, assumeReserved, isReserved, byChannel, byContent, byDayType, byPackage, dailyCumulative, dailyEntries, extraBuys, monthNet, monthSales, monthStats, readTarget, recovery, type Bucket } from "@/lib/sales";
 import { DailyChart } from "./daily-chart";
 import { saveTargets } from "./actions";
 
@@ -10,10 +10,9 @@ const won = (n: number) => n.toLocaleString("ko-KR");
 const signed = (n: number) => (n > 0 ? "+" : "") + won(n);
 
 export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
-  const { m, s, r: rParam } = await searchParams;
+  const { m, r: rParam } = await searchParams;
   const today = todayKST();
   const month = typeof m === "string" && /^\d{4}-\d{2}$/.test(m) ? m : today.slice(0, 7);
-  const scenario: Scenario = SCENARIOS.includes(s as Scenario) ? (s as Scenario) : "기본";
   // 예약 포함 보기(기본값): 오늘 이후 미정산 매출도 들어온다고 가정. r=0 이면 정산 완료만
   // (옛 주소의 r=1 도 예약 포함으로 그대로 동작)
   const withReserved = rParam !== "0";
@@ -29,12 +28,12 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
   const rows = withReserved ? assumeReserved(real, today) : real; // 아래 계산은 전부 이 rows 기준
   const reservedRows = real.filter((r) => isReserved(r, today) && r.date.startsWith(month));
   const reservedNet = reservedRows.reduce((s, r) => s + r.net, 0);
-  const targets: Targets = { ...DEFAULT_TARGETS, ...((setting.monthly_targets as Partial<Targets>) ?? {}) };
+  const target = readTarget(setting.monthly_targets); // 월 순이익 목표 (시나리오 없이 하나)
   const investment = typeof setting.investment === "number" ? setting.investment : DEFAULT_INVESTMENT;
   const fixedCosts = typeof setting.fixed_costs === "number" ? setting.fixed_costs : DEFAULT_FIXED_COSTS;
   // 목표 매출 = 순이익 목표 + 고정비 + 이달 추가 매입(고정비 항목 제외)
   const extra = extraBuys(rows, month);
-  const salesTarget = targets[scenario] + fixedCosts + extra;
+  const salesTarget = target + fixedCosts + extra;
   const st = monthStats(monthSales(rows, month), month, salesTarget, today);
   const rec = recovery(rows, investment, today);
   const daily = dailyCumulative(real, month); // 검정 실선은 항상 실제 정산 기준
@@ -44,7 +43,7 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
   const basis = withReserved ? "예약 포함" : "정산 기준";
 
   const btn = "rounded border border-zinc-300 px-3 py-1 text-sm whitespace-nowrap hover:bg-zinc-50";
-  const q = (mm: string, ss: Scenario, rr = withReserved) => `/sales?m=${mm}&s=${ss}${rr ? "" : "&r=0"}`;
+  const q = (mm: string, rr = withReserved) => `/sales?m=${mm}${rr ? "" : "&r=0"}`;
 
 
   return (
@@ -52,28 +51,18 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg sm:text-xl font-bold whitespace-nowrap"><span className="hidden sm:inline">매출현황 · </span>{info.year}년 {info.month}월</h2>
         <div className="flex flex-wrap gap-1">
-          <Link href={q(info.prev, scenario)} className={btn}>‹<span className="hidden sm:inline"> 이전달</span></Link>
-          <Link href={q(today.slice(0, 7), scenario)} className={btn}>이번달</Link>
-          <Link href={q(info.next, scenario)} className={btn}><span className="hidden sm:inline">다음달 </span>›</Link>
+          <Link href={q(info.prev)} className={btn}>‹<span className="hidden sm:inline"> 이전달</span></Link>
+          <Link href={q(today.slice(0, 7))} className={btn}>이번달</Link>
+          <Link href={q(info.next)} className={btn}><span className="hidden sm:inline">다음달 </span>›</Link>
           <a href="/api/export" download className={btn} title="거래 전체를 CSV(엑셀)로 내려받기 — 백업용">CSV 백업</a>
         </div>
-      </div>
-
-      <div className="mb-4 flex items-center gap-2 text-sm">
-        <span className="text-zinc-500">시나리오</span>
-        <div className="inline-flex overflow-hidden rounded border border-zinc-900">
-          {SCENARIOS.map((sc) => (
-            <Link key={sc} href={q(month, sc)} className={`px-3 py-1 ${sc === scenario ? "bg-zinc-900 text-white" : "hover:bg-zinc-50"}`}>{sc}</Link>
-          ))}
-        </div>
-        <span className="text-zinc-400">목표 매출 {won(salesTarget)}원 <span className="hidden sm:inline">= 순이익 목표 {won(targets[scenario])} + 고정비 {won(fixedCosts)}{extra ? ` + 추가 매입 ${won(extra)}` : ""}</span></span>
       </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-2 text-sm">
         <span className="text-zinc-500">집계</span>
         <div className="inline-flex overflow-hidden rounded border border-zinc-900">
-          <Link href={q(month, scenario, false)} className={`px-3 py-1 ${!withReserved ? "bg-zinc-900 text-white" : "hover:bg-zinc-50"}`}>정산 완료만</Link>
-          <Link href={q(month, scenario, true)} className={`px-3 py-1 ${withReserved ? "bg-zinc-900 text-white" : "hover:bg-zinc-50"}`}>예약 포함</Link>
+          <Link href={q(month, false)} className={`px-3 py-1 ${!withReserved ? "bg-zinc-900 text-white" : "hover:bg-zinc-50"}`}>정산 완료만</Link>
+          <Link href={q(month, true)} className={`px-3 py-1 ${withReserved ? "bg-zinc-900 text-white" : "hover:bg-zinc-50"}`}>예약 포함</Link>
         </div>
         <span className="text-zinc-400">
           {withReserved
@@ -115,12 +104,10 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
       <details className="mt-6 max-w-xl rounded border border-zinc-200">
         <summary className="cursor-pointer select-none px-3 py-2 text-sm text-zinc-600">목표 수정 (월 순이익 목표 · 고정비 · 투자금)</summary>
         <form action={saveTargets} className="flex flex-wrap items-end gap-3 border-t border-zinc-200 p-3">
-          {SCENARIOS.map((sc) => (
-            <label key={sc} className="text-sm">
-              <span className="mb-1 block text-zinc-600">{sc}</span>
-              <input name={sc} type="text" inputMode="numeric" defaultValue={targets[sc]} className="w-32 rounded border border-zinc-300 px-3 py-2 text-base focus:border-zinc-900 focus:outline-none" />
-            </label>
-          ))}
+          <label className="text-sm">
+            <span className="mb-1 block text-zinc-600">월 순이익 목표</span>
+            <input name="monthly_target" type="text" inputMode="numeric" defaultValue={target} className="w-32 rounded border border-zinc-300 px-3 py-2 text-base focus:border-zinc-900 focus:outline-none" />
+          </label>
           <label className="text-sm">
             <span className="mb-1 block text-zinc-600">월 고정비</span>
             <input name="fixed_costs" type="text" inputMode="numeric" defaultValue={fixedCosts} className="w-32 rounded border border-zinc-300 px-3 py-2 text-base focus:border-zinc-900 focus:outline-none" />

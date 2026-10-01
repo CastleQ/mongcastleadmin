@@ -1,4 +1,4 @@
-import { DAYS, PKGS, type Prices } from "@/lib/prices";
+import { DAYS, PKGS, friendDiscountPct, type Prices } from "@/lib/prices";
 import { savePrices } from "./actions";
 
 const won = (n: number) => n.toLocaleString("ko-KR");
@@ -20,9 +20,10 @@ export function PriceCard({ prices }: { prices: Prices }) {
             {PKGS.map((pkg) => (
               <tr key={pkg}><td><strong>{pkg}</strong></td>{prices[pkg].map((v, i) => <td key={i} style={{ textAlign: "right" }}>{won(v)}</td>)}</tr>
             ))}
-            <tr><td>밤샘 옵션</td><td colSpan={3}>밤 패키지 +{won(prices.밤샘)}</td></tr>
+            <tr><td>밤샘 옵션</td><td colSpan={3}>밤 패키지 +{won(prices.밤샘)} · <strong>전일 대관은 밤샘 무료</strong></td></tr>
             <tr><td>청소보증금</td><td colSpan={3}>+{won(prices.보증금)} (입금액에 포함, 퇴실 확인 후 환급 · 지인·기타 채널은 없음)</td></tr>
             <tr><td>인원 추가</td><td colSpan={3}>기준 {prices.기준인원}인, 초과 1인당 +{won(prices.인원추가)} (전일은 무료)</td></tr>
+            <tr><td>지인 할인</td><td colSpan={3}><strong>총 금액에서 {friendDiscountPct()}% 할인</strong> (청소보증금 없음)</td></tr>
           </tbody>
         </table>
         <p style={{ fontSize: "0.8rem", color: "#71717a" }}>개인 연락·계좌이체 기준(저가). 공휴일은 2026·2027 법정공휴일 기준.</p>

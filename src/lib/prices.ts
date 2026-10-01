@@ -9,6 +9,11 @@ export type Prices = {
   기준인원: number; 인원추가: number; // 기준인원 초과 시 1인당 (전일은 무료)
 };
 
+/** 지인 채널 할인: 총 금액 ×0.8 (= 20% 할인). 견적 계산과 가격 정보 표시가 같은 값을 쓴다 */
+export const FRIEND_DISCOUNT_RATE = 0.8;
+/** 위 할인율을 "20" 처럼 퍼센트 숫자로 */
+export const friendDiscountPct = () => Math.round((1 - FRIEND_DISCOUNT_RATE) * 100);
+
 /** 저가(개인 연락·계좌이체) 기준 */
 export const DEFAULT_PRICES: Prices = {
   낮: [40_000, 40_000, 100_000],
