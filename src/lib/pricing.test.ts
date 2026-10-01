@@ -7,12 +7,22 @@ test("suggestAmount: 요일·패키지·채널·보증금", () => {
   assert.equal(suggestAmount("2026-09-16", "낮", "네이버플레이스")?.total, 40_000 + 50_000);
   assert.equal(suggestAmount("2026-09-16", "낮", "스페이스클라우드")?.total, 40_000 + 50_000);
   assert.equal(suggestAmount("2026-09-16", "밤", "별도컨택", undefined, 13)?.total, 70_000 + 30_000 + 50_000); // 11~13인 3명 추가
-  assert.equal(suggestAmount("2026-09-19", "전일", "지인", undefined, 20)?.total, 260_000); // 전일은 인원 추가 무료
+  assert.equal(suggestAmount("2026-09-19", "전일", "지인", undefined, 20)?.total, 208_000); // 전일은 인원 추가 무료 + 지인 20% 할인
   assert.equal(suggestAmount("2026-09-18", "밤", "별도컨택")?.total, 110_000 + 50_000);
   assert.equal(suggestAmount("2026-09-19", "밤+밤샘", "네이버플레이스")?.total, 170_000 + 30_000 + 50_000);
-  assert.equal(suggestAmount("2026-09-19", "전일", "지인")?.total, 260_000); // 지인은 보증금 없음
   assert.equal(suggestAmount("2026-09-16", "기타", "지인"), null);
   assert.equal(suggestAmount("", "밤", "지인"), null);
+});
+
+test("suggestAmount: 지인은 총 금액에서 20% 할인 (보증금 없음)", () => {
+  const sg = suggestAmount("2026-09-19", "전일", "지인"); // 주말 전일 260,000
+  assert.equal(sg?.deposit, 0);                           // 지인은 청소보증금 없음
+  assert.equal(sg?.total, 208_000);                       // 260,000 × 0.8
+  assert.match(sg?.label ?? "", /지인할인 20%/);
+  // 밤 + 밤샘 + 인원 추가도 모두 할인 대상
+  assert.equal(suggestAmount("2026-09-19", "밤+밤샘", "지인", undefined, 12)?.total, Math.round((170_000 + 30_000 + 20_000) * 0.8));
+  // 지인이 아니면 할인 없음
+  assert.equal(suggestAmount("2026-09-19", "전일", "별도컨택")?.total, 260_000 + 50_000);
 });
 
 test("suggestAmount: 공휴일·공휴일 전날·기타 채널", async () => {

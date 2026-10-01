@@ -47,8 +47,9 @@ export function UseTemplate({ templateId, body, phone, initial = {}, prices }: P
   const dateKey = slots.find((s) => isDateKey(s.key))?.key;
   const pkgKey = slots.find((s) => isPackageKey(s.key))?.key;
   const optionKeys = slots.filter((s) => isOptionKey(s.key)).map((s) => s.key);
-  const quote = pkgKey ? packageQuote(dateKey ? values[dateKey] ?? "" : "", values[pkgKey] ?? "", prices) : null;
-  const autoTotal = quote?.base != null ? won(quoteTotal(quote.base, optionKeys.map((k) => values[k] ?? ""), prices)) : "";
+  const pkg = pkgKey ? values[pkgKey] ?? "" : ""; // 고른 패키지 — 전일이면 밤샘이 무료라 옵션 금액이 달라짐
+  const quote = pkgKey ? packageQuote(dateKey ? values[dateKey] ?? "" : "", pkg, prices) : null;
+  const autoTotal = quote?.base != null ? won(quoteTotal(quote.base, optionKeys.map((k) => values[k] ?? ""), prices, pkg)) : "";
 
   // 화면 입력값 → 문구에 들어갈 글자
   const shown: Record<string, string> = {};
@@ -56,7 +57,7 @@ export function UseTemplate({ templateId, body, phone, initial = {}, prices }: P
     const v = values[key] ?? "";
     shown[key] = isDateKey(key) ? (/^\d{4}-\d{2}-\d{2}$/.test(v) ? fmtDate(v) : v)
       : isPackageKey(key) && quote ? quote.text
-      : isOptionKey(key) ? (v ? optionText(v, prices) : "")
+      : isOptionKey(key) ? (v ? optionText(v, prices, pkg) : "")
       : isTotalKey(key) ? (v || autoTotal)
       : v;
   }
@@ -108,7 +109,7 @@ export function UseTemplate({ templateId, body, phone, initial = {}, prices }: P
                   </span>
                   {date ? <input type="date" value={/^\d{4}-\d{2}-\d{2}$/.test(v) ? v : ""} onChange={(e) => set(s.key, e.target.value)} className={input} />
                     : isPackageKey(s.key) ? <Pick options={[...QUOTE_PACKAGES]} value={v} onChange={(x) => set(s.key, x)} />
-                    : isOptionKey(s.key) ? <Pick options={quoteOptions(prices).map((o) => o.label)} value={v} onChange={(x) => set(s.key, x)} allowEmpty />
+                    : isOptionKey(s.key) ? <Pick options={quoteOptions(prices, pkg).map((o) => o.label)} value={v} onChange={(x) => set(s.key, x)} allowEmpty />
                     : total ? <input value={v || autoTotal} onChange={(e) => set(s.key, e.target.value)} placeholder={pkgKey ? "날짜·패키지를 고르면 자동 계산" : ""} className={input + (v ? "" : " text-zinc-500")} />
                     : <input value={v} onChange={(e) => set(s.key, e.target.value)} className={input} />}
                 </label>

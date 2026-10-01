@@ -1,6 +1,6 @@
 import { CHANNELS } from "./ledger.ts";
 import { dayType } from "./holidays.ts";
-import { DEFAULT_PRICES, type Prices } from "./prices.ts";
+import { DEFAULT_PRICES, FRIEND_DISCOUNT_RATE, friendDiscountPct, type Prices } from "./prices.ts";
 
 export type Suggestion = { base: number; overnight: number; extraPeople: number; deposit: number; total: number; label: string };
 
@@ -24,9 +24,13 @@ export function suggestAmount(date: string, pkg: string | null, channel: string 
   const over = key === "전일" ? 0 : Math.max(0, (headcount ?? 0) - prices.기준인원); // 전일은 인원 추가 무료
   const extraPeople = over * prices.인원추가;
   const deposit = depositFor(channel, prices.보증금);
+  // 지인은 총 금액에서 20% 할인. 보증금은 지인에게 아예 없으므로(depositFor) 할인 대상 밖
+  const friend = channel === "지인";
+  const subtotal = base + extra + extraPeople;
   const won = (n: number) => n.toLocaleString("ko-KR");
   return {
-    base, overnight: extra, extraPeople, deposit, total: base + extra + extraPeople + deposit,
-    label: `${dayLabel} ${key} ${won(base)}${extra ? ` + 밤샘 ${won(extra)}` : ""}${extraPeople ? ` + 인원 ${over}명 ${won(extraPeople)}` : ""}${deposit ? ` + 보증금 ${won(deposit)}` : ""}`,
+    base, overnight: extra, extraPeople, deposit,
+    total: (friend ? Math.round(subtotal * FRIEND_DISCOUNT_RATE) : subtotal) + deposit,
+    label: `${dayLabel} ${key} ${won(base)}${extra ? ` + 밤샘 ${won(extra)}` : ""}${extraPeople ? ` + 인원 ${over}명 ${won(extraPeople)}` : ""}${deposit ? ` + 보증금 ${won(deposit)}` : ""}${friend ? ` − 지인할인 ${friendDiscountPct()}%` : ""}`,
   };
 }

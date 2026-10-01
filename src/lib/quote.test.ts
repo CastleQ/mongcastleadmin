@@ -16,3 +16,12 @@ test("quote: 패키지 줄 · 옵션 줄 · 총액(지인할인은 마지막에 
   assert.equal(quoteTotal(110_000, ["밤샘", "청소보증금", "지인할인"], p), 152_000); // (110+30+50)×0.8
   assert.equal(quoteTotal(70_000, ["", "모르는 옵션"], p), 70_000);
 });
+
+test("quote: 전일 대관은 밤샘 무료", () => {
+  const p = DEFAULT_PRICES;
+  assert.equal(optionText("밤샘", p, "전일"), "밤샘 포함 (무료)");
+  assert.equal(optionText("밤샘", p, "밤"), "밤샘 +30,000원");
+  assert.equal(quoteTotal(260_000, ["밤샘"], p, "전일"), 260_000);          // 전일: 가산금 없음
+  assert.equal(quoteTotal(170_000, ["밤샘"], p, "밤"), 170_000 + 30_000);   // 밤: 그대로 가산
+  assert.equal(quoteTotal(260_000, ["밤샘", "지인할인"], p, "전일"), 208_000); // 할인은 그대로 적용
+});
