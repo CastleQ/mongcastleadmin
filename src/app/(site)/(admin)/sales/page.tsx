@@ -14,7 +14,9 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
   const today = todayKST();
   const month = typeof m === "string" && /^\d{4}-\d{2}$/.test(m) ? m : today.slice(0, 7);
   const scenario: Scenario = SCENARIOS.includes(s as Scenario) ? (s as Scenario) : "기본";
-  const withReserved = rParam === "1"; // 예약 포함 보기: 오늘 이후 미정산 매출도 들어온다고 가정
+  // 예약 포함 보기(기본값): 오늘 이후 미정산 매출도 들어온다고 가정. r=0 이면 정산 완료만
+  // (옛 주소의 r=1 도 예약 포함으로 그대로 동작)
+  const withReserved = rParam !== "0";
   const info = monthInfo(month);
 
   const supabase = await createClient();
@@ -42,7 +44,7 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
   const basis = withReserved ? "예약 포함" : "정산 기준";
 
   const btn = "rounded border border-zinc-300 px-3 py-1 text-sm whitespace-nowrap hover:bg-zinc-50";
-  const q = (mm: string, ss: Scenario, rr = withReserved) => `/sales?m=${mm}&s=${ss}${rr ? "&r=1" : ""}`;
+  const q = (mm: string, ss: Scenario, rr = withReserved) => `/sales?m=${mm}&s=${ss}${rr ? "" : "&r=0"}`;
 
 
   return (
