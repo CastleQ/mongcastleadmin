@@ -14,8 +14,10 @@ fi
 cd "${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 
 echo "[session-start] npm install 시작"
-# npm ci 대신 npm install: 이미 받아둔 node_modules를 재사용해 다음 세션이 빨라진다
-npm install --no-audit --no-fund
+# npm ci 대신 npm install: 이미 받아둔 node_modules를 재사용해 다음 세션이 빨라진다.
+# --no-save: 컨테이너 npm 버전이 내 PC와 달라 package-lock.json의 메타데이터만 바뀌는 것을 막는다
+#            (안 쓰면 세션마다 락파일이 수정돼 커밋할 것도 없는 변경이 쌓인다)
+npm install --no-audit --no-fund --no-save
 echo "[session-start] npm install 완료"
 
 # 빌드에 필요한 환경변수 확인. 값은 환경 설정의 Secrets에 넣고, 여기엔 절대 적지 않는다.
