@@ -37,6 +37,13 @@ type Props = {
 /** 달력 전체(제목·달 이동·칸). 전 기간 데이터를 들고 있어서 달 이동이 즉시 */
 export function Calendar({ month: initialMonth, today, isAdmin, rows, flagged = [], highlightId = null, prices, contact, toolbar }: Props) {
   const [month, setMonth] = useState(initialMonth);
+  // 서버가 다른 달을 넘겨주면(검색 결과 클릭 등) 따라감.
+  // useEffect로 맞추면 화면을 두 번 그리므로, 렌더 중에 바로 맞춘다 (React 권장 방식)
+  const [serverMonth, setServerMonth] = useState(initialMonth);
+  if (serverMonth !== initialMonth) {
+    setServerMonth(initialMonth);
+    setMonth(initialMonth);
+  }
   const grid = useRef<HTMLDivElement>(null);
   const acc = useRef(0);
   const until = useRef(0);
@@ -50,9 +57,6 @@ export function Calendar({ month: initialMonth, today, isAdmin, rows, flagged = 
     const url = m === today.slice(0, 7) ? "/reservations" : `/reservations?m=${m}`;
     window.history.pushState(null, "", url);
   };
-  // 서버가 다른 달을 넘겨주면(검색 결과 클릭 등) 따라감
-  useEffect(() => { setMonth(initialMonth); }, [initialMonth]);
-
   useEffect(() => {
     const onPop = () => {
       const m = new URLSearchParams(window.location.search).get("m");
