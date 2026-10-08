@@ -67,7 +67,28 @@ insert into settings (key, value) values (
 ) on conflict (key) do nothing;
 
 -- ─────────────────────────────────────────────────────────────
--- 5) 잠금(RLS): 두 표 모두 관리자만. 손님에게는 전혀 보이지 않는다.
+-- 5) 연동 설정 (어느 캘린더를 읽고 쓰는지, 언제부터인지)
+-- ─────────────────────────────────────────────────────────────
+-- readCalendarIds : 읽어오는 캘린더들. 임시 캘린더는 앞으로 쓸 계획이 없지만, 혹시 적으셔도 놓치지 않게 함께 읽는다.
+-- writeCalendarId : 우리가 일정을 써 넣는 곳. 메인 캘린더 하나.
+-- startedAt       : 연동을 켠 시각. 이보다 먼저 만들어진(created) 구글 일정은 전부 무시한다.
+--                   "이미 구글캘린더에 기록된 일정은 무시" 결정을 이 한 값으로 구현한다.
+--                   null = 아직 안 켬. 연동을 켤 때 화면에서 지금 시각이 들어간다.
+-- 제목 필터(패키지명 또는 '몽캐슬'로 시작)는 코드 상수로 둔다 — 작업 규칙 5 (src/lib)
+insert into settings (key, value) values (
+  'calendar_sync',
+  '{
+     "readCalendarIds": [
+       "gjow2007@gmail.com",
+       "f4bd7b15ee505a2b187f2b65e4a55475f3bbe1d38494ad78dc24a355e254e1b8@group.calendar.google.com"
+     ],
+     "writeCalendarId": "gjow2007@gmail.com",
+     "startedAt": null
+   }'::jsonb
+) on conflict (key) do nothing;
+
+-- ─────────────────────────────────────────────────────────────
+-- 6) 잠금(RLS): 두 표 모두 관리자만. 손님에게는 전혀 보이지 않는다.
 -- ─────────────────────────────────────────────────────────────
 -- 손님 달력은 public_reservations 창(날짜·패키지만)을 쓰므로 고객명·연락처가 새지 않는다.
 -- 구글에서 들어온 예약도 kind='매출' category='대여' 이므로 그 창에 자동으로 잡힌다 (창은 고칠 필요 없음).
@@ -81,7 +102,7 @@ create policy "admin_all" on calendar_links for all to authenticated using (is_a
 create policy "admin_all" on sync_log       for all to authenticated using (is_admin()) with check (is_admin());
 
 -- ─────────────────────────────────────────────────────────────
--- 6) 확인: 아래 세 줄의 결과를 눈으로 확인하세요
+-- 7) 확인: 아래 네 줄의 결과를 눈으로 확인하세요
 -- ─────────────────────────────────────────────────────────────
 
 -- (가) 표 두 개와 칸이 제대로 생겼는지 — calendar_links 7칸 + sync_log 9칸 = 16줄이 나와야 정상
@@ -97,3 +118,6 @@ where table_schema = 'public' and table_name = 'ledger' and column_name = 'amoun
 
 -- (다) 슬롯 시각이 들어갔는지 — 4개 패키지가 보여야 정상
 select key, jsonb_pretty(value) as 슬롯시각 from settings where key = 'slot_hours';
+
+-- (라) 연동 설정이 들어갔는지 — 읽는 캘린더 2개, 쓰는 캘린더 1개, startedAt은 null
+select key, jsonb_pretty(value) as 연동설정 from settings where key = 'calendar_sync';
