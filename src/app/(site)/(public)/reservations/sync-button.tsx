@@ -31,7 +31,9 @@ export function SyncButton() {
     });
 
   return (
-    <div className="mb-3 flex flex-wrap items-center gap-2">
+    // 달 이동 단추 묶음 바로 아래에 오므로 아래 여백을 두지 않는다. 결과 글자는 단추 왼쪽에 붙인다
+    <div className="flex flex-wrap items-center justify-end gap-2">
+      {result && <span className="text-xs text-zinc-500">{result}</span>}
       <button
         type="button"
         onClick={run}
@@ -40,7 +42,6 @@ export function SyncButton() {
       >
         {pending ? "동기화 중…" : "구글캘린더 동기화 🔄"}
       </button>
-      {result && <span className="text-xs text-zinc-500">{result}</span>}
     </div>
   );
 }

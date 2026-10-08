@@ -98,17 +98,19 @@ export function Calendar({ month: initialMonth, today, isAdmin, rows, flagged = 
 
   return (
     <>
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex items-start justify-between gap-2">
         <h2 className="text-lg font-bold whitespace-nowrap sm:text-xl"><span className="hidden sm:inline">예약 현황 · </span>{info.year}년 {info.month}월</h2>
-        <div className="flex gap-1">
-          <button type="button" onClick={() => show(info.prev)} className={btn}>‹<span className="hidden sm:inline"> 이전달</span></button>
-          <button type="button" onClick={() => show(today.slice(0, 7))} className={btn}>오늘</button>
-          <button type="button" onClick={() => show(info.next)} className={btn}><span className="hidden sm:inline">다음달 </span>›</button>
-          {isAdmin && <Link href="/ledger/new" className="rounded bg-zinc-900 px-3 py-1 text-sm text-white whitespace-nowrap hover:bg-zinc-700">+ 추가</Link>}
+        {/* 달 이동·추가 단추와 동기화 단추를 오른쪽에 위아래로 둔다 */}
+        <div className="flex flex-col items-end gap-1">
+          <div className="flex gap-1">
+            <button type="button" onClick={() => show(info.prev)} className={btn}>‹<span className="hidden sm:inline"> 이전달</span></button>
+            <button type="button" onClick={() => show(today.slice(0, 7))} className={btn}>오늘</button>
+            <button type="button" onClick={() => show(info.next)} className={btn}><span className="hidden sm:inline">다음달 </span>›</button>
+            {isAdmin && <Link href="/ledger/new" className="rounded bg-zinc-900 px-3 py-1 text-sm text-white whitespace-nowrap hover:bg-zinc-700">+ 추가</Link>}
+          </div>
+          {isAdmin && <SyncButton />}
         </div>
       </div>
-
-      {isAdmin && <SyncButton />}
 
       {toolbar}
 
