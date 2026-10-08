@@ -8,6 +8,26 @@ export async function loadPrices(): Promise<Prices> {
   return mergePrices(data?.value);
 }
 
+/** 구글캘린더 연동 설정 (settings 표의 calendar_sync 키). SQL은 supabase/calendar-sync.sql */
+export type CalendarSync = {
+  readCalendarIds: string[];
+  writeCalendarId: string;
+  /** 연동을 켠 시각. 이보다 먼저 만들어진 구글 일정은 무시한다. null이면 아직 안 켬 */
+  startedAt: string | null;
+};
+
+export async function loadCalendarSync(): Promise<CalendarSync | null> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("settings").select("value").eq("key", "calendar_sync").maybeSingle();
+  const v = data?.value as Partial<CalendarSync> | undefined;
+  if (!v || !Array.isArray(v.readCalendarIds) || typeof v.writeCalendarId !== "string") return null;
+  return {
+    readCalendarIds: v.readCalendarIds.filter((s): s is string => typeof s === "string"),
+    writeCalendarId: v.writeCalendarId,
+    startedAt: typeof v.startedAt === "string" ? v.startedAt : null,
+  };
+}
+
 export type Contact = { phone: string; kakao: string };
 
 /** 공개 달력용: public_settings 창(요금표 + 문의 연락처). 로그인 없이 읽힘 */

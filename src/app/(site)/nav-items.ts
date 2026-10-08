@@ -14,6 +14,7 @@ export const ADMIN_NAV: NavItem[] = [
   { href: "/sales", label: "매출현황" },
   { href: "/customers", label: "고객관리" },
   { href: "/games/manage", label: "게임 관리" },
+  { href: "/calendar-sync", label: "구글캘린더 연동" },
   { href: "/info", label: "몽캐슬파티룸 정보" },
   { href: "/admins", label: "관리자 관리" },
 ];
