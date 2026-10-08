@@ -26,6 +26,8 @@ export type Preview = {
   rows: PreviewRow[];
   /** 가져오지 않은 일정 수 (제목이 조건에 안 맞거나 연동 시작 전에 만들어진 것) */
   skipped: { notOurs: number; beforeStart: number; cancelled: number };
+  /** 읽지 못해 건너뛴 캘린더 (공유가 안 된 경우 등). 나머지 캘린더는 그대로 보여준다 */
+  unread: { calendarId: string; why: string }[];
   from: string;
   to: string;
   startedAt: string | null;
@@ -61,6 +63,7 @@ export async function buildPreview(): Promise<Preview> {
   const linked = new Set((links ?? []).map((r) => r.google_event_id as string));
 
   const skipped = { notOurs: 0, beforeStart: 0, cancelled: 0 };
+  const unread: { calendarId: string; why: string }[] = [];
   const rows: PreviewRow[] = [];
 
   for (const calendarId of cfg.readCalendarIds) {
@@ -68,8 +71,10 @@ export async function buildPreview(): Promise<Preview> {
     try {
       events = await listEvents(calendarId, timeMin, timeMax);
     } catch (e) {
-      // 캘린더 하나가 막혀도 나머지는 보여준다. 이유는 화면에서 따로 띄운다
-      throw new Error(`${calendarId}: ${e instanceof Error ? e.message : String(e)}`);
+      // 캘린더 하나가 안 열려도 나머지는 그대로 보여준다.
+      // 공유하지 않은 캘린더(쓰지 않기로 한 것)가 전체를 멈추게 해서는 안 된다.
+      unread.push({ calendarId, why: e instanceof Error ? e.message : String(e) });
+      continue;
     }
 
     for (const ev of events) {
@@ -103,5 +108,5 @@ export async function buildPreview(): Promise<Preview> {
   }
 
   rows.sort((a, b) => a.date.localeCompare(b.date) || a.title.localeCompare(b.title));
-  return { rows, skipped, from, to, startedAt: cfg.startedAt };
+  return { rows, skipped, unread, from, to, startedAt: cfg.startedAt };
 }

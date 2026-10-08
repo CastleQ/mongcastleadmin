@@ -43,13 +43,22 @@ export default async function CalendarSyncPage() {
             <ul className="space-y-2">
               {access.map((a) => (
                 <li key={a.id} className="flex flex-wrap items-baseline gap-2">
-                  <span className={a.ok ? "text-emerald-700" : "text-red-600"}>{a.ok ? "✅ 연결됨" : "❌ 안 됨"}</span>
-                  <b>{a.ok ? a.summary : a.id}</b>
+                  <span className={a.ok ? "text-emerald-700" : "text-zinc-400"}>{a.ok ? "✅ 연결됨" : "⃠ 공유 안 됨"}</span>
+                  <b className={a.ok ? "" : "text-zinc-400"}>{a.ok ? a.summary : a.id}</b>
                   {a.id === cfg.writeCalendarId && <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs">여기에 씁니다</span>}
-                  {!a.ok && <span className="w-full text-xs text-zinc-500">{a.why}</span>}
+                  {!a.ok && (
+                    <span className="w-full text-xs text-zinc-400">
+                      건너뜁니다. 이 캘린더도 쓰시려면 서비스 계정에 ‘일정 변경’ 권한으로 공유하세요.
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>
+          )}
+          {preview && preview.unread.length > 0 && (
+            <p className="mt-3 text-xs text-zinc-400">
+              읽지 못한 캘린더 {preview.unread.length}개는 건너뛰고 나머지로 아래 표를 만들었습니다.
+            </p>
           )}
           {cfg && connected === 0 && (
             <p className="mt-3 rounded bg-red-50 p-3 text-red-700">
