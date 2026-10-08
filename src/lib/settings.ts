@@ -14,6 +14,8 @@ export type CalendarSync = {
   writeCalendarId: string;
   /** 연동을 켠 시각. 이보다 먼저 만들어진 구글 일정은 무시한다. null이면 아직 안 켬 */
   startedAt: string | null;
+  /** 구글 일정에 칠할 색 번호(1~11). null이면 색을 지정하지 않는다 */
+  eventColorId: string | null;
 };
 
 export async function loadCalendarSync(): Promise<CalendarSync | null> {
@@ -25,6 +27,7 @@ export async function loadCalendarSync(): Promise<CalendarSync | null> {
     readCalendarIds: v.readCalendarIds.filter((s): s is string => typeof s === "string"),
     writeCalendarId: v.writeCalendarId,
     startedAt: typeof v.startedAt === "string" ? v.startedAt : null,
+    eventColorId: typeof v.eventColorId === "string" ? v.eventColorId : null,
   };
 }
 

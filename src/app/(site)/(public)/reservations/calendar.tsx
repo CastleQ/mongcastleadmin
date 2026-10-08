@@ -10,6 +10,7 @@ import type { Prices } from "@/lib/prices";
 import type { Contact } from "@/lib/settings";
 import { Chip } from "./chip";
 import { PublicCells } from "./public-cells";
+import { SyncButton } from "./sync-button";
 
 /** 예약된 칩은 진하게(가능 슬롯의 연한 초록과 확실히 구분) */
 const COLOR: Record<PackageKind, string> = {
@@ -106,6 +107,8 @@ export function Calendar({ month: initialMonth, today, isAdmin, rows, flagged = 
           {isAdmin && <Link href="/ledger/new" className="rounded bg-zinc-900 px-3 py-1 text-sm text-white whitespace-nowrap hover:bg-zinc-700">+ 추가</Link>}
         </div>
       </div>
+
+      {isAdmin && <SyncButton />}
 
       {toolbar}
 

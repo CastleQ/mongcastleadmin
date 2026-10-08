@@ -78,7 +78,7 @@ export async function pushLedgerRow(id: number): Promise<void> {
     const hash = contentHash(ledger);
     if (link && link.content_hash === hash) return; // 보이는 내용이 그대로면 구글을 건드리지 않는다 (메아리 방지)
 
-    const body = eventFromLedger(ledger, await slotHours());
+    const body = eventFromLedger(ledger, await slotHours(), cfg.eventColorId);
 
     if (link) {
       const updated = await patchEvent(link.calendar_id as string, link.google_event_id as string, body);

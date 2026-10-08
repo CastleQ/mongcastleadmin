@@ -4,6 +4,7 @@ import { loadCalendarSync } from "@/lib/settings";
 import { checkAccess } from "@/lib/google-calendar";
 import { setSyncStart, syncNow } from "./actions";
 import { SeedSection } from "./seed-section";
+import { ColorPicker } from "./color-picker";
 
 const won = (n: number) => n.toLocaleString("ko-KR");
 const fmt = (iso: string) => new Date(iso).toLocaleString("ko-KR", { timeZone: "Asia/Seoul", dateStyle: "medium", timeStyle: "short" });
@@ -161,7 +162,13 @@ export default async function CalendarSyncPage() {
           </section>
 
           {preview.rows.some((r) => !r.alreadyLinked) && preview.startedAt && (
-            <form action={syncNow} className="mb-5 flex flex-wrap items-center gap-3">
+            <form
+              action={async () => {
+                "use server";
+                await syncNow(); // 폼 동작은 값을 돌려주면 안 되므로 감싼다
+              }}
+              className="mb-5 flex flex-wrap items-center gap-3"
+            >
               <button type="submit" className="rounded bg-zinc-900 px-4 py-2 text-sm text-white hover:bg-zinc-700">
                 {preview.rows.filter((r) => !r.alreadyLinked).length}건 장부로 가져오기
               </button>
@@ -178,6 +185,8 @@ export default async function CalendarSyncPage() {
       )}
 
       {connected > 0 && <SeedSection />}
+
+      {cfg && <ColorPicker current={cfg.eventColorId} />}
     </>
   );
 }

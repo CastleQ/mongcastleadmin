@@ -87,8 +87,40 @@ export async function unlink(ledgerId: number) {
  */
 export async function syncNow() {
   const { importFromGoogle } = await import("@/lib/calendar-import");
-  await importFromGoogle();
+  const result = await importFromGoogle();
   revalidatePath("/calendar-sync");
   revalidatePath("/reservations");
   revalidatePath("/ledger");
+  return result;
+}
+
+/**
+ * 구글 일정에 칠할 색 고르기. 저장과 동시에 **이미 올라간 일정들도 다시 칠한다** —
+ * 새로 만드는 것만 바뀌면 캘린더에 두 색이 섞여 더 헷갈린다.
+ * null 을 주면 색 지정을 지운다 (되돌리는 길 — 작업 규칙 7).
+ */
+export async function setEventColor(colorId: string | null) {
+  const supabase = await createClient();
+  const { data } = await supabase.from("settings").select("value").eq("key", "calendar_sync").maybeSingle();
+  if (!data) throw new Error("연동 설정이 없습니다");
+
+  const value = { ...(data.value as Record<string, unknown>), eventColorId: colorId };
+  const { error } = await supabase
+    .from("settings")
+    .update({ value, updated_at: new Date().toISOString() })
+    .eq("key", "calendar_sync");
+  if (error) throw new Error(error.message);
+
+  // 이미 올라간 일정 다시 칠하기. 색은 내용 지문에 안 들어가므로 여기서 직접 보낸다
+  const { patchEvent } = await import("@/lib/google-calendar");
+  const { data: links } = await supabase.from("calendar_links").select("calendar_id,google_event_id");
+  for (const l of links ?? []) {
+    try {
+      await patchEvent(l.calendar_id as string, l.google_event_id as string, { colorId: colorId ?? null });
+    } catch {
+      // 한 건이 실패해도 나머지는 계속한다
+    }
+  }
+
+  revalidatePath("/calendar-sync");
 }

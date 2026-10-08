@@ -61,12 +61,28 @@ export function descriptionOf(row: Ledger): string {
   return lines.filter((l) => l !== "").join("\n");
 }
 
+/** 구글 일정 색 (1~11). 사장님이 이름을 바꿔 쓰시면 구글 화면엔 그 이름으로 보인다 */
+export const EVENT_COLORS: { id: string; name: string; hex: string }[] = [
+  { id: "1", name: "라벤더", hex: "#7986cb" },
+  { id: "2", name: "세이지(연초록)", hex: "#33b679" },
+  { id: "3", name: "포도", hex: "#8e24aa" },
+  { id: "4", name: "플라밍고", hex: "#e67c73" },
+  { id: "5", name: "바나나", hex: "#f6bf26" },
+  { id: "6", name: "귤", hex: "#f4511e" },
+  { id: "7", name: "공작(하늘)", hex: "#039be5" },
+  { id: "8", name: "그래파이트(회색)", hex: "#616161" },
+  { id: "9", name: "블루베리(남색)", hex: "#3f51b5" },
+  { id: "10", name: "바질(진초록)", hex: "#0b8043" },
+  { id: "11", name: "토마토(빨강)", hex: "#d50000" },
+];
+
 export type GoogleEventBody = {
   summary: string;
   description: string;
   start: { date: string } | { dateTime: string; timeZone: string };
   end: { date: string } | { dateTime: string; timeZone: string };
   extendedProperties: { private: { ledger_id: string; content_hash: string } };
+  colorId?: string;
 };
 
 /**
@@ -74,7 +90,7 @@ export type GoogleEventBody = {
  * 숨은 칸(extendedProperties.private)에 거래 번호와 지문을 넣는다 —
  * 되읽을 때 "내가 쓴 것이 돌아온 것"임을 알아보는 바코드다.
  */
-export function eventFromLedger(row: Ledger, hours: SlotHours = DEFAULT_SLOT_HOURS): GoogleEventBody {
+export function eventFromLedger(row: Ledger, hours: SlotHours = DEFAULT_SLOT_HOURS, colorId: string | null = null): GoogleEventBody {
   const slot = hours[row.package ?? ""] ?? null;
   const tz = "Asia/Seoul";
   const start = slot
@@ -90,6 +106,7 @@ export function eventFromLedger(row: Ledger, hours: SlotHours = DEFAULT_SLOT_HOU
     start,
     end,
     extendedProperties: { private: { ledger_id: String(row.id), content_hash: contentHash(row) } },
+    ...(colorId ? { colorId } : {}),
   };
 }
 
