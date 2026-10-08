@@ -179,7 +179,8 @@ export function parseEvent(title: string, description: string, time: EventTime):
       .replace(/01[016-9][-\s]?\d{3,4}[-\s]?\d{4}/g, " ")
       .replace(/\d{1,3}\s*[명인]/g, " ")
       .replace(/\d[\d,]*\s*(만\s*)?원?/g, " ")
-      .replace(/예약|파티룸|문의|참|부/g, " ")
+      // 모임을 뜻하는 말(벙·벙개)과 거드는 말은 이름이 아니다 — '홀덤벙'이 고객 '벙'으로 읽히던 문제
+      .replace(/벙개|벙|예약|파티룸|문의|참|부/g, " ")
       .replace(/[/·,|\-–—]+/g, " "); // 구분자는 이름이 아니다
     name = strip(rest) || null;
   }

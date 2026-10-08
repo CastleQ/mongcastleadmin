@@ -2,8 +2,10 @@ import Link from "next/link";
 import { buildPreview, type PreviewRow } from "@/lib/calendar-sync";
 import { loadCalendarSync } from "@/lib/settings";
 import { checkAccess } from "@/lib/google-calendar";
+import { setSyncStart } from "./actions";
 
 const won = (n: number) => n.toLocaleString("ko-KR");
+const fmt = (iso: string) => new Date(iso).toLocaleString("ko-KR", { timeZone: "Asia/Seoul", dateStyle: "medium", timeStyle: "short" });
 
 /**
  * 구글캘린더 연동 — 미리보기.
@@ -69,6 +71,44 @@ export default async function CalendarSyncPage() {
         </div>
       </section>
 
+      {/* 2. 언제부터 가져올지 */}
+      {cfg && (
+        <section className="mb-5 rounded-lg border border-zinc-200">
+          <h3 className="border-b border-zinc-100 px-4 py-2.5 font-bold">2. 언제부터 가져올지</h3>
+          <div className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm">
+            {cfg.startedAt ? (
+              <>
+                <span className="text-emerald-700">● 켜짐</span>
+                <span>
+                  <b>{fmt(cfg.startedAt)}</b> 이후에 <b>새로 만든</b> 구글 일정만 가져옵니다.
+                  <span className="block text-xs text-zinc-500">그 전에 만들어둔 일정은 손대지 않습니다 (나중에 고쳐도 그대로).</span>
+                </span>
+                <form action={setSyncStart.bind(null, false)} className="ml-auto">
+                  <button type="submit" className="rounded border border-zinc-300 px-3 py-1 text-xs hover:border-zinc-900">
+                    시작 시점 지우기
+                  </button>
+                </form>
+              </>
+            ) : (
+              <>
+                <span className="text-amber-700">○ 꺼짐</span>
+                <span>
+                  기준 시점이 없어 <b>기존 일정까지 전부</b> 대상입니다.
+                  <span className="block text-xs text-zinc-500">
+                    지금 켜면 아래 목록이 비워지고, 앞으로 새로 만드는 일정부터 들어옵니다.
+                  </span>
+                </span>
+                <form action={setSyncStart.bind(null, true)} className="ml-auto">
+                  <button type="submit" className="rounded bg-zinc-900 px-3 py-1.5 text-xs text-white hover:bg-zinc-700">
+                    지금부터 연동 시작
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
+        </section>
+      )}
+
       {error && (
         <section className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           <b>읽는 중 오류:</b> {error}
@@ -80,7 +120,7 @@ export default async function CalendarSyncPage() {
         <>
           <section className="mb-5 rounded-lg border border-zinc-200">
             <h3 className="flex flex-wrap items-baseline gap-2 border-b border-zinc-100 px-4 py-2.5">
-              <span className="font-bold">2. 들어올 예약 {preview.rows.length}건</span>
+              <span className="font-bold">3. 들어올 예약 {preview.rows.length}건</span>
               <span className="text-xs font-normal text-zinc-400">{preview.from} ~ {preview.to}</span>
             </h3>
             <div className="px-4 py-3 text-sm">

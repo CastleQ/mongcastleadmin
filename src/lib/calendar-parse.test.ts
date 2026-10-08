@@ -78,6 +78,13 @@ test("parseEvent: 설명란의 '키: 값'이 제목보다 우선", () => {
   assert.equal(p.customer_phone, "010-9999-8888");
 });
 
+test("parseEvent: '벙'은 고객 이름이 아니다 (실제 일정 '몽캐슬 홀덤벙')", () => {
+  const p = parseEvent("몽캐슬 홀덤벙", "", at("19:00", "20:00"));
+  assert.equal(p.package, "밤");
+  assert.equal(p.content, "홀덤");
+  assert.equal(p.customer_name, null); // 전엔 '벙'으로 읽혔다
+});
+
 test("parseEvent: 패키지를 못 읽으면 기타 + 경고 (실제 일정들)", () => {
   for (const title of ["몽캐슬 반지계피", "몽캐슬 광복절 시계피", "몽캐슬 예약"]) {
     const p = parseEvent(title, "", allDay);
