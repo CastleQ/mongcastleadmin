@@ -24,6 +24,8 @@ const PACKAGE_WORDS: { word: string; pkg: string }[] = [
 ];
 
 const strip = (s: string) => s.replace(/\s+/g, " ").trim();
+/** 정규식에 글자 그대로 넣기 위한 이스케이프 — '밤+밤샘'의 +가 수량 기호로 해석되던 문제 */
+const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /** 제목이 가져올 대상인지. 앞뒤 공백은 무시한다 (실제 일정에 앞 공백이 붙은 것이 있었다) */
 export function isOurs(title: string): boolean {
@@ -171,8 +173,10 @@ export function parseEvent(title: string, description: string, time: EventTime):
   let name: string | null = d["이름"] ?? null;
   if (!name) {
     let rest = t;
-    for (const p of TITLE_PREFIXES) rest = rest.replace(new RegExp(p, "g"), " ");
-    for (const { word } of PACKAGE_WORDS) rest = rest.replace(new RegExp(word.replace("+", "\\+"), "g"), " ");
+    for (const p of TITLE_PREFIXES) rest = rest.replace(new RegExp(esc(p), "g"), " ");
+    for (const { word } of PACKAGE_WORDS) rest = rest.replace(new RegExp(esc(word), "g"), " ");
+    // 전체 이름을 먼저 지운다. 짧은 말('네이버')만 지우면 '플레이스'가 이름에 남는다
+    for (const c of CHANNELS) rest = rest.replace(new RegExp(c, "g"), " ");
     for (const { word } of CHANNEL_WORDS) rest = rest.replace(new RegExp(word, "g"), " ");
     for (const c of CONTENTS) rest = rest.replace(new RegExp(c, "g"), " ");
     rest = rest

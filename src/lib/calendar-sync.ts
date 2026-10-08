@@ -4,6 +4,7 @@ import { listEvents, type GoogleEvent } from "./google-calendar";
 import { eventTime, isOurs, parseEvent, type ParsedEvent } from "./calendar-parse";
 import { suggestAmount } from "./pricing";
 import { todayKST } from "./calendar";
+import { addDays } from "./calendar-push";
 
 /** 미리보기 한 줄: 구글 일정 하나가 예약현황에 어떻게 들어올지 */
 export type PreviewRow = {
@@ -37,11 +38,7 @@ export type Preview = {
 const DAYS_BACK = 30;
 const DAYS_AHEAD = 365;
 
-const shift = (date: string, days: number) => {
-  const d = new Date(`${date}T00:00:00+09:00`);
-  d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
-};
+// 날짜 더하기는 calendar-push 의 것을 쓴다 (시간대 때문에 하루 어긋나던 계산을 한 곳으로 모음)
 
 /**
  * 구글 → 예약현황 미리보기. **아무것도 저장하지 않는다.**
@@ -52,8 +49,8 @@ export async function buildPreview(): Promise<Preview> {
   if (!cfg) throw new Error("연동 설정(settings.calendar_sync)이 없습니다 — supabase/calendar-sync.sql 을 실행하세요");
 
   const today = todayKST();
-  const from = shift(today, -DAYS_BACK);
-  const to = shift(today, DAYS_AHEAD);
+  const from = addDays(today, -DAYS_BACK);
+  const to = addDays(today, DAYS_AHEAD);
   const timeMin = `${from}T00:00:00+09:00`;
   const timeMax = `${to}T00:00:00+09:00`;
 

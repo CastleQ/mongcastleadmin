@@ -109,6 +109,42 @@ export async function listEvents(calendarId: string, timeMin: string, timeMax: s
   return out;
 }
 
+async function write(method: "POST" | "PATCH" | "DELETE", path: string, body?: unknown): Promise<Response> {
+  const token = await accessToken();
+  return fetch(`${API}${path}`, {
+    method,
+    headers: { authorization: `Bearer ${token}`, ...(body ? { "content-type": "application/json" } : {}) },
+    body: body ? JSON.stringify(body) : undefined,
+    cache: "no-store",
+  });
+}
+
+async function fail(res: Response, what: string): Promise<never> {
+  const body = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
+  throw new Error(`${what} 실패: ${body?.error?.message ?? `HTTP ${res.status}`}`);
+}
+
+/** 일정 만들기 → 구글이 붙여준 일정 id를 돌려준다 */
+export async function createEvent(calendarId: string, body: unknown): Promise<string> {
+  const res = await write("POST", `/calendars/${encodeURIComponent(calendarId)}/events`, body);
+  if (!res.ok) await fail(res, "구글 일정 만들기");
+  const data = (await res.json()) as { id?: string };
+  if (!data.id) throw new Error("구글이 일정 id를 주지 않았습니다");
+  return data.id;
+}
+
+/** 일정 고치기 (보낸 칸만 바뀐다) */
+export async function patchEvent(calendarId: string, eventId: string, body: unknown): Promise<void> {
+  const res = await write("PATCH", `/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}`, body);
+  if (!res.ok) await fail(res, "구글 일정 고치기");
+}
+
+/** 일정 지우기. 이미 없으면(410·404) 성공으로 친다 — 지우려던 결과는 같으므로 */
+export async function deleteEvent(calendarId: string, eventId: string): Promise<void> {
+  const res = await write("DELETE", `/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}`);
+  if (!res.ok && res.status !== 404 && res.status !== 410) await fail(res, "구글 일정 지우기");
+}
+
 /** 서비스 계정이 실제로 접근 가능한지 확인용 — 설정 화면의 '연결 확인' 단추가 쓴다 */
 export async function checkAccess(calendarId: string): Promise<{ ok: true; summary: string } | { ok: false; why: string }> {
   try {

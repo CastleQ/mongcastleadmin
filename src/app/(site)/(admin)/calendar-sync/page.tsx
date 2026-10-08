@@ -3,6 +3,7 @@ import { buildPreview, type PreviewRow } from "@/lib/calendar-sync";
 import { loadCalendarSync } from "@/lib/settings";
 import { checkAccess } from "@/lib/google-calendar";
 import { setSyncStart } from "./actions";
+import { SeedSection } from "./seed-section";
 
 const won = (n: number) => n.toLocaleString("ko-KR");
 const fmt = (iso: string) => new Date(iso).toLocaleString("ko-KR", { timeZone: "Asia/Seoul", dateStyle: "medium", timeStyle: "short" });
@@ -159,12 +160,14 @@ export default async function CalendarSyncPage() {
             </div>
           </section>
 
-          <p className="text-sm text-zinc-500">
-            내용이 맞으면 다음 단계에서 <b>가져오기</b> 단추를 만들어 실제로 반영합니다.
-            지금은 확인만 하세요 — <Link href="/ledger" className="underline hover:text-zinc-900">거래</Link>는 그대로입니다.
+          <p className="mb-5 text-sm text-zinc-500">
+            위 표는 <b>구글 → 장부</b> 방향입니다. 가져오기 단추는 다음 단계에서 붙입니다 —
+            지금은 확인만 하세요. <Link href="/ledger" className="underline hover:text-zinc-900">거래</Link>는 그대로입니다.
           </p>
         </>
       )}
+
+      {connected > 0 && <SeedSection />}
     </>
   );
 }

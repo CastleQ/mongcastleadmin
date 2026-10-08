@@ -2,6 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { pushLedgerRow } from "@/lib/calendar-export";
+import { contentHash } from "@/lib/calendar-push";
+import type { Ledger } from "@/lib/ledger";
 
 /**
  * 연동 시작 시점(settings.calendar_sync.startedAt) 켜기·끄기.
@@ -28,5 +31,51 @@ export async function setSyncStart(on: boolean) {
     .eq("key", "calendar_sync");
   if (error) throw new Error(error.message);
 
+  revalidatePath("/calendar-sync");
+}
+
+/**
+ * 1차 내보내기: 고른 거래들을 구글에 올린다.
+ * 한 건이 실패해도 나머지는 계속한다 (실패는 sync_log 에 남는다).
+ */
+export async function seedToGoogle(ids: number[]) {
+  for (const id of ids) await pushLedgerRow(id);
+  revalidatePath("/calendar-sync");
+}
+
+/**
+ * 중복 처리: 새로 만들지 않고 **이미 있는 구글 일정과 짝만 맺는다.**
+ * 같은 예약이 양쪽에 따로 있을 때 쓴다 (예: 이미 적어두신 10/24 건).
+ * 짝을 맺어두면 그 뒤로는 하나처럼 움직인다.
+ */
+export async function linkExisting(ledgerId: number, googleEventId: string, calendarId: string) {
+  const supabase = await createClient();
+  const { data: row } = await supabase.from("ledger").select("*").eq("id", ledgerId).maybeSingle();
+  if (!row) throw new Error("거래를 찾을 수 없습니다");
+
+  const { error } = await supabase.from("calendar_links").insert({
+    ledger_id: ledgerId,
+    google_event_id: googleEventId,
+    calendar_id: calendarId,
+    // 일부러 장부 기준 지문을 넣는다 → 다음 저장 때 구글 일정이 장부 내용으로 맞춰진다
+    content_hash: contentHash(row as Ledger),
+  });
+  if (error) throw new Error(error.message);
+
+  await supabase.from("sync_log").insert({
+    direction: "ledger_to_google",
+    action: "updated",
+    ledger_id: ledgerId,
+    google_event_id: googleEventId,
+    message: "이미 있던 구글 일정과 짝만 맺음 (새로 만들지 않음)",
+  });
+  revalidatePath("/calendar-sync");
+}
+
+/** 짝 풀기 — 잘못 맺었을 때 되돌리는 길 (작업 규칙 7). 구글 일정은 지우지 않는다 */
+export async function unlink(ledgerId: number) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("calendar_links").delete().eq("ledger_id", ledgerId);
+  if (error) throw new Error(error.message);
   revalidatePath("/calendar-sync");
 }
