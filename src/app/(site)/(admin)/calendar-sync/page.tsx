@@ -2,7 +2,7 @@ import Link from "next/link";
 import { buildPreview, type PreviewRow } from "@/lib/calendar-sync";
 import { loadCalendarSync } from "@/lib/settings";
 import { checkAccess } from "@/lib/google-calendar";
-import { setSyncStart } from "./actions";
+import { setSyncStart, syncNow } from "./actions";
 import { SeedSection } from "./seed-section";
 
 const won = (n: number) => n.toLocaleString("ko-KR");
@@ -160,9 +160,19 @@ export default async function CalendarSyncPage() {
             </div>
           </section>
 
+          {preview.rows.some((r) => !r.alreadyLinked) && preview.startedAt && (
+            <form action={syncNow} className="mb-5 flex flex-wrap items-center gap-3">
+              <button type="submit" className="rounded bg-zinc-900 px-4 py-2 text-sm text-white hover:bg-zinc-700">
+                {preview.rows.filter((r) => !r.alreadyLinked).length}건 장부로 가져오기
+              </button>
+              <span className="text-xs text-zinc-500">
+                금액은 추정으로 들어가고 <b>미정산</b>으로 표시됩니다. 구글에서 고친 일정도 함께 따라옵니다.
+              </span>
+            </form>
+          )}
           <p className="mb-5 text-sm text-zinc-500">
-            위 표는 <b>구글 → 장부</b> 방향입니다. 가져오기 단추는 다음 단계에서 붙입니다 —
-            지금은 확인만 하세요. <Link href="/ledger" className="underline hover:text-zinc-900">거래</Link>는 그대로입니다.
+            가져온 뒤에는 <Link href="/ledger" className="underline hover:text-zinc-900">거래</Link>에서 금액을 확인하고 고치시면 됩니다.
+            모든 변경은 기록에 남습니다.
           </p>
         </>
       )}

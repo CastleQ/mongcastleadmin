@@ -79,3 +79,16 @@ export async function unlink(ledgerId: number) {
   if (error) throw new Error(error.message);
   revalidatePath("/calendar-sync");
 }
+
+/**
+ * 구글 → 장부 가져오기 (지금 동기화).
+ * 새 일정은 넣고, 구글에서 고친 것은 반영하고, 지워진 것은 표시만 한다.
+ * 모든 변경은 sync_log 에 남아 되돌릴 수 있다 (작업 규칙 7).
+ */
+export async function syncNow() {
+  const { importFromGoogle } = await import("@/lib/calendar-import");
+  await importFromGoogle();
+  revalidatePath("/calendar-sync");
+  revalidatePath("/reservations");
+  revalidatePath("/ledger");
+}

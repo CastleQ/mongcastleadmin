@@ -18,6 +18,8 @@ export type Ledger = {
   net: number; // 실수령
   payment_method: string | null;
   note: string | null;
+  /** 구글캘린더에서 들어와 금액을 날짜·패키지로 추정한 건. 사장님이 확정하면 false (DB 기본값 false) */
+  amount_estimated?: boolean;
 };
 
 export type LedgerInput = Omit<Ledger, "id">;

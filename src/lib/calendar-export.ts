@@ -81,22 +81,23 @@ export async function pushLedgerRow(id: number): Promise<void> {
     const body = eventFromLedger(ledger, await slotHours());
 
     if (link) {
-      await patchEvent(link.calendar_id as string, link.google_event_id as string, body);
+      const updated = await patchEvent(link.calendar_id as string, link.google_event_id as string, body);
       await supabase.from("calendar_links")
-        .update({ content_hash: hash, synced_at: new Date().toISOString(), deleted_in_google: false })
+        .update({ content_hash: hash, google_updated: updated, synced_at: new Date().toISOString(), deleted_in_google: false })
         .eq("ledger_id", id);
       await log({ direction: "ledger_to_google", action: "updated", ledger_id: id, google_event_id: link.google_event_id as string });
       return;
     }
 
-    const eventId = await createEvent(cfg.writeCalendarId, body);
+    const created = await createEvent(cfg.writeCalendarId, body);
     await supabase.from("calendar_links").insert({
       ledger_id: id,
-      google_event_id: eventId,
+      google_event_id: created.id,
       calendar_id: cfg.writeCalendarId,
       content_hash: hash,
+      google_updated: created.updated,
     });
-    await log({ direction: "ledger_to_google", action: "created", ledger_id: id, google_event_id: eventId });
+    await log({ direction: "ledger_to_google", action: "created", ledger_id: id, google_event_id: created.id });
   } catch (e) {
     // 장부 저장을 막지 않는다. 무엇이 실패했는지는 기록에 남긴다
     await log({
