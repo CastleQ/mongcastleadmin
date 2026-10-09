@@ -21,7 +21,7 @@ export function GameForm({ row, back }: { row?: Game; back?: string }) {
               </label>
             ))}
           </div>
-          <p className="mt-1 text-xs text-zinc-400">공개 페이지엔 보드게임만 보여요</p>
+          <p className="mt-1 text-xs text-zinc-400">머더미스터리는 이미지가 있어야 공개 페이지에 보여요</p>
         </div>
         <div>
           <label className={label} htmlFor="name">이름 <b className="text-red-500">*</b></label>

@@ -33,7 +33,7 @@ export default async function ManageGamesPage({ searchParams }: PageProps<"/game
 
       {sections.map((s) => (
         <section key={s.kind} className="mb-6">
-          {!k && <h3 className="mb-1 text-sm font-medium text-zinc-600">{s.kind} <span className="font-normal text-zinc-400">{s.games.length}개{s.kind === "머더미스터리" && " · 번역 예정 목록, 공개 안 됨"}</span></h3>}
+          {!k && <h3 className="mb-1 text-sm font-medium text-zinc-600">{s.kind} <span className="font-normal text-zinc-400">{s.games.length}개{s.kind === "머더미스터리" && " · 이미지 있는 것만 공개"}</span></h3>}
           <ul className="divide-y divide-zinc-100 border-y border-zinc-200">
             {s.games.map((g) => (
               <li key={g.id}>
