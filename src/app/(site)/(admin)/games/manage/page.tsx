@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { GAME_KINDS, type Game } from "@/lib/games";
+import { GameRow } from "@/app/(site)/game-row";
 
 export default async function ManageGamesPage({ searchParams }: PageProps<"/games/manage">) {
   const { kind } = await searchParams;
@@ -37,17 +38,7 @@ export default async function ManageGamesPage({ searchParams }: PageProps<"/game
             {s.games.map((g) => (
               <li key={g.id}>
                 <Link href={`/games/manage/${g.id}${q}`} className="flex items-center gap-3 px-2 py-2 hover:bg-zinc-50">
-                  {g.image_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={g.image_url} alt="" className="h-12 w-12 shrink-0 rounded object-cover" />
-                  ) : (
-                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded bg-zinc-100 text-[10px] text-zinc-400">이미지 없음</span>
-                  )}
-                  <span className="min-w-0 flex-1">
-                    <span className="block font-medium">{g.name}{g.expansion && <span className="ml-1 font-normal text-zinc-500">+ {g.expansion}</span>}</span>
-                    <span className="block truncate text-xs text-zinc-500">{[g.category, g.players, g.play_minutes && `${g.play_minutes}분`, g.qty > 1 && `×${g.qty}`].filter(Boolean).join(" · ")}</span>
-                  </span>
-                  {g.kind === "머더미스터리" && <span className="shrink-0 text-xs text-zinc-400">{g.translated ? "번역됨" : "미번역"}</span>}
+                  <GameRow g={g} />
                 </Link>
               </li>
             ))}

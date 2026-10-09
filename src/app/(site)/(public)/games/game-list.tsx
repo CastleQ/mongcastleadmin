@@ -1,12 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { filterGames, type Game } from "@/lib/games";
+import { GameRow } from "@/app/(site)/game-row";
 
-/** 검색 + 종류 필터 (브라우저에서 즉시) */
+type View = "card" | "list";
+const VIEW_KEY = "games-view";
+const VIEWS: { v: View; label: string }[] = [{ v: "card", label: "카드" }, { v: "list", label: "목록" }];
+
+/** 검색 + 카드/목록 보기 전환 (브라우저에서 즉시, 보기 방식은 이 기기에 기억) */
 export function GameList({ games }: { games: Game[] }) {
   const [q, setQ] = useState("");
+  const [view, setView] = useState<View>("card");
   const shown = filterGames(games, null, q);
+
+  useEffect(() => {
+    try {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 서버 렌더와 맞추려고 첫 화면 뒤에 읽음
+      if (localStorage.getItem(VIEW_KEY) === "list") setView("list");
+    } catch {}
+  }, []);
+  const pick = (v: View) => {
+    setView(v);
+    try { localStorage.setItem(VIEW_KEY, v); } catch {}
+  };
 
   return (
     <>
@@ -14,10 +31,22 @@ export function GameList({ games }: { games: Game[] }) {
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="게임 이름 검색" type="search"
           className="min-w-0 flex-1 rounded border border-zinc-300 px-3 py-1.5 text-base focus:border-zinc-900 focus:outline-none sm:max-w-xs" />
         <span className="text-sm text-zinc-500">{shown.length}개</span>
+        <div className="ml-auto inline-flex overflow-hidden rounded border border-zinc-900" role="group" aria-label="보기 방식">
+          {VIEWS.map(({ v, label }) => (
+            <button key={v} type="button" onClick={() => pick(v)} aria-pressed={view === v}
+              className={`px-3 py-1.5 text-sm ${view === v ? "bg-zinc-900 text-white" : "hover:bg-zinc-50"}`}>{label}</button>
+          ))}
+        </div>
       </div>
 
       {shown.length === 0 ? (
         <p className="py-10 text-center text-zinc-500">해당하는 게임이 없어요.</p>
+      ) : view === "list" ? (
+        <ul className="divide-y divide-zinc-100 border-y border-zinc-200">
+          {shown.map((g) => (
+            <li key={g.id} className="flex items-center gap-3 px-2 py-2"><GameRow g={g} /></li>
+          ))}
+        </ul>
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {shown.map((g) => (
