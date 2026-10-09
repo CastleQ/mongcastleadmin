@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { filterGames, groupGames, type Game } from "@/lib/games";
 import { GameRow } from "@/app/(site)/game-row";
@@ -12,8 +13,9 @@ const VIEWS: { v: View; label: string; icon: React.ReactNode }[] = [
   { v: "list", label: "목록 보기", icon: <path d="M3 5h18M3 12h18M3 19h18" /> },
 ];
 
-/** 검색 + 카드/목록 보기 전환 (브라우저에서 즉시, 보기 방식은 이 기기에 기억) */
-export function GameList({ games }: { games: Game[] }) {
+/** 검색 + 카드/목록 보기 전환 (브라우저에서 즉시, 보기 방식은 이 기기에 기억).
+ *  editBase가 있으면(게임 관리) 각 게임을 누르면 `${editBase}${id}` 편집 화면으로 */
+export function GameList({ games, editBase }: { games: Game[]; editBase?: string }) {
   const [q, setQ] = useState("");
   const [view, setView] = useState<View>("card");
   const shown = filterGames(games, null, q);
@@ -54,11 +56,17 @@ export function GameList({ games }: { games: Game[] }) {
           </h3>
           {view === "list" ? (
             <ul className="divide-y divide-zinc-100 border-b border-zinc-200">
-              {s.games.map((g) => <li key={g.id} className="flex items-center gap-3 px-2 py-2"><GameRow g={g} /></li>)}
+              {s.games.map((g) => (
+                <li key={g.id}>
+                  {editBase
+                    ? <Link href={`${editBase}${g.id}`} className="flex items-center gap-3 px-2 py-2 hover:bg-zinc-50"><GameRow g={g} /></Link>
+                    : <div className="flex items-center gap-3 px-2 py-2"><GameRow g={g} /></div>}
+                </li>
+              ))}
             </ul>
           ) : (
             <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {s.games.map((g) => <GameCard key={g.id} g={g} />)}
+              {s.games.map((g) => <GameCard key={g.id} g={g} href={editBase && `${editBase}${g.id}`} />)}
             </ul>
           )}
         </section>
@@ -67,31 +75,39 @@ export function GameList({ games }: { games: Game[] }) {
   );
 }
 
-function GameCard({ g }: { g: Game }) {
-  return (
-    <li className="overflow-hidden rounded-lg border border-zinc-200">
-      {g.image_url && (
+function GameCard({ g, href }: { g: Game; href?: string }) {
+  const head = (
+    <>
+      {g.image_url ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={g.image_url} alt={g.name} className="aspect-[4/3] w-full object-cover" loading="lazy" />
+      ) : href && (
+        <span className="flex aspect-[4/3] w-full items-center justify-center bg-zinc-100 text-sm text-zinc-400">이미지 없음</span>
       )}
-      <div className="p-3">
-        <div className="font-bold">{g.name}{g.expansion && <span className="ml-1 font-normal text-zinc-500">+ {g.expansion}</span>}</div>
-        {g.name_original && <div className="truncate text-xs text-zinc-400">{g.name_original}</div>}
-        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-zinc-600">
+      <span className="block p-3">
+        <span className="block font-bold">{g.name}{g.expansion && <span className="ml-1 font-normal text-zinc-500">+ {g.expansion}</span>}</span>
+        {g.name_original && <span className="block truncate text-xs text-zinc-400">{g.name_original}</span>}
+        <span className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-zinc-600">
           {g.category && <span>{g.category}</span>}
           {g.players && <span>👥 {g.players}</span>}
           {g.play_minutes && <span>⏱ {g.play_minutes}분</span>}
           {g.qty > 1 && <span>×{g.qty}</span>}
           {g.kind === "머더미스터리" && <span>{g.gm_required ? "GM 필요" : "GM 없이"} · {g.translated ? "번역됨" : "미번역"}</span>}
           {g.language && <span>{g.language}</span>}
-        </div>
-        {g.synopsis && (
-          <details className="mt-2 text-xs">
-            <summary className="cursor-pointer text-zinc-500 hover:text-zinc-900">소개 보기</summary>
-            <p className="mt-1 whitespace-pre-wrap text-zinc-600">{g.synopsis}</p>
-          </details>
-        )}
-      </div>
+        </span>
+      </span>
+    </>
+  );
+  return (
+    <li className="overflow-hidden rounded-lg border border-zinc-200">
+      {href ? <Link href={href} className="block hover:bg-zinc-50">{head}</Link> : head}
+      {/* 소개 펼치기는 링크 밖에 (누르면 편집으로 넘어가지 않게) */}
+      {g.synopsis && (
+        <details className="-mt-1 px-3 pb-3 text-xs">
+          <summary className="cursor-pointer text-zinc-500 hover:text-zinc-900">소개 보기</summary>
+          <p className="mt-1 whitespace-pre-wrap text-zinc-600">{g.synopsis}</p>
+        </details>
+      )}
     </li>
   );
 }
