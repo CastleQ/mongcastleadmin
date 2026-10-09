@@ -6,7 +6,11 @@ import { GameRow } from "@/app/(site)/game-row";
 
 type View = "card" | "list";
 const VIEW_KEY = "games-view";
-const VIEWS: { v: View; label: string }[] = [{ v: "card", label: "카드" }, { v: "list", label: "목록" }];
+// 아이콘: 카드 = 네모 4칸, 목록 = 가로줄 3개 (currentColor라 선택되면 흰색)
+const VIEWS: { v: View; label: string; icon: React.ReactNode }[] = [
+  { v: "card", label: "카드 보기", icon: <><rect x="3" y="3" width="7.5" height="7.5" rx=".5" /><rect x="13.5" y="3" width="7.5" height="7.5" rx=".5" /><rect x="3" y="13.5" width="7.5" height="7.5" rx=".5" /><rect x="13.5" y="13.5" width="7.5" height="7.5" rx=".5" /></> },
+  { v: "list", label: "목록 보기", icon: <path d="M3 5h18M3 12h18M3 19h18" /> },
+];
 
 /** 검색 + 카드/목록 보기 전환 (브라우저에서 즉시, 보기 방식은 이 기기에 기억) */
 export function GameList({ games }: { games: Game[] }) {
@@ -32,9 +36,11 @@ export function GameList({ games }: { games: Game[] }) {
           className="min-w-0 flex-1 rounded border border-zinc-300 px-3 py-1.5 text-base focus:border-zinc-900 focus:outline-none sm:max-w-xs" />
         <span className="text-sm text-zinc-500">{shown.length}개</span>
         <div className="ml-auto inline-flex overflow-hidden rounded border border-zinc-900" role="group" aria-label="보기 방식">
-          {VIEWS.map(({ v, label }) => (
-            <button key={v} type="button" onClick={() => pick(v)} aria-pressed={view === v}
-              className={`px-3 py-1.5 text-sm ${view === v ? "bg-zinc-900 text-white" : "hover:bg-zinc-50"}`}>{label}</button>
+          {VIEWS.map(({ v, label, icon }) => (
+            <button key={v} type="button" onClick={() => pick(v)} aria-pressed={view === v} aria-label={label} title={label}
+              className={`px-2.5 py-2 ${view === v ? "bg-zinc-900 text-white" : "hover:bg-zinc-50"}`}>
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">{icon}</svg>
+            </button>
           ))}
         </div>
       </div>
