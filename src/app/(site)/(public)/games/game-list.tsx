@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { filterGames, groupGames, type Game } from "@/lib/games";
+import { filterGames, groupGames, GROUP_NOTES, type Game } from "@/lib/games";
 import { GameRow } from "@/app/(site)/game-row";
 
 type View = "card" | "list";
@@ -54,6 +54,7 @@ export function GameList({ games, editBase }: { games: Game[]; editBase?: string
           <h3 className="mb-3 flex items-baseline gap-2 border-b-2 border-zinc-900 pb-1 text-lg font-bold">
             {s.group}<span className="text-sm font-normal text-zinc-400">{s.games.length}개</span>
           </h3>
+          {GROUP_NOTES[s.group] && <p className="mb-3 text-xs text-zinc-500">{GROUP_NOTES[s.group]}</p>}
           {view === "list" ? (
             <ul className="divide-y divide-zinc-100 border-b border-zinc-200">
               {s.games.map((g) => (
