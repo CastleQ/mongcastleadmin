@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Reservation } from "@/lib/calendar";
+import { navigateOnTap } from "@/lib/tap";
 
 type Props = { r: Reservation; className: string; alignRight: boolean; children: ReactNode; highlight?: boolean; dim?: boolean };
 
@@ -10,13 +11,20 @@ const won = (n: number) => n.toLocaleString("ko-KR") + "원";
 
 /**
  * 관리자 달력 칩. 마우스 올리면(또는 폰에서 한 번 터치) 예약 정보 팝오버, 클릭(두 번째 터치)하면 거래 수정으로.
+ * 두 번째 터치가 안 먹던 버그를 2026-10-11에 고쳤다 — 판정 시점이 범인이었다 (lib/tap.ts 주석 참고).
  * 팝오버 배경: 미정산 회색 · 정산 흰색 · 매입 연한 주황. highlight = 검색 결과에서 온 칩(테두리 강조 + 팝오버 열림), dim = 나머지 흐리게
  */
 export function Chip({ r, className, alignRight, children, highlight = false, dim = false }: Props) {
   const [open, setOpen] = useState(highlight);
+  // 팝오버 상태를 ref 에도 들고 있는다. 아래 '누를 때 정하기'가 리렌더 시점에 휘둘리지 않게
+  const shown = useRef(highlight);
+  const show = (v: boolean) => { shown.current = v; setOpen(v); };
+  // 이번 누름이 '이동'인지 '팝오버 열기'인지 — pointerdown 에서 정해 담아둔다 (이유는 lib/tap.ts)
+  const go = useRef(true);
+
   useEffect(() => {
     if (!open) return;
-    const close = () => setOpen(false);
+    const close = () => show(false);
     document.addEventListener("pointerdown", close);
     return () => document.removeEventListener("pointerdown", close);
   }, [open]);
@@ -26,9 +34,13 @@ export function Chip({ r, className, alignRight, children, highlight = false, di
   const sep = <span className="mx-1.5 text-zinc-400">|</span>;
 
   return (
-    <div className="relative flex flex-1 flex-col" onPointerEnter={(e) => { if (e.pointerType === "mouse") setOpen(true); }} onPointerLeave={() => setOpen(false)} onPointerDown={(e) => e.stopPropagation()}>
+    <div className="relative flex flex-1 flex-col"
+      onPointerEnter={(e) => { if (e.pointerType === "mouse") show(true); }}
+      // 터치의 pointerleave 는 무시한다. 터치에서는 click 보다 먼저 와서 팝오버를 닫아버린다 (lib/tap.ts)
+      onPointerLeave={(e) => { if (e.pointerType === "mouse") show(false); }}
+      onPointerDown={(e) => { go.current = navigateOnTap(e.pointerType, shown.current); e.stopPropagation(); }}>
       <Link href={`/ledger/${r.id}`} className={`${className} ${highlight ? "ring-2 ring-blue-600 ring-offset-1" : dim ? "opacity-40" : ""}`}
-        onClick={(e) => { if ((e.nativeEvent as PointerEvent).pointerType === "touch" && !open) { e.preventDefault(); setOpen(true); } }}>
+        onClick={(e) => { if (!go.current) { e.preventDefault(); show(true); } }}>
         {children}
       </Link>
       {open && (
