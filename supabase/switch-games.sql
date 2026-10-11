@@ -3,7 +3,7 @@
 --
 -- 순서가 중요하다(옮기지 말 것): games.kind 제약을 먼저 넓혀야 '스위치게임' 행이 들어간다.
 -- 인원(players)은 "본체 1대 + TV 1대" 기준 동시 플레이 인원이다. 로컬통신·온라인 인원은 소개(synopsis)에 적었다.
--- 이미지는 북미 GameStop·BestBuy·Kroger, 일본 Amazon 패키지 주소를 그대로 가리킨다(기존 게임들과 같은 방식).
+-- 이미지는 북미 GameStop·Kroger, 일본 Amazon 패키지 주소를 그대로 가리킨다(기존 게임들과 같은 방식).
 --   한국판 패키지와 로고·문구가 다를 수 있고, 저쪽 사이트가 주소를 바꾸면 깨진다.
 --   깨지면 게임 관리 화면에서 사진을 직접 올려 덮어쓰면 된다.
 
@@ -96,7 +96,7 @@ from (values
    'Animal Crossing: New Horizons / あつまれ どうぶつの森', '시뮬레이션', '1~4인', null, 1,
    '끝이 정해져 있지 않은 느긋한 섬 생활 게임이에요. 한 화면에서 4명까지 돌아다닐 수 있고, 본체를 여러 대 쓰면 8명까지 모일 수 있어요. 섬은 본체에 하나뿐이라 대표 한 분을 중심으로 진행돼요.',
    '섬은 본체당 1개 — 손님이 바뀌면 같은 섬을 이어서 쓰게 되니 세이브 주의',
-   'https://pisces.bbystatic.com/image2/BestBuy_US/images/products/dc24f3dc-d74e-460e-b0ff-842fbd7b9d1c.jpg;maxHeight=750;maxWidth=345?format=webp'),
+   'https://media.gamestop.com/i/gamestop/10168434/Animal-Crossing-New-Horizons---Nintendo-Switch?w=768&h=768&fmt=auto'),
 
   ('스위치게임', '포켓몬스터 레츠고! 이브이',
    'Pokémon: Let''s Go, Eevee! / ポケットモンスター Let''s Go! イーブイ', 'RPG', '1~2인', null, 1,
@@ -112,7 +112,10 @@ from (values
 ) as v(kind, name, name_original, category, players, play_minutes, qty, synopsis, note, image_url)
 where not exists (select 1 from games g where g.name = v.name);
 
--- 3) 확인: 스위치게임 14개가 들어왔는지, 이미지가 빠진 것이 없는지
+-- 3) 언어: 매장 스위치 게임은 전부 한국어판 (사장님 확인, 2026-10-11)
+update games set language = '한국어' where kind = '스위치게임' and language is null;
+
+-- 4) 확인: 스위치게임 14개가 들어왔는지, 이미지가 빠진 것이 없는지
 select kind, count(*) as 개수, count(image_url) as 이미지있음
 from games group by kind order by kind;
 
