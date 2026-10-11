@@ -22,9 +22,14 @@ export function Chip({ r, className, alignRight, children, highlight = false, di
   // 이번 누름이 '이동'인지 '팝오버 열기'인지 — pointerdown 에서 정해 담아둔다 (이유는 lib/tap.ts)
   const go = useRef(true);
 
+  const box = useRef<HTMLDivElement>(null);
+
+  // 바깥을 누르면 닫는다. '바깥인지'는 반드시 contains 로 따져야 한다 —
+  // stopPropagation 만 믿으면 안 된다(리액트가 document 에 한 번에 받아서, 같은 document 의 이 처리기는 그대로 돌아간다).
+  // 그걸 안 따졌을 때: 팝오버를 누르는 순간 팝오버가 사라져 click 이 닿을 곳이 없어 이동하지 못했다.
   useEffect(() => {
     if (!open) return;
-    const close = () => show(false);
+    const close = (e: PointerEvent) => { if (!box.current?.contains(e.target as Node)) show(false); };
     document.addEventListener("pointerdown", close);
     return () => document.removeEventListener("pointerdown", close);
   }, [open]);
@@ -34,7 +39,7 @@ export function Chip({ r, className, alignRight, children, highlight = false, di
   const sep = <span className="mx-1.5 text-zinc-400">|</span>;
 
   return (
-    <div className="relative flex flex-1 flex-col"
+    <div ref={box} className="relative flex flex-1 flex-col"
       onPointerEnter={(e) => { if (e.pointerType === "mouse") show(true); }}
       // 터치의 pointerleave 는 무시한다. 터치에서는 click 보다 먼저 와서 팝오버를 닫아버린다 (lib/tap.ts)
       onPointerLeave={(e) => { if (e.pointerType === "mouse") show(false); }}
@@ -44,7 +49,10 @@ export function Chip({ r, className, alignRight, children, highlight = false, di
         {children}
       </Link>
       {open && (
-        <div role="tooltip" className={`absolute top-full z-20 mt-1 w-max max-w-64 rounded-lg border p-2.5 text-left text-xs leading-relaxed shadow-lg ${bg} ${alignRight ? "right-0" : "left-0"} [writing-mode:horizontal-tb]`}>
+        // 팝오버 자체도 거래 수정으로 가는 링크다 — 폰에선 설명이 뜨면 손가락이 자연히 거기로 간다 (사장님이 실제로 그러셨음).
+        // role="tooltip" 은 뺐다 — 이제 누를 수 있는 링크라서 '설명 상자'로 읽히면 안 된다
+        // 칩과 붙여 둔다(mt 없음): 틈을 두면 마우스가 그 틈에서 칩 밖으로 나가 팝오버가 닫혀 PC에서 누를 수 없다
+        <Link href={`/ledger/${r.id}`} data-popover className={`absolute top-full z-20 block w-max max-w-64 rounded-lg border p-2.5 text-left text-xs leading-relaxed shadow-lg hover:brightness-95 ${bg} ${alignRight ? "right-0" : "left-0"} [writing-mode:horizontal-tb]`}>
           {r.kind === "매입" ? (
             <>
               <p className={line}><span className="font-semibold">매입 · {r.category}</span>{sep}<span className="tabular-nums">{won(r.amount)}</span></p>
@@ -58,7 +66,7 @@ export function Chip({ r, className, alignRight, children, highlight = false, di
             </>
           )}
           {r.note && <p className="mt-1 whitespace-pre-wrap border-t border-black/10 pt-1 text-zinc-700">{r.note}</p>}
-        </div>
+        </Link>
       )}
     </div>
   );
