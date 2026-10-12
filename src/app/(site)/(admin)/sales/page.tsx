@@ -27,7 +27,6 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
   const real: Ledger[] = ledger ?? [];
   const rows = withReserved ? assumeReserved(real, today) : real; // 아래 계산은 전부 이 rows 기준
   const reservedRows = real.filter((r) => isReserved(r, today) && r.date.startsWith(month));
-  const reservedNet = reservedRows.reduce((s, r) => s + r.net, 0);
   const target = readTarget(setting.monthly_targets); // 월 순이익 목표 (시나리오 없이 하나)
   const investment = typeof setting.investment === "number" ? setting.investment : DEFAULT_INVESTMENT;
   const fixedCosts = typeof setting.fixed_costs === "number" ? setting.fixed_costs : DEFAULT_FIXED_COSTS;
@@ -64,9 +63,6 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
           <Link href={q(month, false)} className={`px-3 py-1 ${!withReserved ? "bg-zinc-900 text-white" : "hover:bg-zinc-50"}`}>정산 완료만</Link>
           <Link href={q(month, true)} className={`px-3 py-1 ${withReserved ? "bg-zinc-900 text-white" : "hover:bg-zinc-50"}`}>예약 포함</Link>
         </div>
-        <span className="text-zinc-400">
-          {!withReserved && (reservedRows.length ? `이달 오늘 이후 미정산 예약 ${reservedRows.length}건 (+${won(reservedNet)}원) 은 빠져 있어요` : "정산완료 ✓ 표시된 거래만")}
-        </span>
       </div>
 
       <dl className="mb-4 grid grid-cols-2 gap-px overflow-hidden rounded border border-zinc-200 bg-zinc-200 sm:grid-cols-5">
