@@ -12,8 +12,7 @@ export default async function AdminsPage() {
 
   return (
     <>
-      <h2 className="mb-1 text-xl font-bold">관리자 관리</h2>
-      <p className="mb-4 text-sm text-zinc-500">여기 등록된 구글 계정만 관리 메뉴를 쓸 수 있어요. 등록하면 그 사람이 다음에 로그인할 때부터 바로 적용됩니다.</p>
+      <h2 className="mb-4 text-xl font-bold">관리자 권한 관리</h2>
 
       <ul className="mb-5 max-w-xl divide-y divide-zinc-100 border-y border-zinc-200">
         {rows.map((r) => (

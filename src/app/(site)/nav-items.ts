@@ -16,7 +16,7 @@ export const ADMIN_NAV: NavItem[] = [
   { href: "/games/manage", label: "게임 관리" },
   { href: "/calendar-sync", label: "구글캘린더 연동" },
   { href: "/info", label: "몽캐슬파티룸 정보" },
-  { href: "/admins", label: "관리자 관리" },
+  { href: "/admins", label: "관리자 권한 관리" },
 ];
 
 /** 주소가 관리자 구역인지 (proxy·layout 공용) */

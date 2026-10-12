@@ -32,10 +32,7 @@ export default async function CalendarSyncPage() {
 
   return (
     <>
-      <h2 className="mb-1 text-xl font-bold">구글캘린더 연동 — 미리보기</h2>
-      <p className="mb-4 text-sm text-zinc-500">
-        구글 일정이 예약현황에 <b>어떻게 들어올지</b>만 보여줍니다. 이 화면은 <b>아무것도 저장하지 않아요.</b>
-      </p>
+      <h2 className="mb-4 text-xl font-bold">구글캘린더 연동 — 미리보기</h2>
 
       {/* 1. 연결 상태 */}
       <section className="mb-5 rounded-lg border border-zinc-200">

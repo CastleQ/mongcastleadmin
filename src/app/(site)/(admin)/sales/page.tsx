@@ -65,23 +65,21 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
           <Link href={q(month, true)} className={`px-3 py-1 ${withReserved ? "bg-zinc-900 text-white" : "hover:bg-zinc-50"}`}>예약 포함</Link>
         </div>
         <span className="text-zinc-400">
-          {withReserved
-            ? `오늘 이후 미정산 예약 ${reservedRows.length}건 · 실수령 +${won(reservedNet)}원이 그대로 들어온다고 가정 (지난 날짜 미정산은 제외)`
-            : reservedRows.length ? `이달 오늘 이후 미정산 예약 ${reservedRows.length}건 (+${won(reservedNet)}원) 은 빠져 있어요` : "정산완료 ✓ 표시된 거래만"}
+          {!withReserved && (reservedRows.length ? `이달 오늘 이후 미정산 예약 ${reservedRows.length}건 (+${won(reservedNet)}원) 은 빠져 있어요` : "정산완료 ✓ 표시된 거래만")}
         </span>
       </div>
 
       <dl className="mb-4 grid grid-cols-2 gap-px overflow-hidden rounded border border-zinc-200 bg-zinc-200 sm:grid-cols-5">
         <Tile label="목표 매출" value={`${won(st.target)}원`} />
         <Tile label={`현재 매출 (${basis})`} value={`${won(st.actual)}원`} strong />
-        <Tile label="현재 순이익" value={`${won(net)}원`} sub="매출 실수령 − 이달 매입" tone={net >= 0 ? "good" : "bad"} />
+        <Tile label="현재 순이익" value={`${won(net)}원`} tone={net >= 0 ? "good" : "bad"} />
         <Tile label="달성도" value={`${st.achievement}%`} tone={st.achievement >= 100 ? "good" : st.achievement >= 50 ? "" : "bad"} />
         <Tile label="남은 목표 매출" value={st.gap >= 0 ? "목표 달성 ✓" : `${won(-st.gap)}원`} sub={`목표 대비 ${signed(st.gapPct)}%`} tone={st.gap >= 0 ? "good" : "bad"} />
       </dl>
 
       {/* 이달 일별 누적 */}
       <section className="mb-6 rounded border border-zinc-200 p-3">
-        <h3 className="mb-2 text-sm font-medium">이달 누적 매출 vs 목표 <span className="font-normal text-zinc-400">(일 단위, {basis})</span></h3>
+        <h3 className="mb-2 text-sm font-medium">이달 누적 매출 vs 목표</h3>
         <DailyChart points={daily} reserved={reservedDaily} pendingIds={reservedRows.map((r) => r.id)} days={st.days} target={salesTarget} breakEven={fixedCosts + extra} entries={entries} />
       </section>
 

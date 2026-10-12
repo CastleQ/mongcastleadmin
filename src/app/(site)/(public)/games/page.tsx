@@ -11,7 +11,7 @@ export default async function GamesPage() {
   return (
     <>
       <h2 className="mb-1 text-xl font-bold">보유 게임</h2>
-      <p className="mb-4 text-sm text-zinc-500">몽캐슬에 있는 보드게임·머더미스터리·닌텐도 스위치 게임이에요. 원하는 게임이 있으면 예약할 때 미리 말씀해주세요.</p>
+      <p className="mb-4 text-sm text-zinc-500">몽캐슬에 구비된 게임 목록이에요. 목록에 없는 게임도 말씀 주시면 최대한 준비해 드릴게요.</p>
       <GameList games={games} />
     </>
   );
