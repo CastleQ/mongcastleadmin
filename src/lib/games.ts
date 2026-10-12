@@ -31,11 +31,6 @@ export const GROUP_LABELS: Partial<Record<GameGroup, string>> = { "닌텐도 스
 /** 보드게임 장르(category) → 탭. 게임 관리의 장르 보기도 이 목록이다. 카드엔 원래 장르 글자가 그대로 보인다. 여기 없는 장르(옛 값)는 테마게임 */
 export const BOARD_CATEGORIES: Record<string, GameGroup> = { 파티: "파티게임", 전략: "전략게임", 추상전략: "전략게임", 마피아: "테마게임", 테마게임: "테마게임" };
 
-/** 묶음 제목 아래 한 줄 안내. 없는 묶음은 아무것도 안 보인다 */
-export const GROUP_NOTES: Partial<Record<GameGroup, string>> = {
-  "닌텐도 스위치": "인원은 본체 1대·TV 1대로 함께 할 수 있는 사람 수예요. 조이콘이 더 필요한 게임은 소개에 적어뒀어요.",
-};
-
 export function gameGroup(g: Pick<Game, "kind" | "category">): GameGroup {
   // 종류를 먼저 본다 — 스위치 게임에도 장르가 '파티'인 것이 있어서(슈퍼 마리오 파티) 장르부터 보면 보드게임 묶음으로 샌다
   if (g.kind === "스위치게임") return "닌텐도 스위치";
