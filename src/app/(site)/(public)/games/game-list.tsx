@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { filterGames, GAME_GROUPS, groupGames, GROUP_LABELS, GROUP_NOTES, type Game, type GameGroup } from "@/lib/games";
+import { filterGames, GAME_GROUPS, gameGroup, groupGames, GROUP_LABELS, GROUP_NOTES, type Game, type GameGroup } from "@/lib/games";
 import { GameRow } from "@/app/(site)/game-row";
 
 type View = "card" | "list";
+/** 편집 화면 주소. 그 게임의 탭을 넘겨서 저장·삭제 뒤 그 탭으로 돌아오게 */
+const editHref = (base: string, g: Game) => `${base}${g.id}?tab=${encodeURIComponent(gameGroup(g))}`;
 const VIEW_KEY = "games-view";
 // 아이콘: 카드 = 네모 4칸, 목록 = 가로줄 3개 (currentColor라 선택되면 흰색)
 const VIEWS: { v: View; label: string; icon: React.ReactNode }[] = [
@@ -89,14 +91,14 @@ export function GameList({ games, editBase }: { games: Game[]; editBase?: string
               {s.games.map((g) => (
                 <li key={g.id}>
                   {editBase
-                    ? <Link href={`${editBase}${g.id}`} className="flex items-center gap-3 px-2 py-2 hover:bg-zinc-50"><GameRow g={g} /></Link>
+                    ? <Link href={editHref(editBase, g)} className="flex items-center gap-3 px-2 py-2 hover:bg-zinc-50"><GameRow g={g} /></Link>
                     : <div className="flex items-center gap-3 px-2 py-2"><GameRow g={g} /></div>}
                 </li>
               ))}
             </ul>
           ) : (
             <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {s.games.map((g) => <GameCard key={g.id} g={g} href={editBase && `${editBase}${g.id}`} />)}
+              {s.games.map((g) => <GameCard key={g.id} g={g} href={editBase && editHref(editBase, g)} />)}
             </ul>
           )}
         </section>

@@ -2,10 +2,10 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { GAME_KINDS, type Game } from "@/lib/games";
+import { GAME_GROUPS, GAME_KINDS, type Game } from "@/lib/games";
 
-/** 저장/삭제 후 열었던 필터 화면으로 */
-const backTo = (kind: FormDataEntryValue | string | null) => GAME_KINDS.includes(kind as Game["kind"]) ? `/games/manage?kind=${kind}` : "/games/manage";
+/** 저장/삭제 후 열었던 탭으로 */
+const backTo = (tab: FormDataEntryValue | string | null) => (GAME_GROUPS as readonly unknown[]).includes(tab) ? `/games/manage?tab=${encodeURIComponent(String(tab))}` : "/games/manage";
 
 function parse(f: FormData): Omit<Game, "id" | "image_url"> {
   const s = (k: string) => (f.get(k) as string | null)?.trim() || null;

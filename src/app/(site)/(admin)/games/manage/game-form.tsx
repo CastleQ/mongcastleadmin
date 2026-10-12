@@ -1,11 +1,17 @@
 import { GAME_KINDS, type Game } from "@/lib/games";
 import { saveGame } from "./actions";
 import { DeleteGameButton } from "./delete-button";
+import { CategoryField } from "./category-field";
+import { createClient } from "@/lib/supabase/server";
 
 const input = "w-full rounded border border-zinc-300 px-3 py-2 text-base focus:border-zinc-900 focus:outline-none";
 const label = "block text-sm text-zinc-600 mb-1";
 
-export function GameForm({ row, back }: { row?: Game; back?: string }) {
+export async function GameForm({ row, back }: { row?: Game; back?: string }) {
+  // 스위치 장르 보기: 지금 쓰는 장르들
+  const supabase = await createClient();
+  const { data } = await supabase.from("games").select("category").eq("kind", "스위치게임");
+  const switchGenres = [...new Set((data ?? []).map((g) => g.category as string | null).filter((c): c is string => !!c))].sort();
   const mm = row?.kind === "머더미스터리";
   return (
     <form action={saveGame.bind(null, row?.id ?? null)} className="max-w-2xl space-y-4">
@@ -32,7 +38,7 @@ export function GameForm({ row, back }: { row?: Game; back?: string }) {
       <div className="grid gap-3 sm:grid-cols-2">
         <div><label className={label} htmlFor="name_original">원제 (영어/일어 — 이미지 자동 검색에 씀)</label><input id="name_original" name="name_original" defaultValue={row?.name_original ?? ""} className={input} /></div>
         <div><label className={label} htmlFor="expansion">확장</label><input id="expansion" name="expansion" defaultValue={row?.expansion ?? ""} className={input} /></div>
-        <div><label className={label} htmlFor="category">장르</label><input id="category" name="category" defaultValue={row?.category ?? ""} placeholder="전략게임 / 파티게임 / 공포…" className={input} /></div>
+        <CategoryField row={row} switchGenres={switchGenres} />
         <div><label className={label} htmlFor="players">인원</label><input id="players" name="players" defaultValue={row?.players ?? ""} placeholder="2~4인" className={input} /></div>
         <div><label className={label} htmlFor="play_minutes">플레이 시간(분)</label><input id="play_minutes" name="play_minutes" type="number" inputMode="numeric" defaultValue={row?.play_minutes ?? ""} className={input} /></div>
         <div><label className={label} htmlFor="qty">수량</label><input id="qty" name="qty" type="number" inputMode="numeric" defaultValue={row?.qty ?? 1} className={input} /></div>
