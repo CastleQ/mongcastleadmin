@@ -74,8 +74,13 @@ curl -s -o /dev/null -w "%{http_code} %{content_type} %{size_download}\n" --max-
   멀쩡한 주소도 `net::ERR_TOO_MANY_RETRIES`로 깨진 것처럼 나온다 (2026-10-12에 이걸로 오판해 멀쩡한
   이미지를 바꿨다). 판정은 curl로 한다
 
-### 4) SQL 쓰기 — 틀을 지킨다
-**반드시 Write/Edit 도구로 쓴다.** bash heredoc·sed로 쓰지 않는다(CLAUDE.md 규칙 1 — `\`, `$`, 백틱이 깎인다).
+### 4) SQL 쓰기
+**틀·함정·전달 방법은 스킬 `write-sql` 에 다 있다. 그걸 따른다** (여기 베껴 두지 않는다 — 두 벌이 되면 어긋난다).
+게임에만 해당하는 것만 아래에 적는다.
+
+- 판정키는 `name`. `where not exists (select 1 from games g where g.name = v.name)`
+- `kind` 에 새 값을 쓰려면 표 제약부터 넓힌다 (`supabase/switch-games.sql` 방식)
+- 검증할 때 운영 게임 이름을 임시 DB 에 먼저 넣어 이름 충돌까지 재현한다
 
 ```sql
 -- <주제> N종 추가 (출처: ..., YYYY-MM-DD)
@@ -97,28 +102,9 @@ select name, kind, category, players, play_minutes,
 from games where name in ('이름','다음 게임') order by category, name;
 ```
 
-지켜야 할 것:
-- **첫 줄에만 타입 캐스팅**(`::text` `::int`). 안 붙이면 타입 추론이 어긋난다
-- `where not exists (... g.name = v.name)` — 재실행해도 안 늘어난다
-- **`create temporary table`을 쓰지 말 것.** Supabase SQL Editor는 문장마다 커밋해서 다음 문장에서 사라진다.
-  넣기·고치기·지우기를 함께 해야 하면 데이터 변경 CTE 한 문장(`with b as (values ...), 넣기 as (insert ...), 고치기 as (update ...) delete ...`)으로 묶는다
-- 이미 넣은 것을 고쳐야 하면, **안 돌린 경우와 이미 돌린 경우 둘 다 같은 결과**가 되게 쓴다
-- `kind`에 새 값을 쓰려면 표 제약부터 넓혀야 한다(`supabase/switch-games.sql`의 `do $$ ... pg_constraint ...` 방식)
-
-### 5) 검증 — 넘기기 전에 반드시 (CLAUDE.md 규칙 2·4)
-임시 Postgres 16에 **운영 DB의 실제 이름을 먼저 넣고** 두 번 실행한다. 이름 충돌까지 재현된다.
-
-```bash
-PG=/usr/lib/postgresql/16/bin
-id pgtest >/dev/null 2>&1 || useradd -m pgtest
-[ -d /home/pgtest/data ] || su pgtest -c "$PG/initdb -D /home/pgtest/data -U pgtest --auth=trust"
-su pgtest -c "$PG/pg_ctl -D /home/pgtest/data -o '-k /tmp -p 5444 -c listen_addresses=' -l /home/pgtest/log start"
-# games 표는 schema.sql + image_url·bgg_id 칸 + 넓힌 kind 제약으로 만든다
-# 운영 이름을 insert 해 둔 뒤 SQL 을 두 번 실행
-```
-
-통과 기준: **1회차 N건 / 2회차 0건**, 분류·인원·시간이 의도대로, 이미지 전부 '있음'.
-끝나면 `pg_ctl stop`으로 내린다.
+### 5) 검증
+방법은 `write-sql` 의 검증 절차를 그대로 쓴다 (임시 Postgres 16, 운영 이름 먼저 넣고 두 번 실행).
+게임 통과 기준: **1회차 N건 / 2회차 0건**, 분류·인원·시간이 의도대로, 이미지 전부 '있음'.
 
 ### 6) 넘기기
 파일을 `SendUserFile`로 보내고, 채팅에 확인용 표와 **내가 판단으로 채운 칸**을 적는다.
