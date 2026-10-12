@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { Ledger } from "./ledger.ts";
-import { byContent, byDayType, dayType, monthNet, monthStats, monthlySeries } from "./sales.ts";
+import { byContent, byDayType, dayType, monthBookings, monthNet, monthStats, monthlySeries, totalBookings } from "./sales.ts";
 
 const base: Ledger = {
   id: 0, date: "2026-09-01", kind: "매출", category: "대여", channel: "지인", inquiry_date: null,
@@ -73,4 +73,19 @@ test("assumeReserved: 오늘 이후 미정산 매출만 정산된 것으로, 지
   assert.equal(monthSales(assumeReserved(withPast, "2026-09-10"), "2026-09"), 350000 + 999999); // 오늘 포함
   assert.equal(monthSales(assumeReserved(withPast, "2026-09-11"), "2026-09"), 350000);
   assert.equal(assumeReserved(withPast, "2026-09-01").find((r) => r.id === 8)?.settled, false); // 매입은 건드리지 않음
+});
+
+test("예약 건수: 대여 매출만, 이용 날짜가 그 달, 확정/미정산 따로 · 누적은 오늘까지 확정만", () => {
+  const b: Ledger[] = [
+    { ...base, id: 1, date: "2026-10-03" },                          // 확정
+    { ...base, id: 2, date: "2026-10-05", settled: false },          // 지난 날짜 미정산도 센다
+    { ...base, id: 3, date: "2026-10-20", settled: false },          // 앞으로 올 예약
+    { ...base, id: 4, date: "2026-10-04", category: "기타" },         // 대여 아님
+    { ...base, id: 5, date: "2026-10-06", kind: "매입", category: "집기구매" },
+    { ...base, id: 6, date: "2026-09-30" },                          // 지난달 확정
+    { ...base, id: 7, date: "2026-10-25" },                          // 선입금 확정 — 오늘 이후라 누적엔 아직 안 셈
+  ];
+  assert.deepEqual(monthBookings(b, "2026-10"), { settled: 2, pending: 2 });
+  assert.deepEqual(monthBookings(b, "2026-09"), { settled: 1, pending: 0 });
+  assert.equal(totalBookings(b, "2026-10-12"), 2);
 });

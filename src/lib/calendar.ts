@@ -60,3 +60,10 @@ export function monthGrid(year: number, month: number): (string | null)[] {
 export function todayKST(): string {
   return new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
 }
+
+/** 하루치 매입을 항목(category)별로 묶음. 항목 순서는 처음 나온 순서, 각 묶음에 소계 */
+export function groupBuys(rows: Reservation[]): { category: string; total: number; rows: Reservation[] }[] {
+  const map = new Map<string, Reservation[]>();
+  for (const r of rows) map.set(r.category, [...(map.get(r.category) ?? []), r]);
+  return [...map].map(([category, rs]) => ({ category, total: rs.reduce((s, r) => s + r.amount, 0), rows: rs }));
+}

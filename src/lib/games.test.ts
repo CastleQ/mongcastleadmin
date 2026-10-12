@@ -17,8 +17,11 @@ test("스위치 게임은 장르가 '파티'여도 닌텐도 스위치 묶음으
 test("보드게임·머더미스터리 묶음은 그대로 (머더미스터리는 장르와 상관없이)", () => {
   assert.equal(gameGroup({ kind: "보드게임", category: "파티" }), "파티게임");
   assert.equal(gameGroup({ kind: "보드게임", category: "전략" }), "전략게임");
-  assert.equal(gameGroup({ kind: "보드게임", category: "마피아" }), "그 외");
-  assert.equal(gameGroup({ kind: "보드게임", category: null }), "그 외");
+  // 2026-10-12: '그 외' 없앰 — 아발론(추상전략)은 전략, 마피아·테마는 테마게임
+  assert.equal(gameGroup({ kind: "보드게임", category: "추상전략" }), "전략게임");
+  assert.equal(gameGroup({ kind: "보드게임", category: "마피아" }), "테마게임");
+  assert.equal(gameGroup({ kind: "보드게임", category: "테마게임" }), "테마게임");
+  assert.equal(gameGroup({ kind: "보드게임", category: null }), "테마게임");
   assert.equal(gameGroup({ kind: "머더미스터리", category: "파티" }), "머더미스터리");
   assert.equal(gameGroup({ kind: "머더미스터리", category: "머더미스터리" }), "머더미스터리");
 });

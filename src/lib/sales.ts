@@ -31,7 +31,21 @@ export function monthNet(rows: Ledger[], month: string): number {
  * "예약 포함" 보기: 오늘 이후의 미정산 매출(예약은 됐는데 입금·정산 전)은 그대로 들어온다고 가정 → 정산된 것처럼 바꿔
  * 같은 계산식(monthSales·dailyCumulative·bucketize…)에 넣음. 지난 날짜의 미정산은 그대로 제외 (노쇼·미입금일 수 있음)
  */
-export const isReserved = (r: Ledger, today: string) => !r.settled && r.kind === "매출" && r.date >= today;
+/** 예약 = 대여 매출 한 건 (달력과 같은 기준) */
+const isBooking = (r: Ledger) => r.kind === "매출" && r.category === "대여";
+
+/** 이용 날짜가 그 달인 예약 건수. 확정 = 정산완료, 예약 = 미정산 (지난 날짜 미정산도 센다). '예약 포함' 바꾸기 전 원본 rows 를 넣을 것 */
+export function monthBookings(rows: Ledger[], month: string): { settled: number; pending: number } {
+  const m = rows.filter((r) => isBooking(r) && monthOf(r.date) === month);
+  return { settled: m.filter((r) => r.settled).length, pending: m.filter((r) => !r.settled).length };
+}
+
+/** 오늘까지 누적된 확정(정산완료) 예약 건수 */
+export function totalBookings(rows: Ledger[], today: string): number {
+  return rows.filter((r) => isBooking(r) && r.settled && r.date <= today).length;
+}
+
+export const isReserved =(r: Ledger, today: string) => !r.settled && r.kind === "매출" && r.date >= today;
 export function assumeReserved(rows: Ledger[], today: string): Ledger[] {
   return rows.map((r) => (isReserved(r, today) ? { ...r, settled: true } : r));
 }

@@ -8,7 +8,7 @@ import { HOLIDAYS } from "@/lib/holidays";
 import { OPEN_COLOR, SLOTS, slotStates } from "@/lib/availability";
 import type { Prices } from "@/lib/prices";
 import type { Contact } from "@/lib/settings";
-import { Chip } from "./chip";
+import { BuyChip, Chip } from "./chip";
 import { PublicCells } from "./public-cells";
 import { SyncButton } from "./sync-button";
 
@@ -99,7 +99,7 @@ export function Calendar({ month: initialMonth, today, isAdmin, rows, flagged = 
   return (
     <>
       <div className="mb-4 flex items-start justify-between gap-2">
-        <h2 className="text-lg font-bold whitespace-nowrap sm:text-xl"><span className="hidden sm:inline">예약 현황 · </span>{info.year}년 {info.month}월</h2>
+        <h2 className="text-[22px] font-bold whitespace-nowrap sm:text-3xl"><span className="hidden sm:inline">예약 현황 · </span>{info.year}년 {info.month}월</h2>
         {/* 달 이동·추가 단추와 동기화 단추를 오른쪽에 위아래로 둔다 */}
         <div className="flex flex-col items-end gap-1">
           <div className="flex gap-1">
@@ -163,11 +163,11 @@ export function Calendar({ month: initialMonth, today, isAdmin, rows, flagged = 
                     })}
                   </div>
                   {dayRows.filter((r) => packageKind(r.package) === "기타").map(chip)}
-                  {buys.map((r) => (
-                    <Chip key={r.id} r={r} alignRight={alignRight} highlight={r.id === hl} dim={hl !== null && r.id !== hl} className={`${SLOT} mt-0.5 bg-orange-100 text-orange-900 hover:opacity-80`}>
-                      <span className="font-semibold">매입</span><span className="hidden sm:inline"> {r.category}</span>
-                    </Chip>
-                  ))}
+                  {buys.length > 0 && (
+                    <div className="mt-0.5">
+                      <BuyChip rows={buys} alignRight={alignRight} highlightId={hl} className="block truncate whitespace-nowrap rounded px-1 py-0.5 text-center text-[10px] leading-tight bg-orange-100 text-orange-900 hover:opacity-80 sm:text-left sm:text-xs" />
+                    </div>
+                  )}
                 </>
               )}
             </div>

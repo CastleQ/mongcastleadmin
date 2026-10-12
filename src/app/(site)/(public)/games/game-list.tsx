@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { filterGames, groupGames, GROUP_NOTES, type Game } from "@/lib/games";
+import { filterGames, GAME_GROUPS, groupGames, GROUP_LABELS, GROUP_NOTES, type Game, type GameGroup } from "@/lib/games";
 import { GameRow } from "@/app/(site)/game-row";
 
 type View = "card" | "list";
@@ -13,19 +13,33 @@ const VIEWS: { v: View; label: string; icon: React.ReactNode }[] = [
   { v: "list", label: "목록 보기", icon: <path d="M3 5h18M3 12h18M3 19h18" /> },
 ];
 
-/** 검색 + 카드/목록 보기 전환 (브라우저에서 즉시, 보기 방식은 이 기기에 기억).
+/** 묶음 탭 + 검색 + 카드/목록 보기 전환 (브라우저에서 즉시, 보기 방식은 이 기기에 기억).
+ *  고른 탭은 주소(?tab=)에 남겨서 편집하고 돌아와도 같은 탭. 검색 중엔 탭과 상관없이 전체에서 찾아 묶음별로 보여준다.
  *  editBase가 있으면(게임 관리) 각 게임을 누르면 `${editBase}${id}` 편집 화면으로 */
 export function GameList({ games, editBase }: { games: Game[]; editBase?: string }) {
   const [q, setQ] = useState("");
   const [view, setView] = useState<View>("card");
+  const [tab, setTab] = useState<GameGroup | null>(null);
   const shown = filterGames(games, null, q);
+  const searching = q.trim() !== "";
+  const groups = groupGames(searching ? shown : games); // 탭 = 게임이 있는 묶음만
+  const active = groups.find((s) => s.group === tab) ?? groups[0];
 
   useEffect(() => {
     try {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- 서버 렌더와 맞추려고 첫 화면 뒤에 읽음
       if (localStorage.getItem(VIEW_KEY) === "list") setView("list");
     } catch {}
+    const t = new URLSearchParams(window.location.search).get("tab");
+    if ((GAME_GROUPS as readonly string[]).includes(t ?? "")) setTab(t as GameGroup);
   }, []);
+  const pickTab = (g: GameGroup) => {
+    setTab(g);
+    setQ("");
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", g);
+    window.history.replaceState(null, "", url);
+  };
   const pick = (v: View) => {
     setView(v);
     try { localStorage.setItem(VIEW_KEY, v); } catch {}
@@ -36,7 +50,7 @@ export function GameList({ games, editBase }: { games: Game[]; editBase?: string
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="게임 이름 검색" type="search"
           className="min-w-0 flex-1 rounded border border-zinc-300 px-3 py-1.5 text-base focus:border-zinc-900 focus:outline-none sm:max-w-xs" />
-        <span className="text-sm text-zinc-500">{shown.length}개</span>
+        {searching && <span className="text-sm text-zinc-500">{shown.length}개</span>}
         <div className="ml-auto inline-flex overflow-hidden rounded border border-zinc-900" role="group" aria-label="보기 방식">
           {VIEWS.map(({ v, label, icon }) => (
             <button key={v} type="button" onClick={() => pick(v)} aria-pressed={view === v} aria-label={label} title={label}
@@ -47,13 +61,28 @@ export function GameList({ games, editBase }: { games: Game[]; editBase?: string
         </div>
       </div>
 
+      {/* 탭: 폰에서 넘치면 탭 줄만 가로로 밀린다 (페이지 폭은 그대로) */}
+      <div className="mb-4 flex overflow-x-auto border-b-2 border-zinc-900" role="tablist" aria-label="게임 분류">
+        {groups.map((s) => {
+          const on = !searching && s.group === active?.group;
+          return (
+            <button key={s.group} type="button" role="tab" aria-selected={on} onClick={() => pickTab(s.group)}
+              className={`shrink-0 whitespace-nowrap rounded-t px-3 py-2 text-sm font-semibold ${on ? "bg-zinc-900 text-white" : "text-zinc-600 hover:bg-zinc-100"}`}>
+              {GROUP_LABELS[s.group] ?? s.group}<span className={`ml-1 text-xs font-normal ${on ? "text-zinc-300" : "text-zinc-400"}`}>{s.games.length}</span>
+            </button>
+          );
+        })}
+      </div>
+
       {shown.length === 0 ? (
         <p className="py-10 text-center text-zinc-500">해당하는 게임이 없어요.</p>
-      ) : groupGames(shown).map((s) => (
+      ) : (searching ? groups : active ? [active] : []).map((s) => (
         <section key={s.group} className="mb-8">
-          <h3 className="mb-3 flex items-baseline gap-2 border-b-2 border-zinc-900 pb-1 text-lg font-bold">
-            {s.group}<span className="text-sm font-normal text-zinc-400">{s.games.length}개</span>
-          </h3>
+          {searching && (
+            <h3 className="mb-3 flex items-baseline gap-2 border-b border-zinc-300 pb-1 text-lg font-bold">
+              {GROUP_LABELS[s.group] ?? s.group}<span className="text-sm font-normal text-zinc-400">{s.games.length}개</span>
+            </h3>
+          )}
           {GROUP_NOTES[s.group] && <p className="mb-3 text-xs text-zinc-500">{GROUP_NOTES[s.group]}</p>}
           {view === "list" ? (
             <ul className="divide-y divide-zinc-100 border-b border-zinc-200">
