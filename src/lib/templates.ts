@@ -68,6 +68,8 @@ export function autoFill(slots: Slot[], r: Ledger): Record<string, string> {
     else if (isPackageKey(key)) out[key] = overnight ? "밤" : r.package ?? "";
     else if (key.includes("보증금")) out[key] = deposit ? `청소보증금 ${won(deposit)}` : "";
     else if (isTotalKey(key) || key.includes("금액")) out[key] = won(r.amount);
+    // 고객·이름보다 먼저 본다 — '플랫폼이름' 처럼 '이름'이 들어간 칸이 고객명으로 채워지면 안 된다
+    else if (key.includes("플랫폼") || key.includes("채널")) out[key] = r.channel ?? "";
     else if (key.includes("고객") || key.includes("이름")) out[key] = r.customer_name ?? "";
     else if (key.includes("인원")) out[key] = r.headcount ? `${r.headcount}명` : "";
   }

@@ -41,6 +41,10 @@ test("autoFill: 예약 정보로 칸 채우기", () => {
   assert.equal(v["고객명"], "홍길동");
   assert.equal(v["인원"], "12명");
   assert.equal(v["기타"], undefined);
+  // 플랫폼·채널 칸은 예약 채널로. '플랫폼이름'처럼 '이름'이 들어가도 고객명으로 새지 않아야 한다
+  const p = autoFill(placeholders("[플랫폼] [채널] [플랫폼이름] [고객명]"), { ...r, channel: "네이버플레이스" });
+  assert.deepEqual([p["플랫폼"], p["채널"], p["플랫폼이름"], p["고객명"]], ["네이버플레이스", "네이버플레이스", "네이버플레이스", "홍길동"]);
+
   // 밤+밤샘 · 지인 → 패키지 밤, 옵션 밤샘·지인할인 (지인은 보증금 없음)
   const w = autoFill(placeholders("[패키지] [옵션1] [옵션2] [옵션3]"), { ...r, package: "밤+밤샘", channel: "지인" });
   assert.deepEqual([w["패키지"], w["옵션1"], w["옵션2"], w["옵션3"]], ["밤", "밤샘", "지인할인", ""]);
