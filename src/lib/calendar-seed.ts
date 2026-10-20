@@ -34,7 +34,7 @@ export type Seed = {
 
 export async function buildSeed(): Promise<Seed> {
   const cfg = await loadCalendarSync();
-  if (!cfg) throw new Error("연동 설정이 없습니다 — supabase/calendar-sync.sql 을 실행하세요");
+  if (!cfg) throw new Error("연동 설정이 없습니다 — supabase/done/calendar-sync.sql 을 실행하세요");
 
   const today = todayKST();
   const to = addDays(today, DAYS_AHEAD);

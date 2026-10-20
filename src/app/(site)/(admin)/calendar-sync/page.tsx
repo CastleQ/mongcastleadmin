@@ -39,7 +39,7 @@ export default async function CalendarSyncPage() {
         <h3 className="border-b border-zinc-100 px-4 py-2.5 font-bold">1. 연결 상태</h3>
         <div className="px-4 py-3 text-sm">
           {!cfg ? (
-            <p className="text-red-600">연동 설정이 없습니다. <code>supabase/calendar-sync.sql</code>을 실행하세요.</p>
+            <p className="text-red-600">연동 설정이 없습니다. <code>supabase/done/calendar-sync.sql</code>을 실행하세요.</p>
           ) : (
             <ul className="space-y-2">
               {access.map((a) => (

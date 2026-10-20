@@ -46,7 +46,7 @@ const DAYS_AHEAD = 365;
  */
 export async function buildPreview(): Promise<Preview> {
   const cfg = await loadCalendarSync();
-  if (!cfg) throw new Error("연동 설정(settings.calendar_sync)이 없습니다 — supabase/calendar-sync.sql 을 실행하세요");
+  if (!cfg) throw new Error("연동 설정(settings.calendar_sync)이 없습니다 — supabase/done/calendar-sync.sql 을 실행하세요");
 
   const today = todayKST();
   const from = addDays(today, -DAYS_BACK);

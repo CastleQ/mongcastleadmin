@@ -21,7 +21,7 @@ export async function setSyncStart(on: boolean) {
     .eq("key", "calendar_sync")
     .maybeSingle();
   if (readError) throw new Error(readError.message);
-  if (!data) throw new Error("연동 설정이 없습니다 — supabase/calendar-sync.sql 을 먼저 실행하세요");
+  if (!data) throw new Error("연동 설정이 없습니다 — supabase/done/calendar-sync.sql 을 먼저 실행하세요");
 
   // 캘린더 주소 같은 나머지 설정은 그대로 두고 startedAt 만 바꾼다
   const value = { ...(data.value as Record<string, unknown>), startedAt: on ? new Date().toISOString() : null };

@@ -39,9 +39,9 @@ curl -s "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/games?select=id,kind,name,category&or
    안 붙이면 타입 추론이 어긋나 `column is of type X but expression is of type Y` 가 난다.
 3. **표 제약(check)에 없는 값은 안 들어간다.** 예: `games.kind` 에 `스위치게임` 을 넣으려면
    제약부터 넓혀야 한다. 제약 이름이 다를 수 있으니 이름으로 찾아 지우고 다시 만든다
-   (`supabase/switch-games.sql` 의 `do $$ ... pg_constraint ...` 참고).
+   (`supabase/done/switch-games.sql` 의 `do $$ ... pg_constraint ...` 참고).
 4. **잠금 순서.** 같은 표에 `alter table` 과 데이터 문장이 섞이면 `alter` 를 맨 앞에 둔다.
-   `supabase/calendar-sync.sql` 에서 순서를 안 지켜 교착(deadlock 40P01)이 실제로 났다.
+   `supabase/done/calendar-sync.sql` 에서 순서를 안 지켜 교착(deadlock 40P01)이 실제로 났다.
 5. **앱을 거치지 않으므로 연동이 안 돈다.** SQL 로 거래를 직접 넣으면 구글캘린더 일정이
    자동으로 안 만들어진다. 필요하면 "구글캘린더 연동 → 내보내기"를 눌러야 한다고 알린다.
 6. **화면이 옛 내용을 들고 있다.** SQL 로 직접 넣으면 앱은 바뀐 걸 모른다.
@@ -103,7 +103,7 @@ id pgtest >/dev/null 2>&1 || useradd -m pgtest
 su pgtest -c "$PG/pg_ctl -D /home/pgtest/data -o '-k /tmp -p 5444 -c listen_addresses=' -l /home/pgtest/log start"
 mkdir -p /home/pgtest/sql && cp <만든파일>.sql /home/pgtest/sql/ && chown -R pgtest:pgtest /home/pgtest/sql
 # 대상 표만 schema.sql 에서 떼어 만든다
-sed -n '/^create table <표> (/,/^);/p' supabase/schema.sql > /home/pgtest/sql/t.sql
+sed -n '/^create table <표> (/,/^);/p' supabase/done/schema.sql > /home/pgtest/sql/t.sql
 # 나중에 추가된 칸·제약도 재현한다 (예: games 의 image_url·bgg_id, 넓힌 kind 제약)
 su pgtest -c "$PG/psql -h /tmp -p 5444 -U pgtest -d postgres -v ON_ERROR_STOP=1 -f /home/pgtest/sql/<만든파일>.sql"
 ...

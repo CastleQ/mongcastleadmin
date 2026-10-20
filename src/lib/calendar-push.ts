@@ -10,7 +10,7 @@ import type { Ledger } from "./ledger.ts";
 
 export type SlotHours = Record<string, { start: string; end: string; endNextDay: boolean }>;
 
-/** settings.slot_hours 가 없거나 깨졌을 때 쓰는 기본값 (supabase/calendar-sync.sql 과 같은 값) */
+/** settings.slot_hours 가 없거나 깨졌을 때 쓰는 기본값 (supabase/done/calendar-sync.sql 과 같은 값) */
 export const DEFAULT_SLOT_HOURS: SlotHours = {
   낮: { start: "10:00", end: "17:00", endNextDay: false },
   밤: { start: "18:00", end: "23:00", endNextDay: false },

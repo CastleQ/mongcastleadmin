@@ -11,6 +11,7 @@
 |---|---|
 | 사장님이 정한 업무 규칙 (미정산 뜻, 매입 항목, 게임 분류) | `docs/운영규칙.md` ← **거래·게임 건드리기 전에 읽을 것** |
 | SQL 쓰는 법·함정·검증 | 스킬 `write-sql` |
+| SQL 파일을 어디에 두나 (안 돌린 것 / 돌린 것) | `supabase/README.md` ← 새 SQL 만들 때 읽을 것 |
 | 게임 추가 (이름만 받아 SQL까지) | 스킬 `add-games` |
 | 구글캘린더 연동 설계·단계 | `docs/google-calendar-sync-plan.md` |
 | 날짜별 작업 기록 (무엇을 왜 그렇게 했나) | `docs/sessions/` |

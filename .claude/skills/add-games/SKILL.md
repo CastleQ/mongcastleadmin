@@ -38,7 +38,7 @@ curl -s "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/games?select=id,kind,name,category&or
 스위치는 위키백과 + GameStop 이미지.
 
 ### 2) 칸 채우기 — games 표 규칙
-`src/lib/games.ts`의 타입과 `supabase/schema.sql`이 원본. 바뀌면 그쪽을 믿는다.
+`src/lib/games.ts`의 타입과 `supabase/done/schema.sql`이 원본. 바뀌면 그쪽을 믿는다.
 
 | 칸 | 규칙 |
 |---|---|
@@ -79,7 +79,7 @@ curl -s -o /dev/null -w "%{http_code} %{content_type} %{size_download}\n" --max-
 게임에만 해당하는 것만 아래에 적는다.
 
 - 판정키는 `name`. `where not exists (select 1 from games g where g.name = v.name)`
-- `kind` 에 새 값을 쓰려면 표 제약부터 넓힌다 (`supabase/switch-games.sql` 방식)
+- `kind` 에 새 값을 쓰려면 표 제약부터 넓힌다 (`supabase/done/switch-games.sql` 방식)
 - 검증할 때 운영 게임 이름을 임시 DB 에 먼저 넣어 이름 충돌까지 재현한다
 
 ```sql
