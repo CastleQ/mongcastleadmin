@@ -15,9 +15,12 @@
 --      '폭탄대소동 엔트리봇'→'엔트리봇 폭탄대소동'
 --   3) '우리 게임으로 결혼했어요' 는 텀블벅으로 나온 커플 대화게임으로 보이는데,
 --      인원·시간이 어디에도 적혀 있지 않아 **비워 뒀습니다**(지어내지 않음).
---   4) 시간은 BGG 기준 '긴 쪽'입니다. 실제로는 더 빨리 끝나는 것들이 있습니다
---      (타코 캣 30→10분대, 젝스님트 45→20분대, 룩 45, 루미큐브 60, 스택버거 30→15분대).
---      바꿔 드릴까요?
+--   4) 시간은 **실제 체감 시간**으로 낮췄습니다 (사장님 지시, 10-22). 근거가 갈리니 구분해 둡니다.
+--      · 출처 있음 — 타코 캣 10분(보드라이프 '10-30분'의 짧은 쪽), 스택버거 15분(보드라이프 표기)
+--      · 제 판단 — 젝스님트 20분, 룩 30분, 루미큐브 40분
+--        (이 셋은 BGG·보드라이프 모두 45/45/60분으로 적어 둬서, 낮춘 숫자에 출처가 없습니다.
+--         한 판 돌려 보시고 다르면 보유 게임 화면에서 바로 고치실 수 있습니다)
+--      · 안 건드린 것 — 우노 겨울왕국 30분. 이미 있는 '우노' 행과 같은 값으로 뒀습니다
 --   5) 장르: 마라케시는 '전략', 루미큐브는 '추상전략'(둘 다 전략게임 탭), 나머지 13종은 '파티'.
 --   6) language: BGG·보드라이프에 한국어판이 확인된 것만 '한국어'. 룩 카드게임은 확인 못 해 비움.
 --
@@ -34,10 +37,10 @@ from (values
    'https://cf.geekdo-images.com/olHL4zeLplDzjGgl3o942A__itemrep/img/yIQkbpvh5b39CGhA_SsIk0NsbUQ=/fit-in/246x300/filters:strip_icc()/pic6329985.png'::text,
    '트릭테이킹. 내가 몇 번 이길지 먼저 선언하고 그만큼 맞히면 점수. 4~6라운드'::text),
 
-  ('보드게임', '타코 캣 고트 치즈 피자', 'Taco Cat Goat Cheese Pizza (2018)', '파티', '2~8인', 30, 1,
+  ('보드게임', '타코 캣 고트 치즈 피자', 'Taco Cat Goat Cheese Pizza (2018)', '파티', '2~8인', 10, 1,
    '한국어', 'https://boardgamegeek.com/boardgame/253664/taco-cat-goat-cheese-pizza', 253664,
    'https://cf.geekdo-images.com/GHrnr-Khb0LvBU_QkrC_qA__itemrep/img/cWh2D89fj4HLBkLT71g7JYWiM1s=/fit-in/246x300/filters:strip_icc()/pic7192024.png',
-   '말과 그림이 맞으면 손바닥 내려치기. 실제로는 한 판 10분 안쪽'),
+   '말과 그림이 맞으면 손바닥 내려치기. 10분(보드라이프 10-30분의 짧은 쪽)'),
 
   ('보드게임', '듀오 미니', 'Duo (1986)', '파티', '2~6인', 20, 1,
    '한국어', 'https://boardgamegeek.com/boardgame/1464/duo', 1464,
@@ -53,15 +56,15 @@ from (values
    '한국어', null, null, null,
    '겨울왕국 그림의 우노. 규칙은 기본 우노와 같다(우노는 따로 2개 있음)'),
 
-  ('보드게임', '젝스님트', '6 nimmt! / Take 5 (1994)', '파티', '2~10인', 45, 1,
+  ('보드게임', '젝스님트', '6 nimmt! / Take 5 (1994)', '파티', '2~10인', 20, 1,
    '한국어', 'https://boardgamegeek.com/boardgame/432/take-5', 432,
    'https://cf.geekdo-images.com/WuOY1XAIJQ-RGAmT_apW_w__itemrep/img/6Ed-INTd8Hitxi6gOJugeSBFHQE=/fit-in/246x300/filters:strip_icc()/pic8632998.jpg',
-   '소머리 안 받기. 인원이 많아도 되고 설명이 짧아 첫 게임으로 좋다. 실제 20분대'),
+   '소머리 안 받기. 인원이 많아도 되고 설명이 짧아 첫 게임으로 좋다. ⚠️ BGG·보드라이프는 45분인데 체감 20분으로 넣음(출처 없는 판단)'),
 
-  ('보드게임', '룩 카드게임', 'Rook (1906)', '파티', '2~6인', 45, 1,
+  ('보드게임', '룩 카드게임', 'Rook (1906)', '파티', '2~6인', 30, 1,
    null, 'https://boardgamegeek.com/boardgame/1260/rook', 1260,
    'https://cf.geekdo-images.com/lKJgntNaJAa8A7QStjRvzA__itemrep/img/bLFO86V7E4n7LXOmDcJPwT1lETc=/fit-in/246x300/filters:strip_icc()/pic394433.jpg',
-   '편 나눠 하는 트릭테이킹(미국 고전). 한국어판 여부는 확인 못 했다'),
+   '편 나눠 하는 트릭테이킹(미국 고전). 한국어판 여부는 확인 못 했다. ⚠️ BGG 45분인데 체감 30분으로 넣음(출처 없는 판단)'),
 
   ('보드게임', '로보77', 'Lobo 77 / Double Down (1993)', '파티', '2~8인', 30, 1,
    '한국어', 'https://boardgamegeek.com/boardgame/3337/lobo-77', 3337,
@@ -87,20 +90,20 @@ from (values
    'https://cf.geekdo-images.com/x4ls1E4Y7KMlCnPeRTbIew__itemrep/img/nIHbtAItG7LUmMr7ogupfq7nXtw=/fit-in/246x300/filters:strip_icc()/pic3031803.jpg',
    '카드에 나온 악기 동작을 몸으로 하는 어린이 동작게임. 6세 이상, 3인부터'),
 
-  ('보드게임', '스택버거', 'Stack Burger (2017)', '파티', '2~4인', 30, 1,
+  ('보드게임', '스택버거', 'Stack Burger (2017)', '파티', '2~4인', 15, 1,
    '한국어', 'https://boardgamegeek.com/boardgame/261069/stack-burger', 261069,
    'https://cf.geekdo-images.com/Ok8kMcPfPxHAIEeIXfphhg__itemrep/img/LV4DZAriJiwTpXgIzITLFRjLDQM=/fit-in/246x300/filters:strip_icc()/pic5689929.jpg',
-   '주문대로 버거 쌓기(기억력). 8세 이상, 보드라이프 기준 실제 15분쯤'),
+   '주문대로 버거 쌓기(기억력). 8세 이상. 15분(보드라이프 표기, BGG는 20-30분)'),
 
   ('보드게임', '마라케시', 'Marrakech (2007)', '전략', '2~4인', 30, 1,
    '한국어', 'https://boardgamegeek.com/boardgame/29223/marrakech', 29223,
    'https://cf.geekdo-images.com/JFE29MODWOFXreEmM-xhyQ__itemrep/img/hO2TUcU1O4X4xt9q3eAvoNwFKDc=/fit-in/246x300/filters:strip_icc()/pic8594649.jpg',
    '양탄자 깔아 상대 자리 덮기. 가벼운 전략이라 전략게임 탭에 넣었다'),
 
-  ('보드게임', '루미큐브', 'Rummikub (1950)', '추상전략', '2~4인', 60, 1,
+  ('보드게임', '루미큐브', 'Rummikub (1950)', '추상전략', '2~4인', 40, 1,
    '한국어', 'https://boardgamegeek.com/boardgame/811/rummikub', 811,
    'https://cf.geekdo-images.com/LeaLDlTTmeN639MfuflcMw__itemrep/img/x4GW0OJaN-pV8-K_b4RTSFioW6U=/fit-in/246x300/filters:strip_icc()/pic2286966.jpg',
-   '⚠️ 사장님이 적어주신 이름은 ''루비큐브''였다. BGG 한글 별칭이 ''루미큐브''라 이쪽으로 판단. 루빅큐브면 고칠 것')
+   '⚠️ 사장님이 적어주신 이름은 ''루비큐브''였다. BGG 한글 별칭이 ''루미큐브''라 이쪽으로 판단. 루빅큐브면 고칠 것. ⚠️ BGG·보드라이프 60분인데 체감 40분으로 넣음(출처 없는 판단)')
 ) as v(kind, name, name_original, category, players, play_minutes, qty, language, link, bgg_id, image_url, note)
 where not exists (select 1 from games g where g.name = v.name);
 
