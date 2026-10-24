@@ -54,7 +54,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/reserva
   const [{ data }, { data: fl }] = await Promise.all([
     supabase
       .from("ledger")
-      .select("id,date,kind,category,package,channel,customer_name,customer_phone,content,headcount,amount,note,settled")
+      .select("id,date,kind,category,package,start_time,end_time,channel,customer_name,customer_phone,content,headcount,amount,note,settled")
       .or("kind.eq.매입,and(kind.eq.매출,category.eq.대여)") // 대여 매출 + 매입(월세·집기 등, 주황 칩)
       .order("date"),
     supabase.from("customers").select("*").neq("grade", "일반"),

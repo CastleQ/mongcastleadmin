@@ -42,9 +42,14 @@ next-env.d.ts
 
 # 개인정보/비밀 포함 파일
 *.txt
+# 비밀·개인정보가 든 SQL (출입 비밀번호·계좌·고객 연락처). 저장소가 공개라 올리지 않는다.
+# done/ 으로 옮긴 뒤에도 계속 걸리도록 하위 폴더까지 함께 적는다 (CLAUDE.md 규칙 6)
 supabase/seed.sql
 supabase/templates*.sql
 supabase/info*.sql
+supabase/**/seed.sql
+supabase/**/templates*.sql
+supabase/**/info*.sql
 
 # 개인 문서 (PC에만 보관, 공개 저장소 제외)
 HANDOVER_*.md

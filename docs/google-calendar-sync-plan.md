@@ -1,6 +1,6 @@
 # 구글캘린더 ↔ 예약현황 양방향 연동 — 확정 설계
 
-**상태: 1단계(DB 준비) 완료 — `supabase/calendar-sync.sql`을 2026-10-08 운영 Supabase에서 실행 완료.**
+**상태: 1단계(DB 준비) 완료 — `supabase/done/calendar-sync.sql`을 2026-10-08 운영 Supabase에서 실행 완료.**
 표 2개·`ledger.amount_estimated`·설정 2개가 들어간 것을 REST로 직접 확인했다. 다음은 2단계(구글 쪽 준비).
 
 도메인(카페24에서 구매 예정)은 **5단계의 구글 푸시 알림에만** 필요하다.
@@ -126,7 +126,7 @@
 거래 저장·수정·삭제 시 구글 반영은 그 자리에서 즉시 호출한다 (이 방향은 도메인과 무관하게 항상 실시간).
 
 ## 단계별 계획
-1. ~~**DB 준비**~~ ✅ **완료** — `supabase/calendar-sync.sql`
+1. ~~**DB 준비**~~ ✅ **완료** — `supabase/done/calendar-sync.sql`
    `calendar_links`(짝 맞춤·지문), `sync_log`(되돌리기용 기록), `ledger.amount_estimated`(금액 추정 띠),
    `settings.slot_hours`(슬롯 시각). 임시 Postgres에 2회 실행해 재실행 안전성과
    cascade·기록 보존·중복 방지를 확인했다. *(사장님: Supabase에서 1회 실행)*

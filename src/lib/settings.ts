@@ -8,7 +8,7 @@ export async function loadPrices(): Promise<Prices> {
   return mergePrices(data?.value);
 }
 
-/** 구글캘린더 연동 설정 (settings 표의 calendar_sync 키). SQL은 supabase/calendar-sync.sql */
+/** 구글캘린더 연동 설정 (settings 표의 calendar_sync 키). SQL은 supabase/done/calendar-sync.sql */
 export type CalendarSync = {
   readCalendarIds: string[];
   writeCalendarId: string;

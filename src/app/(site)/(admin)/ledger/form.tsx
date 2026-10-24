@@ -9,8 +9,10 @@ import { customerKey, type Customer } from "@/lib/customers";
 import { CustomerWarning } from "@/app/(site)/customer-warning";
 import { suggestAmount } from "@/lib/pricing";
 import { DEFAULT_PRICES, type Prices } from "@/lib/prices";
+import { hhmm, packageTime, timeRange } from "@/lib/hours";
+import type { Prefill } from "@/lib/prefill";
 
-type Props = { row?: Ledger; defaultDate?: string; defaultPackage?: string; from?: string; flagged?: Customer[]; prices?: Prices };
+type Props = { row?: Ledger; defaultDate?: string; defaultPackage?: string; from?: string; flagged?: Customer[]; prices?: Prices; prefill?: Prefill };
 
 const input = "w-full rounded border border-zinc-300 bg-white px-3 py-2 text-base focus:border-zinc-900 focus:outline-none";
 const label = "block text-sm text-zinc-600 mb-1";
@@ -67,21 +69,30 @@ function SelectOther({ name, options, value, onChange }: { name: string; options
   );
 }
 
-export function LedgerForm({ row, defaultDate, defaultPackage, from, flagged = [], prices = DEFAULT_PRICES }: Props) {
+export function LedgerForm({ row, defaultDate, defaultPackage, from, flagged = [], prices = DEFAULT_PRICES, prefill }: Props) {
   // 달력 빈 슬롯에서 들어오면 패키지·항목(대여)·입금액까지 미리 채움
   const initial = !row && defaultDate && defaultPackage ? suggestAmount(defaultDate, defaultPackage, null, prices) : null;
-  const [kind, setKind] = useState<Ledger["kind"]>(row?.kind ?? "매출");
-  const [category, setCategory] = useState<string | null>(row?.category ?? (initial ? "대여" : null));
-  const [channel, setChannel] = useState<string | null>(row?.channel ?? null);
-  const [pkg, setPkg] = useState<string | null>(row?.package ?? (initial ? defaultPackage ?? null : null));
-  const [payment, setPayment] = useState<string | null>(row?.payment_method ?? "계좌이체");
-  const [date, setDate] = useState(row?.date ?? defaultDate ?? "");
-  const [amount, setAmount] = useState(row?.amount ? String(row.amount) : initial ? String(initial.total) : "");
+  // 응대 템플릿에서 넘어온 값(prefill)이 가장 세다 — 사장님이 문구에서 이미 고른 값이라서.
+  // 그 다음이 저장된 예약(row), 마지막이 달력에서 추정한 값
+  const v = { ...(row ?? {}), ...(prefill ?? {}) } as Partial<Ledger>;
+  const [kind, setKind] = useState<Ledger["kind"]>(v.kind ?? "매출");
+  const [category, setCategory] = useState<string | null>(v.category ?? (initial ? "대여" : null));
+  const [channel, setChannel] = useState<string | null>(v.channel ?? null);
+  const [pkg, setPkg] = useState<string | null>(v.package ?? (initial ? defaultPackage ?? null : null));
+  const [payment, setPayment] = useState<string | null>(v.payment_method ?? "계좌이체");
+  const [date, setDate] = useState(v.date ?? defaultDate ?? "");
+  const [amount, setAmount] = useState(v.amount ? String(v.amount) : initial ? String(initial.total) : "");
   const [suggested, setSuggested] = useState<number | null>(initial?.total ?? null); // 마지막으로 자동 기입한 금액
-  const [headcount, setHeadcount] = useState(row?.headcount ? String(row.headcount) : "");
-  const [other, setOther] = useState(row?.other_expense ? String(row.other_expense) : "");
-  const [name, setName] = useState(row?.customer_name ?? "");
-  const [phone, setPhone] = useState(row?.customer_phone ?? "");
+  const [headcount, setHeadcount] = useState(v.headcount ? String(v.headcount) : "");
+  const [other, setOther] = useState(v.other_expense ? String(v.other_expense) : "");
+  const [name, setName] = useState(v.customer_name ?? "");
+  const [phone, setPhone] = useState(v.customer_phone ?? "");
+  // 예약 시간. 패키지를 고르면 기본값이 들어오고, 손으로 고친 값은 덮어쓰지 않는다(입금액과 같은 방식)
+  const firstTimes = v.start_time || v.end_time
+    ? { start: hhmm(v.start_time), end: hhmm(v.end_time) }
+    : packageTime(v.package ?? (initial ? defaultPackage : null)) ?? { start: "", end: "" };
+  const [times, setTimes] = useState(firstTimes);
+  const [autoTimes, setAutoTimes] = useState<string>(`${firstTimes.start}-${firstTimes.end}`); // 마지막으로 자동 기입한 시간
   const sale = kind === "매출";
   const key = customerKey({ customer_name: name, customer_phone: phone });
   const warn = sale ? flagged.find((c) => c.key === key) : undefined;
@@ -96,6 +107,18 @@ export function LedgerForm({ row, defaultDate, defaultPackage, from, flagged = [
     if (!sg) return;
     if (amount === "" || toNum(amount) === suggested) { setAmount(String(sg.total)); setSuggested(sg.total); }
   };
+
+  // 패키지를 고르면 그 패키지의 기본 시간을 넣는다. 손으로 고쳐 둔 시간은 그대로 둔다
+  // ('기타'는 정해진 시간이 없어 비운다 — 사장님 지시)
+  const applyTimes = (nextPkg: string) => {
+    const t = packageTime(nextPkg) ?? { start: "", end: "" };
+    const untouched = (!times.start && !times.end) || `${times.start}-${times.end}` === autoTimes;
+    if (!untouched) return;
+    setTimes(t);
+    setAutoTimes(`${t.start}-${t.end}`);
+  };
+  const setTime = (which: "start" | "end", value: string) => setTimes((t) => ({ ...t, [which]: value }));
+  const rental = sale && (category ?? "대여") === "대여"; // 시간 칸은 대여 매출만
 
   return (
     <form action={saveLedger.bind(null, row?.id ?? null)} className="max-w-xl space-y-5">
@@ -121,7 +144,23 @@ export function LedgerForm({ row, defaultDate, defaultPackage, from, flagged = [
       {sale && (
         <div>
           <span className={label}>패키지 <b className="text-red-500">*</b></span>
-          <Choice name="package" options={PACKAGES} value={pkg} onChange={(v) => { setPkg(v); applySuggestion({ pkg: v }); }} required />
+          <Choice name="package" options={PACKAGES} value={pkg} onChange={(x) => { setPkg(x); applySuggestion({ pkg: x }); applyTimes(x); }} required />
+        </div>
+      )}
+
+      {/* 예약 시간 — 대여만. 패키지를 고르면 기본 시간이 들어오고 손으로 고칠 수 있다 */}
+      {rental && (
+        <div>
+          <span className={label}>예약 시간</span>
+          <div className="flex items-center gap-2">
+            <input name="start_time" type="time" step={300} value={times.start} onChange={(e) => setTime("start", e.target.value)} aria-label="시작 시간" className={input + " w-32"} />
+            <span className="text-zinc-500">~</span>
+            <input name="end_time" type="time" step={300} value={times.end} onChange={(e) => setTime("end", e.target.value)} aria-label="종료 시간" className={input + " w-32"} />
+            {timeRange(times.start, times.end) && <span className="text-sm text-zinc-500 tabular-nums">{timeRange(times.start, times.end)}</span>}
+          </div>
+          <p className="mt-1 text-xs text-zinc-400">
+            종료가 시작보다 이르면 다음 날로 봐요(밤샘·하루종일). 패키지를 고르면 기본 시간이 들어오고, 고쳐 두면 그 값을 지킵니다.
+          </p>
         </div>
       )}
 

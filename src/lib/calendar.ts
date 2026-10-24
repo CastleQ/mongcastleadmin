@@ -4,6 +4,9 @@ export type Reservation = {
   kind: "매출" | "매입";
   category: string;
   package: string | null;
+  /** 예약 시간 'HH:MM' (lib/hours.ts). 옛 예약은 비어 있을 수 있다 */
+  start_time?: string | null;
+  end_time?: string | null;
   channel: string | null;
   customer_name: string | null;
   customer_phone: string | null;

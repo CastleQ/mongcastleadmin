@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { groupBuys, type Reservation } from "@/lib/calendar";
 import { navigateOnTap } from "@/lib/tap";
+import { timeRange } from "@/lib/hours";
 
 type Props = { r: Reservation; className: string; alignRight: boolean; children: ReactNode; highlight?: boolean; dim?: boolean };
 
@@ -62,6 +63,8 @@ export function Chip({ r, className, alignRight, children, highlight = false, di
             <>
               <p className={line}><span className="font-semibold">{r.customer_name || "이름 없음"}</span>{r.customer_phone && <>{sep}<span className="text-zinc-600">{r.customer_phone}</span></>}</p>
               <p className={line}><span>{r.package || "패키지 없음"}</span>{sep}<span className="tabular-nums">{won(r.amount)}{r.settled ? "" : " (미정산)"}</span></p>
+              {/* 예약 시간 — 적어 둔 예약만 보여준다 (옛 예약은 비어 있다) */}
+              {timeRange(r.start_time, r.end_time) && <p className={`${line} tabular-nums text-zinc-600`}>⏰ {timeRange(r.start_time, r.end_time)}</p>}
               {r.content && <p className="text-zinc-600">{r.content}{r.headcount ? ` · ${r.headcount}명` : ""}</p>}
             </>
           )}
