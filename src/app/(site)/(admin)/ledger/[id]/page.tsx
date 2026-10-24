@@ -5,10 +5,15 @@ import type { Ledger } from "@/lib/ledger";
 import { LedgerForm } from "../form";
 import type { Customer } from "@/lib/customers";
 import { loadPrices } from "@/lib/settings";
+import { parsePrefill } from "@/lib/prefill";
 
 export default async function EditLedgerPage({ params, searchParams }: PageProps<"/ledger/[id]">) {
   const { id } = await params;
-  const { from } = await searchParams;
+  const sp = await searchParams;
+  const { from } = sp;
+  // 문자 만들기에서 '예약현황에 반영' 으로 돌아오면 문구에서 고른 값이 주소에 담겨 온다.
+  // 폼에 미리 채워 보여주기만 하고, 저장은 사장님이 '변경 저장'을 눌러야 된다
+  const prefill = parsePrefill(sp);
   const supabase = await createClient();
   const [{ data }, { data: fl }] = await Promise.all([
     supabase.from("ledger").select("*").eq("id", Number(id)).maybeSingle(),
@@ -29,7 +34,7 @@ export default async function EditLedgerPage({ params, searchParams }: PageProps
           <Link href={`/templates?ledger=${row.id}`} className="rounded border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-50">✉ 문자 만들기</Link>
         )}
       </div>
-      <LedgerForm row={row} from={typeof from === "string" ? from : undefined} flagged={flagged} prices={prices} />
+      <LedgerForm row={row} from={typeof from === "string" ? from : undefined} flagged={flagged} prices={prices} prefill={prefill} />
     </>
   );
 }

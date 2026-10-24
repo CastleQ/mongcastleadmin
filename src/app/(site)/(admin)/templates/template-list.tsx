@@ -82,10 +82,13 @@ export function TemplateList({ rows, ledger, warn, prices }: { rows: Template[];
             <UseTemplate
               key={`${current.id}-${ledger?.id ?? ""}`}
               templateId={current.id}
+              templateName={current.name}
               body={current.body}
               phone={ledger?.customer_phone}
               prices={prices}
               initial={ledger ? autoFill(placeholders(current.body), ledger) : undefined}
+              ledgerId={ledger?.id ?? null}
+              defaultHeadcount={ledger?.headcount ?? null}
             />
 
             <div className="mt-5 flex justify-between border-t border-zinc-100 pt-3 text-sm">

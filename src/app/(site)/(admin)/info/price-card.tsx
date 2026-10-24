@@ -1,8 +1,11 @@
 import { DAYS, PKGS, friendDiscountPct, type Prices } from "@/lib/prices";
+import { PACKAGE_HOURS, hourlyRate, packageTime, timeRange } from "@/lib/hours";
 import { savePrices } from "./actions";
 
 const won = (n: number) => n.toLocaleString("ko-KR");
 const DAY_LABEL = { 평일: "월~목", 금: "금 · 공휴일 전날", 주말: "토·일·공휴일" } as const;
+/** 시간당 단가를 안내하는 패키지. 전일(하루종일)은 시간당으로 치지 않는다 */
+const HOURLY_PKGS = ["낮", "밤"] as const;
 const input = "w-28 rounded border border-zinc-300 px-2 py-1.5 text-right text-sm tabular-nums focus:border-zinc-900 focus:outline-none";
 
 /** 📌 가격 정보: settings의 요금표를 표로 보여주고, 아래에서 숫자만 고쳐 저장 */
@@ -27,6 +30,34 @@ export function PriceCard({ prices }: { prices: Prices }) {
           </tbody>
         </table>
         <p style={{ fontSize: "0.8rem", color: "#71717a" }}>개인 연락·계좌이체 기준(저가). 공휴일은 2026·2027 법정공휴일 기준.</p>
+
+        {/* 시간당 단가: 위 표의 패키지 금액 ÷ 이용 시간. 따로 입력하는 값이 아니라 자동 계산이라 가격을 고치면 같이 바뀐다 */}
+        <h4>시간당 단가</h4>
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              {HOURLY_PKGS.map((pkg) => {
+                const t = packageTime(pkg);
+                return <th key={pkg}>{pkg}타임{t && <span style={{ fontWeight: 400 }}> ({timeRange(t.start, t.end)})</span>}</th>;
+              })}
+            </tr>
+          </thead>
+          <tbody>
+            {DAYS.map((d, i) => (
+              <tr key={d}>
+                <td><strong>{DAY_LABEL[d]}</strong></td>
+                {HOURLY_PKGS.map((pkg) => (
+                  <td key={pkg} style={{ textAlign: "right" }}>{won(hourlyRate(prices[pkg][i], PACKAGE_HOURS[pkg]))}원/h</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p style={{ fontSize: "0.8rem", color: "#71717a" }}>
+          패키지 금액 ÷ 이용 시간을 <strong>천원 단위로 올림</strong>한 값(손님에게 안내할 기준 단가). 위 가격을 고치면 같이 바뀐다.
+          하루종일(10:00~익일09:00)은 시간당으로 안내하지 않는다.
+        </p>
 
         <details className="mt-3 rounded border border-zinc-200 not-prose">
           <summary className="cursor-pointer select-none px-3 py-2 text-sm text-zinc-600">가격 수정</summary>
