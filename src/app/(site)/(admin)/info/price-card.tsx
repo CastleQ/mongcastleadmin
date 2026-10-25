@@ -29,8 +29,6 @@ export function PriceCard({ prices }: { prices: Prices }) {
             <tr><td>지인 할인</td><td colSpan={3}><strong>총 금액에서 {friendDiscountPct()}% 할인</strong> (청소보증금 없음)</td></tr>
           </tbody>
         </table>
-        <p style={{ fontSize: "0.8rem", color: "#71717a" }}>개인 연락·계좌이체 기준(저가). 공휴일은 2026·2027 법정공휴일 기준.</p>
-
         {/* 시간당 단가: 위 표의 패키지 금액 ÷ 이용 시간. 따로 입력하는 값이 아니라 자동 계산이라 가격을 고치면 같이 바뀐다 */}
         <h4>시간당 단가</h4>
         <table>
@@ -54,10 +52,6 @@ export function PriceCard({ prices }: { prices: Prices }) {
             ))}
           </tbody>
         </table>
-        <p style={{ fontSize: "0.8rem", color: "#71717a" }}>
-          패키지 금액 ÷ 이용 시간을 <strong>천원 단위로 올림</strong>한 값(손님에게 안내할 기준 단가). 위 가격을 고치면 같이 바뀐다.
-          하루종일(10:00~익일09:00)은 시간당으로 안내하지 않는다.
-        </p>
 
         <details className="mt-3 rounded border border-zinc-200 not-prose">
           <summary className="cursor-pointer select-none px-3 py-2 text-sm text-zinc-600">가격 수정</summary>
