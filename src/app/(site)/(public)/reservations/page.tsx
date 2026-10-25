@@ -7,6 +7,7 @@ import { Calendar } from "./calendar";
 import { SearchBox } from "./search-box";
 import { LedgerTable } from "@/app/(site)/(admin)/ledger/ledger-table";
 import { searchLedger } from "@/lib/search";
+import { isMissingColumn } from "@/lib/missing-column";
 import type { Ledger } from "@/lib/ledger";
 
 /**
@@ -51,17 +52,24 @@ export default async function CalendarPage({ searchParams }: PageProps<"/reserva
     return <Calendar month={month} today={today} isAdmin={false} rows={rows} prices={prices} contact={contact} />;
   }
 
-  const [{ data }, { data: fl }] = await Promise.all([
+  // 예약현황에 쓰는 칸들. 시간 두 칸은 supabase/ledger-times.sql 을 돌린 뒤에 생긴다 —
+  // 아직 없으면 그 두 칸만 빼고 다시 불러온다 (안 그러면 목록이 통째로 오류가 나 빈 달력이 된다)
+  const COLS = "id,date,kind,category,package,channel,customer_name,customer_phone,content,headcount,amount,note,settled";
+  const load = (cols: string) =>
     supabase
       .from("ledger")
-      .select("id,date,kind,category,package,start_time,end_time,channel,customer_name,customer_phone,content,headcount,amount,note,settled")
+      .select(cols)
       .or("kind.eq.매입,and(kind.eq.매출,category.eq.대여)") // 대여 매출 + 매입(월세·집기 등, 주황 칩)
-      .order("date"),
+      .order("date");
+
+  const [withTime, { data: fl }] = await Promise.all([
+    load(`${COLS},start_time,end_time`),
     supabase.from("customers").select("*").neq("grade", "일반"),
   ]);
+  const { data } = isMissingColumn(withTime.error) ? await load(COLS) : withTime;
 
   return (
     <Calendar month={month} today={today} isAdmin toolbar={<SearchBox />}
-      rows={(data ?? []) as Reservation[]} flagged={(fl ?? []) as Customer[]} highlightId={highlightId} />
+      rows={(data ?? []) as unknown as Reservation[]} flagged={(fl ?? []) as Customer[]} highlightId={highlightId} />
   );
 }
