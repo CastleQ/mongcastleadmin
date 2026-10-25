@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { parseLedgerForm } from "@/lib/ledger";
 import { loadPrices } from "@/lib/settings";
 import { pushLedgerRow, removeFromGoogle } from "@/lib/calendar-export";
+import { isMissingColumn, TIME_COLUMNS, withoutKeys } from "@/lib/missing-column";
 
 /** 저장/삭제 후 돌아갈 화면. 허용된 곳만 (ledger → 거래 탭, 그 외 → 달력) */
 const backTo = (from: string | null, date: string) => `${from === "ledger" ? "/ledger" : "/reservations"}?m=${date.slice(0, 7)}`;
@@ -13,11 +14,14 @@ export async function saveLedger(id: number | null, formData: FormData) {
   const row = parseLedgerForm(formData, (await loadPrices()).보증금);
   if (!row.date) throw new Error("날짜를 입력하세요");
   const supabase = await createClient();
-  const q = id === null
-    ? supabase.from("ledger").insert(row).select("id").single()
-    : supabase.from("ledger").update(row).eq("id", id).select("id").single();
-  const { data, error } = await q;
+  const save = (r: typeof row) => (id === null
+    ? supabase.from("ledger").insert(r).select("id").single()
+    : supabase.from("ledger").update(r).eq("id", id).select("id").single());
+  let { data, error } = await save(row);
+  // 예약 시간 칸이 아직 DB 에 없으면(SQL 미실행) 그 두 칸만 빼고 저장한다 — 저장이 막히면 안 된다
+  if (isMissingColumn(error)) ({ data, error } = await save(withoutKeys(row, TIME_COLUMNS)));
   if (error) throw new Error(error.message);
+  if (!data) throw new Error("저장은 됐지만 번호를 못 받았어요. 거래 목록에서 확인해 주세요");
   // 구글에 바로 반영. 구글이 안 되더라도 저장은 이미 끝났고, 실패는 sync_log 에 남는다
   await pushLedgerRow(data.id as number);
   redirect(backTo(formData.get("from") as string | null, row.date));
