@@ -20,8 +20,10 @@ type Props = {
   prices: Prices;
   /** 예약에서 '문자 만들기'로 들어왔으면 그 예약 번호. 복사 뒤 그 예약 수정으로 돌아간다 */
   ledgerId?: number | null;
-  /** 그 예약에 적혀 있던 인원 — 인원추가 옵션을 고르면 이 값이 미리 들어가 있다 */
+  /** 그 예약에 적혀 있던 인원 — 이용인원 칸에 미리 들어가 있다 */
   defaultHeadcount?: number | null;
+  /** 그 예약의 고객명 — 문구에 [고객명] 칸이 없을 때도 예약자 이름 칸에 들어가 있다 */
+  defaultName?: string | null;
 };
 
 const input = "w-full rounded border border-zinc-300 px-3 py-2 text-base focus:border-zinc-900 focus:outline-none";
@@ -53,13 +55,14 @@ function Pick({ options, value, onChange, allowEmpty, emptyLabel = "(없음)" }:
  * 옵션에서 '인원추가'를 고르면 인원수 칸이 열리고, 기준인원을 넘는 만큼 총액에 더해진다.
  * 복사한 뒤에는 "예약현황에 바로 추가할까요?"를 물어 거래 추가(또는 그 예약 수정)로 값까지 들고 넘어간다.
  */
-export function UseTemplate({ templateId, templateName, body, phone, initial = {}, prices, ledgerId = null, defaultHeadcount = null }: Props) {
+export function UseTemplate({ templateId, templateName, body, phone, initial = {}, prices, ledgerId = null, defaultHeadcount = null, defaultName = null }: Props) {
   const router = useRouter();
   const slots = placeholders(body);
   const [values, setValues] = useState<Record<string, string>>(() =>
     Object.fromEntries(slots.map((s) => [s.key, initial[s.key] ?? (isDateKey(s.key) && s.def === "오늘" ? todayKST() : s.def)])),
   );
-  const [headcount, setHeadcount] = useState(defaultHeadcount ? String(defaultHeadcount) : ""); // 인원추가 옵션을 골랐을 때만 쓰는 칸
+  const [headcount, setHeadcount] = useState(defaultHeadcount ? String(defaultHeadcount) : "");
+  const [typedName, setTypedName] = useState(defaultName ?? ""); // 문구에 [고객명] 칸이 없을 때 쓰는 이름
   const [edited, setEdited] = useState<string | null>(null); // 미리보기를 직접 고친 내용
   const [copied, setCopied] = useState(false);
   const [ask, setAsk] = useState(false); // 복사 뒤 "예약현황에 추가할까요?" 모달
@@ -70,12 +73,15 @@ export function UseTemplate({ templateId, templateName, body, phone, initial = {
   const platformKey = slots.find((s) => isPlatformKey(s.key))?.key;
   const nameKey = slots.find((s) => s.key.includes("고객"))?.key;
   const optionKeys = slots.filter((s) => isOptionKey(s.key)).map((s) => s.key);
-  const lastOptionKey = optionKeys[optionKeys.length - 1];
   const pkg = pkgKey ? values[pkgKey] ?? "" : ""; // 고른 패키지 — 전일이면 밤샘이 무료라 옵션 금액이 달라짐
   const chosen = optionKeys.map((k) => values[k] ?? "");
-  // 인원수 칸은 옵션 1~3 중 **한 곳에서라도** '인원추가'를 골랐을 때만 열린다 (여러 곳에서 골라도 한 번만 센다)
-  const peopleOn = chosen.includes(HEADCOUNT_OPTION);
-  const people = peopleOn ? Number(headcount.replace(/[^\d]/g, "")) || null : null;
+  // 예약자 이름·이용인원은 **입금안내 문구에서 늘 적을 수 있는 칸**이다 (2026-10-31 사장님 요청).
+  // 적어 둔 인원은 문구(인원추가 옵션을 고른 경우)와 총액, 그리고 거래 추가로 넘어갈 때 함께 간다
+  const people = Number(headcount.replace(/[^\d]/g, "")) || null;
+  const guestName = nameKey ? values[nameKey] ?? "" : typedName;
+  // 이 문구에서 '예약현황에 추가'를 물어볼지 — 입금안내 문구만 해당된다.
+  // 예약확정 문자처럼 이미 잡힌 예약에 보내는 문구는 거래를 새로 만들 일이 없다 (2026-10-31 사장님 지시)
+  const canAddLedger = templateName.includes("입금안내");
   const quote = pkgKey ? packageQuote(dateKey ? values[dateKey] ?? "" : "", pkg, prices) : null;
   const autoTotal = quote?.base != null ? won(quoteTotal(quote.base, chosen, prices, pkg, people)) : "";
 
@@ -95,11 +101,13 @@ export function UseTemplate({ templateId, templateName, body, phone, initial = {
   const missing = slots.filter((s) => !isDropKey(s.key) && !shown[s.key]?.trim());
 
   const set = (key: string, v: string) => { setValues((cur) => ({ ...cur, [key]: v })); setEdited(null); };
+  // 이름 칸은 문구에 [고객명] 이 있으면 그 칸을 쓰고, 없으면 따로 들고 있다가 거래로 넘길 때만 쓴다
+  const setGuestName = (v: string) => { if (nameKey) set(nameKey, v); else { setTypedName(v); setEdited(null); } };
   const copy = async () => {
     await navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
-    setAsk(true);
+    if (canAddLedger) setAsk(true);
   };
   const remember = (key: string, value: string) => start(async () => {
     await saveSlotDefault(templateId, key, value);
@@ -130,7 +138,7 @@ export function UseTemplate({ templateId, templateName, body, phone, initial = {
       settled: platformMode,
       amount,
       headcount: people ?? undefined,
-      customer_name: nameKey ? (values[nameKey] ?? "").trim() || undefined : undefined,
+      customer_name: guestName.trim() || undefined,
       inquiry_date: todayKST(), // 문구를 복사한 날 = 연락이 온 날
       start_time: t?.start,
       end_time: t?.end,
@@ -145,10 +153,33 @@ export function UseTemplate({ templateId, templateName, body, phone, initial = {
   return (
     <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
       <div className="space-y-4">
+        {/* 예약자 이름·이용인원 — 문구의 대괄호 칸과 상관없이 늘 적을 수 있는 칸.
+            적어 두면 '예약현황에 추가'로 넘어갈 때 거래에 그대로 채워진다 (2026-10-31 사장님 요청) */}
+        {canAddLedger && (
+          <div className="grid grid-cols-2 gap-3 rounded border border-zinc-200 bg-zinc-50 p-3">
+            <label className="block">
+              <span className="mb-1 block text-sm text-zinc-600">예약자 이름</span>
+              <input value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="홍길동" className={input} />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-sm text-zinc-600">이용인원</span>
+              <input type="number" inputMode="numeric" min={1} value={headcount}
+                onChange={(e) => { setHeadcount(e.target.value); setEdited(null); }}
+                placeholder={`${prices.기준인원}인까지 기본`} className={input} />
+            </label>
+            <p className="col-span-2 text-xs text-zinc-500">
+              {nameKey ? "이름은 문구에도 들어갑니다." : "이 문구에는 이름 칸이 없어 문자에는 안 나오고, 거래에만 채워집니다."}
+              {" "}인원이 {prices.기준인원}명을 넘으면 1인당 {won(prices.인원추가)}이 총액에 더해집니다
+              {pkg === "전일" ? " (하루종일은 인원 추가 무료)" : ""}.
+              {" "}문구에 ‘이용인원 N인’ 줄을 넣으려면 옵션에서 ‘{HEADCOUNT_OPTION}’를 고르세요.
+            </p>
+          </div>
+        )}
+
         {slots.length > 0 && (
           <div className="space-y-3">
             <p className="text-sm text-zinc-600">채울 칸 {slots.length}개</p>
-            {slots.map((s) => {
+            {slots.filter((s) => !(canAddLedger && s.key === nameKey)).map((s) => {
               const v = values[s.key] ?? "";
               const date = isDateKey(s.key), total = isTotalKey(s.key);
               const changed = !date && !total && v.trim() !== "" && v.trim() !== s.def;
@@ -181,19 +212,6 @@ export function UseTemplate({ templateId, templateName, body, phone, initial = {
                       : <input value={v} onChange={(e) => set(s.key, e.target.value)} className={input} />}
                   </label>
 
-                  {/* 인원수 칸: 마지막 옵션 바로 아래(=기타 칸 위). 옵션에서 '인원추가'를 고르기 전까지는 못 쓰게 둔다 */}
-                  {s.key === lastOptionKey && (
-                    <label className="block">
-                      <span className="mb-1 block text-sm text-zinc-600">
-                        이용인원
-                        {!peopleOn && <span className="ml-1 text-xs text-zinc-400">옵션에서 ‘{HEADCOUNT_OPTION}’를 고르면 쓸 수 있어요</span>}
-                      </span>
-                      <input type="number" inputMode="numeric" min={1} value={headcount} disabled={!peopleOn}
-                        onChange={(e) => { setHeadcount(e.target.value); setEdited(null); }}
-                        placeholder={`${prices.기준인원}인 초과 1인당 ${won(prices.인원추가)}`}
-                        className={input + (peopleOn ? "" : " bg-zinc-100 text-zinc-400")} />
-                    </label>
-                  )}
                 </Fragment>
               );
             })}

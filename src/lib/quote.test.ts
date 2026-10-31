@@ -50,4 +50,10 @@ test("quote: 인원추가 — 기준 10인까지 무료, 넘으면 1인당 10,00
   assert.equal(quoteTotal(170_000, [HEADCOUNT_OPTION, HEADCOUNT_OPTION], p, "밤", 13), 200_000);
   assert.equal(quoteTotal(170_000, [HEADCOUNT_OPTION, "청소보증금"], p, "밤", 13), 250_000);
   assert.equal(quoteTotal(170_000, [HEADCOUNT_OPTION], p, "밤", 10), 170_000);
+  // 인원수만 적어도 가산금이 들어간다 (옵션은 '이용인원 N인' 줄을 문구에 넣을지일 뿐)
+  assert.equal(quoteTotal(170_000, [], p, "밤", 13), 200_000);
+  assert.equal(quoteTotal(170_000, ["청소보증금"], p, "밤", 13), 250_000);
+  assert.equal(quoteTotal(260_000, [], p, "전일", 13), 260_000); // 하루종일은 그래도 무료
+  assert.equal(quoteTotal(170_000, [], p, "밤", null), 170_000);
+  assert.equal(quoteTotal(170_000, ["지인할인"], p, "밤", 13), 160_000); // (170+30)×0.8
 });
