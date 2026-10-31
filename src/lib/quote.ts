@@ -61,15 +61,19 @@ export function packageQuote(date: string, pkg: string, p: Prices): { text: stri
   return { text: `${name}${when} ${won(sg.base)}원`, base: sg.base };
 }
 
-/** 총액 = 기본가 + 옵션 금액 + 인원 가산금, 그 뒤 지인할인이 있으면 ×0.8 */
+/**
+ * 총액 = 기본가 + 옵션 금액 + 인원 가산금, 그 뒤 지인할인이 있으면 ×0.8.
+ * 인원 가산금은 **인원수를 적기만 하면** 들어간다 (옵션으로 '인원추가'를 고르는 것은
+ *  문구에 '이용인원 N인' 줄을 넣을지일 뿐이다 — 2026-10-31 사장님 요청으로 분리).
+ */
 export function quoteTotal(base: number, labels: string[], p: Prices, pkg = "", headcount: number | null = null): number {
   const opts = quoteOptions(p, pkg);
   let sum = base, rate = 1;
-  // 같은 옵션을 여러 칸에서 골라도 한 번만 센다 (인원추가를 옵션1·2에 둘 다 골라 두 번 더해지면 안 된다)
+  // 같은 옵션을 여러 칸에서 골라도 한 번만 센다 (청소보증금을 옵션1·2에 둘 다 골라 두 번 더해지면 안 된다)
   for (const l of new Set(labels)) {
     const o = opts.find((x) => x.label === l);
     if (o) { sum += o.add; rate *= o.rate; }
   }
-  if (labels.includes(HEADCOUNT_OPTION)) sum += extraPeopleFee(headcount, p, pkg);
+  sum += extraPeopleFee(headcount, p, pkg);
   return Math.round(sum * rate);
 }
