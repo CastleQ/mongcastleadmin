@@ -1,8 +1,10 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { placeholders, setDefault } from "@/lib/templates";
+import { setInfoToken } from "@/lib/markdown";
 
 export async function saveTemplate(id: number | null, formData: FormData) {
   const s = (k: string) => (formData.get(k) as string | null)?.trim() || null;
@@ -31,15 +33,30 @@ export async function deleteTemplate(id: number) {
 }
 
 /**
- * 채운 값을 그 칸의 기본값으로 템플릿에 저장.
- * keepToken = 문구 복사 때의 자동 저장. 기본값이 `{{출입 비밀번호}}` 처럼 '몽캐슬파티룸 정보'에서
- * 끌어오는 자리표면 건드리지 않는다 — 원본이 한 곳이어야 하기 때문. (버튼을 직접 누르면 덮어쓴다)
+ * 채운 값을 그 칸의 기본값으로 저장.
+ *
+ * 기본값이 `{{출입 비밀번호}}` 처럼 자리표면 **템플릿이 아니라 '몽캐슬파티룸 정보' 표를 고친다.**
+ * 그래서 어느 쪽에서 고치든 두 곳이 같은 값을 본다(양방향). 값의 원본은 늘 정보 표 하나다.
  */
-export async function saveSlotDefault(id: number, key: string, value: string, keepToken = false) {
+export async function saveSlotDefault(id: number, key: string, value: string) {
   const supabase = await createClient();
   const { data, error } = await supabase.from("templates").select("body").eq("id", id).single();
   if (error) throw new Error(error.message);
-  if (keepToken && (placeholders(data.body).find((s) => s.key === key)?.def ?? "").includes("{{")) return;
+
+  const token = (placeholders(data.body).find((s) => s.key === key)?.def ?? "").match(/^\{\{\s*(.+?)\s*\}\}$/)?.[1];
+  if (token) {
+    const { data: secs } = await supabase.from("info_sections").select("id,body").order("sort_order");
+    for (const sec of secs ?? []) {
+      const next = setInfoToken(sec.body as string, token, value.trim());
+      if (!next) continue;
+      const { error: e } = await supabase.from("info_sections").update({ body: next, updated_at: new Date().toISOString() }).eq("id", sec.id);
+      if (e) throw new Error(e.message);
+      revalidatePath("/info");
+      return;
+    }
+    // 정보 표에 그 항목이 없으면 아래로 내려가 템플릿에 적는다 (값을 잃지 않게)
+  }
+
   const body = setDefault(data.body, key, value.trim());
   const { error: e2 } = await supabase.from("templates").update({ body }).eq("id", id);
   if (e2) throw new Error(e2.message);

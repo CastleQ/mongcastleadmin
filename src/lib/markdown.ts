@@ -27,6 +27,17 @@ export function infoTokens(body: string): Record<string, string> {
   return out;
 }
 
+/**
+ * 반대 방향: '| 항목 | 값 |' 줄의 **값만** 바꾼다. 그 항목이 없으면 null.
+ * 응대 템플릿에서 고친 값을 원본(핵심 정보)에 되돌려 적을 때 쓴다 — 두 곳이 어긋나지 않게.
+ */
+export function setInfoToken(body: string, key: string, value: string): string | null {
+  const esc = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const re = new RegExp(`^(\\s*\\|\\s*${esc}\\s*\\|)[^|\\n]*(\\|\\s*)$`, "m");
+  if (!re.test(body)) return null;
+  return body.replace(re, `$1 ${value.replace(/\|/g, "")} $2`); // 값 안의 | 는 표를 깨뜨리므로 뺀다
+}
+
 export function fmtDateTime(iso: string): string {
   return new Date(iso).toLocaleString("ko-KR", { timeZone: "Asia/Seoul", year: "2-digit", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }

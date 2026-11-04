@@ -114,7 +114,7 @@ export function UseTemplate({ templateId, templateName, body, phone, initial = {
     // 날짜는 뺀다 — '오늘'이 특정 날짜로 굳어 버린다
     for (const s of slots) {
       const v = (values[s.key] ?? "").trim();
-      if (s.def && !isDateKey(s.key) && v && v !== s.def) start(() => saveSlotDefault(templateId, s.key, v, true));
+      if (s.def && !isDateKey(s.key) && v && v !== s.def) start(() => saveSlotDefault(templateId, s.key, v));
     }
     if (canAddLedger) setAsk(true);
   };
