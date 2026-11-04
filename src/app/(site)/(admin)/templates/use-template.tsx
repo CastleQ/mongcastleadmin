@@ -110,6 +110,12 @@ export function UseTemplate({ templateId, templateName, body, phone, initial = {
     await navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
+    // 기본값이 있는 칸(출입 비밀번호 같은 것)을 고쳐서 복사했으면 그 값을 기본값으로 기억한다.
+    // 날짜는 뺀다 — '오늘'이 특정 날짜로 굳어 버린다
+    for (const s of slots) {
+      const v = (values[s.key] ?? "").trim();
+      if (s.def && !isDateKey(s.key) && v && v !== s.def) start(() => saveSlotDefault(templateId, s.key, v, true));
+    }
     if (canAddLedger) setAsk(true);
   };
   const remember = (key: string, value: string) => start(async () => {

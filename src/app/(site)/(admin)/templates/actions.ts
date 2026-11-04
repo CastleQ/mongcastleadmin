@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { setDefault } from "@/lib/templates";
+import { placeholders, setDefault } from "@/lib/templates";
 
 export async function saveTemplate(id: number | null, formData: FormData) {
   const s = (k: string) => (formData.get(k) as string | null)?.trim() || null;
@@ -30,11 +30,16 @@ export async function deleteTemplate(id: number) {
   redirect("/templates");
 }
 
-/** 채운 값을 그 칸의 기본값으로 템플릿에 저장 */
-export async function saveSlotDefault(id: number, key: string, value: string) {
+/**
+ * 채운 값을 그 칸의 기본값으로 템플릿에 저장.
+ * keepToken = 문구 복사 때의 자동 저장. 기본값이 `{{출입 비밀번호}}` 처럼 '몽캐슬파티룸 정보'에서
+ * 끌어오는 자리표면 건드리지 않는다 — 원본이 한 곳이어야 하기 때문. (버튼을 직접 누르면 덮어쓴다)
+ */
+export async function saveSlotDefault(id: number, key: string, value: string, keepToken = false) {
   const supabase = await createClient();
   const { data, error } = await supabase.from("templates").select("body").eq("id", id).single();
   if (error) throw new Error(error.message);
+  if (keepToken && (placeholders(data.body).find((s) => s.key === key)?.def ?? "").includes("{{")) return;
   const body = setDefault(data.body, key, value.trim());
   const { error: e2 } = await supabase.from("templates").update({ body }).eq("id", id);
   if (e2) throw new Error(e2.message);
