@@ -9,6 +9,8 @@ test("quote: 패키지 줄은 요일 대신 이용 시간을 보여준다", () =
   assert.deepEqual(packageQuote("2026-10-08", "낮", p), { text: "낮 패키지(10:00~17:00) 40,000원", base: 40_000 });
   // 전일은 '하루종일', 종료가 다음 날이라 '익일'
   assert.deepEqual(packageQuote("2026-09-18", "전일", p), { text: "하루종일(10:00~익일09:00) 180,000원", base: 180_000 });
+  // [이용료] 칸을 따로 쓰는 문구에서는 패키지 줄에 금액이 안 들어간다 (금액이 두 번 나오지 않게)
+  assert.deepEqual(packageQuote("2026-09-18", "밤", p, false), { text: "밤 패키지(18:00~23:00)", base: 110_000 });
   assert.deepEqual(packageQuote("", "밤", p), { text: "밤", base: null });
   assert.deepEqual(packageQuote("2026-09-18", "시간대여 3시간", p), { text: "시간대여 3시간", base: null });
 });

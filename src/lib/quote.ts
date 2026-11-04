@@ -52,13 +52,14 @@ export function optionText(label: string, p: Prices, pkg = "", headcount: number
  * 요일 이름 대신 **이용 시간**을 보여준다 (2026-10-24 사장님 요청 — 손님에게 평일/주말 구분은 필요 없고 시간이 중요).
  * 날짜나 패키지를 모르면(직접 입력) 기본가 null, 문구는 입력값 그대로
  */
-export function packageQuote(date: string, pkg: string, p: Prices): { text: string; base: number | null } {
+export function packageQuote(date: string, pkg: string, p: Prices, withPrice = true): { text: string; base: number | null } {
   const sg = date && pkg ? suggestAmount(date, pkg, null, p) : null;
   if (!sg) return { text: pkg, base: null };
   const t = packageTime(pkg);
   const name = PACKAGE_LABEL[pkg] ?? `${pkg} 패키지`;
   const when = t ? `(${timeRange(t.start, t.end)})` : "";
-  return { text: `${name}${when} ${won(sg.base)}원`, base: sg.base };
+  // 문구에 [이용료] 칸을 따로 쓰면 패키지 줄에는 금액을 넣지 않는다 (같은 금액이 두 번 나오지 않게)
+  return { text: `${name}${when}${withPrice ? ` ${won(sg.base)}원` : ""}`, base: sg.base };
 }
 
 /**
