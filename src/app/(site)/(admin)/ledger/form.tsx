@@ -9,7 +9,7 @@ import { customerKey, type Customer } from "@/lib/customers";
 import { CustomerWarning } from "@/app/(site)/customer-warning";
 import { suggestAmount } from "@/lib/pricing";
 import { DEFAULT_PRICES, type Prices } from "@/lib/prices";
-import { hhmm, packageTime, timeRange } from "@/lib/hours";
+import { hhmm, packageTime } from "@/lib/hours";
 import type { Prefill } from "@/lib/prefill";
 
 type Props = { row?: Ledger; defaultDate?: string; defaultPackage?: string; from?: string; flagged?: Customer[]; prices?: Prices; prefill?: Prefill };
@@ -156,11 +156,7 @@ export function LedgerForm({ row, defaultDate, defaultPackage, from, flagged = [
             <input name="start_time" type="time" step={300} value={times.start} onChange={(e) => setTime("start", e.target.value)} aria-label="시작 시간" className={input + " w-32"} />
             <span className="text-zinc-500">~</span>
             <input name="end_time" type="time" step={300} value={times.end} onChange={(e) => setTime("end", e.target.value)} aria-label="종료 시간" className={input + " w-32"} />
-            {timeRange(times.start, times.end) && <span className="text-sm text-zinc-500 tabular-nums">{timeRange(times.start, times.end)}</span>}
           </div>
-          <p className="mt-1 text-xs text-zinc-400">
-            종료가 시작보다 이르면 다음 날로 봐요(밤샘·하루종일). 패키지를 고르면 기본 시간이 들어오고, 고쳐 두면 그 값을 지킵니다.
-          </p>
         </div>
       )}
 
@@ -203,7 +199,7 @@ export function LedgerForm({ row, defaultDate, defaultPackage, from, flagged = [
         </dl>
       )}
 
-      <Switch name="settled" defaultChecked={row?.settled ?? false}>정산 완료 (입금·지출 확인됨)</Switch>
+      <Switch name="settled" defaultChecked={v.settled ?? false}>정산 완료</Switch>
 
       <details className="rounded border border-zinc-200" open={!!row}>
         <summary className="cursor-pointer px-3 py-2 text-sm text-zinc-600 select-none">자세한 항목</summary>
@@ -212,7 +208,7 @@ export function LedgerForm({ row, defaultDate, defaultPackage, from, flagged = [
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={label} htmlFor="inquiry_date">인입일 (연락 온 날)</label>
-                <input id="inquiry_date" name="inquiry_date" type="date" defaultValue={row?.inquiry_date ?? ""} className={input} />
+                <input id="inquiry_date" name="inquiry_date" type="date" defaultValue={v.inquiry_date ?? ""} className={input} />
               </div>
               <div>
                 <label className={label} htmlFor="customer_phone">연락처</label>

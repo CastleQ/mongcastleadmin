@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { Fragment, useState, useTransition } from "react";
 import { fmtDate, isDateKey, isDropKey, isOptionKey, isPackageKey, isPlatformKey, isTotalKey, placeholders, PLATFORMS, render } from "@/lib/templates";
-import { HEADCOUNT_OPTION, optionText, packageQuote, QUOTE_PACKAGES, quoteOptions, quoteTotal } from "@/lib/quote";
+import { optionText, packageQuote, QUOTE_PACKAGES, quoteOptions, quoteTotal } from "@/lib/quote";
 import { todayKST } from "@/lib/calendar";
 import { packageTime } from "@/lib/hours";
 import { prefillParams, type Prefill } from "@/lib/prefill";
@@ -161,7 +161,7 @@ export function UseTemplate({ templateId, templateName, body, phone, initial = {
         {canAddLedger && (
           <div className="grid grid-cols-2 gap-3 rounded border border-zinc-200 bg-zinc-50 p-3">
             <label className="block">
-              <span className="mb-1 block text-sm text-zinc-600">예약자 이름</span>
+              <span className="mb-1 block text-sm text-zinc-600">고객명</span>
               <input value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="홍길동" className={input} />
             </label>
             <label className="block">
@@ -170,12 +170,6 @@ export function UseTemplate({ templateId, templateName, body, phone, initial = {
                 onChange={(e) => { setHeadcount(e.target.value); setEdited(null); }}
                 placeholder={`${prices.기준인원}인까지 기본`} className={input} />
             </label>
-            <p className="col-span-2 text-xs text-zinc-500">
-              {nameKey ? "이름은 문구에도 들어갑니다." : "이 문구에는 이름 칸이 없어 문자에는 안 나오고, 거래에만 채워집니다."}
-              {" "}인원이 {prices.기준인원}명을 넘으면 1인당 {won(prices.인원추가)}이 총액에 더해집니다
-              {pkg === "전일" ? " (하루종일은 인원 추가 무료)" : ""}.
-              {" "}문구에 ‘이용인원 N인’ 줄을 넣으려면 옵션에서 ‘{HEADCOUNT_OPTION}’를 고르세요.
-            </p>
           </div>
         )}
 
