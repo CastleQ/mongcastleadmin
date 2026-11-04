@@ -71,7 +71,9 @@ export function UseTemplate({ templateId, templateName, body, phone, initial = {
   const dateKey = slots.find((s) => isDateKey(s.key))?.key;
   const pkgKey = slots.find((s) => isPackageKey(s.key))?.key;
   const platformKey = slots.find((s) => isPlatformKey(s.key))?.key;
-  const nameKey = slots.find((s) => s.key.includes("고객"))?.key;
+  // 이름 칸: '고객명' 도 '예약자 이름' 도 받는다. '플랫폼이름' 처럼 플랫폼 칸은 빼고 본다
+  const nameKey = slots.find((s) => !isPlatformKey(s.key) && (s.key.includes("고객") || s.key.includes("이름")))?.key;
+  const feeKey = slots.find((s) => s.key.includes("이용료"))?.key; // 있으면 패키지 줄에서 금액을 뺀다
   const optionKeys = slots.filter((s) => isOptionKey(s.key)).map((s) => s.key);
   const pkg = pkgKey ? values[pkgKey] ?? "" : ""; // 고른 패키지 — 전일이면 밤샘이 무료라 옵션 금액이 달라짐
   const chosen = optionKeys.map((k) => values[k] ?? "");
@@ -82,7 +84,7 @@ export function UseTemplate({ templateId, templateName, body, phone, initial = {
   // 이 문구에서 '예약현황에 추가'를 물어볼지 — 입금안내 문구만 해당된다.
   // 예약확정 문자처럼 이미 잡힌 예약에 보내는 문구는 거래를 새로 만들 일이 없다 (2026-10-31 사장님 지시)
   const canAddLedger = templateName.includes("입금안내");
-  const quote = pkgKey ? packageQuote(dateKey ? values[dateKey] ?? "" : "", pkg, prices) : null;
+  const quote = pkgKey ? packageQuote(dateKey ? values[dateKey] ?? "" : "", pkg, prices, !feeKey) : null;
   const autoTotal = quote?.base != null ? won(quoteTotal(quote.base, chosen, prices, pkg, people)) : "";
 
   // 화면 입력값 → 문구에 들어갈 글자
@@ -92,6 +94,7 @@ export function UseTemplate({ templateId, templateName, body, phone, initial = {
     shown[key] = isDateKey(key) ? (/^\d{4}-\d{2}-\d{2}$/.test(v) ? fmtDate(v) : v)
       : isPackageKey(key) && quote ? quote.text
       : isOptionKey(key) ? (v ? optionText(v, prices, pkg, people) : "")
+      : key === feeKey ? (quote?.base != null ? won(quote.base) : v)
       : isTotalKey(key) ? (v || autoTotal)
       : v;
   }

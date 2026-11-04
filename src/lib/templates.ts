@@ -28,11 +28,11 @@ export function fill(body: string, values: Record<string, string>, drop?: (key: 
 }
 
 /**
- * 비워 두면 문구에서 **아예 사라지는** 칸: 옵션N · 기타… · 플랫폼….
+ * 비워 두면 문구에서 **아예 사라지는** 칸: 옵션이 든 칸(옵션1·추가옵션…) · 기타… · 플랫폼….
  * (옵션은 원래 그랬고, 2026-10-24에 '기타(할인 등)'과 '플랫폼'도 같게 했다 —
  *  할인이 없는데 "기타(할인 등)"이라는 빈 줄이 손님에게 가면 안 된다)
  */
-export const isDropKey = (key: string) => isOptionKey(key) || key.startsWith("기타") || key.includes("플랫폼");
+export const isDropKey = (key: string) => key.includes("옵션") || key.startsWith("기타") || key.includes("플랫폼");
 
 /**
  * 보낼 문구 만들기. 빈 drop 칸은 지우고, **그 칸만 있던 줄은 줄째로** 지운다.
