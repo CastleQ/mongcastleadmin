@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { Fragment, useState, useTransition } from "react";
 import { fmtDate, isDateKey, isDropKey, isOptionKey, isPackageKey, isPlatformKey, isTotalKey, placeholders, PLATFORMS, render } from "@/lib/templates";
-import { optionText, packageQuote, QUOTE_PACKAGES, quoteOptions, quoteTotal } from "@/lib/quote";
+import { extraPeopleFee, optionText, packageQuote, QUOTE_PACKAGES, quoteOptions, quoteTotal } from "@/lib/quote";
 import { todayKST } from "@/lib/calendar";
 import { packageTime } from "@/lib/hours";
 import { prefillParams, type Prefill } from "@/lib/prefill";
@@ -86,6 +86,9 @@ export function UseTemplate({ templateId, templateName, body, phone, initial = {
   const canAddLedger = templateName.includes("입금안내");
   const quote = pkgKey ? packageQuote(dateKey ? values[dateKey] ?? "" : "", pkg, prices, !feeKey) : null;
   const autoTotal = quote?.base != null ? won(quoteTotal(quote.base, chosen, prices, pkg, people)) : "";
+  // [이용료] = 패키지 값 + 기준인원 초과 가산금. 보증금·할인 같은 옵션은 빼고 '쓴 값'만 보여준다
+  // (플랫폼 문구가 '이용료 N원 결제완료' 로 쓰는 금액 — 인원이 늘면 플랫폼에서 더 결제하고 온다)
+  const usageFee = quote?.base != null ? won(quote.base + extraPeopleFee(people, prices, pkg)) : "";
 
   // 화면 입력값 → 문구에 들어갈 글자
   const shown: Record<string, string> = {};
@@ -94,7 +97,7 @@ export function UseTemplate({ templateId, templateName, body, phone, initial = {
     shown[key] = isDateKey(key) ? (/^\d{4}-\d{2}-\d{2}$/.test(v) ? fmtDate(v) : v)
       : isPackageKey(key) && quote ? quote.text
       : isOptionKey(key) ? (v ? optionText(v, prices, pkg, people) : "")
-      : key === feeKey ? (quote?.base != null ? won(quote.base) : v)
+      : key === feeKey ? (usageFee || v)
       : isTotalKey(key) ? (v || autoTotal)
       : v;
   }

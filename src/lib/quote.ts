@@ -2,8 +2,11 @@ import { suggestAmount } from "./pricing.ts";
 import { FRIEND_DISCOUNT_RATE, type Prices } from "./prices.ts";
 import { PACKAGE_LABEL, packageTime, timeRange } from "./hours.ts";
 
-/** 입금안내 템플릿의 패키지 드롭다운 (밤샘은 옵션으로) */
-export const QUOTE_PACKAGES = ["낮", "밤", "전일"] as const;
+/** 입금안내 템플릿의 패키지 드롭다운. 거래의 패키지 이름과 같게 쓴다 */
+export const QUOTE_PACKAGES = ["낮", "밤", "밤+밤샘", "전일"] as const;
+
+/** 밤샘 값이 이미 패키지 값에 들어 있는 것들 — 옵션으로 또 더하면 두 번 센다 */
+const overnightIncluded = (pkg: string) => pkg === "전일" || pkg === "밤+밤샘";
 
 /** 인원추가 옵션 이름 한 곳. 이 옵션을 고르면 인원수 칸이 열리고 문구에 '이용인원 N인'이 들어간다 */
 export const HEADCOUNT_OPTION = "인원추가";
@@ -12,7 +15,7 @@ export const HEADCOUNT_OPTION = "인원추가";
 export type QuoteOption = { label: string; add: number; rate: number };
 /** 고른 패키지를 받는 이유: 전일 대관은 밤샘이 무료라 가산금이 0이 된다 */
 export const quoteOptions = (p: Prices, pkg = ""): QuoteOption[] => [
-  { label: "밤샘", add: pkg === "전일" ? 0 : p.밤샘, rate: 1 },
+  { label: "밤샘", add: overnightIncluded(pkg) ? 0 : p.밤샘, rate: 1 },
   { label: "청소보증금", add: p.보증금, rate: 1 },
   { label: "지인할인", add: 0, rate: FRIEND_DISCOUNT_RATE },
   { label: HEADCOUNT_OPTION, add: 0, rate: 1 }, // 금액은 인원수에 달려 있어 여기선 0 — extraPeopleFee 로 따로 센다
@@ -58,8 +61,10 @@ export function packageQuote(date: string, pkg: string, p: Prices, withPrice = t
   const t = packageTime(pkg);
   const name = PACKAGE_LABEL[pkg] ?? `${pkg} 패키지`;
   const when = t ? `(${timeRange(t.start, t.end)})` : "";
+  // 밤+밤샘은 밤샘 값까지가 그 패키지의 값이다 (옵션으로 따로 더하지 않는다)
+  const base = sg.base + sg.overnight;
   // 문구에 [이용료] 칸을 따로 쓰면 패키지 줄에는 금액을 넣지 않는다 (같은 금액이 두 번 나오지 않게)
-  return { text: `${name}${when}${withPrice ? ` ${won(sg.base)}원` : ""}`, base: sg.base };
+  return { text: `${name}${when}${withPrice ? ` ${won(base)}원` : ""}`, base };
 }
 
 /**
