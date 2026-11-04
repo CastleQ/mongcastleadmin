@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { Fragment, useState, useTransition } from "react";
 import { fmtDate, isDateKey, isDropKey, isOptionKey, isPackageKey, isPlatformKey, isTotalKey, placeholders, PLATFORMS, render } from "@/lib/templates";
-import { extraPeopleFee, optionText, packageQuote, QUOTE_PACKAGES, quoteOptions, quoteTotal } from "@/lib/quote";
+import { extraPeopleFee, optionText, packageQuote, QUOTE_PACKAGES, quoteOptions, quoteTotal, templateDeposit } from "@/lib/quote";
 import { todayKST } from "@/lib/calendar";
 import { packageTime } from "@/lib/hours";
 import { prefillParams, type Prefill } from "@/lib/prefill";
@@ -84,8 +84,12 @@ export function UseTemplate({ templateId, templateName, body, phone, initial = {
   // 이 문구에서 '예약현황에 추가'를 물어볼지 — 입금안내 문구만 해당된다.
   // 예약확정 문자처럼 이미 잡힌 예약에 보내는 문구는 거래를 새로 만들 일이 없다 (2026-10-31 사장님 지시)
   const canAddLedger = templateName.includes("입금안내");
+  // 플랫폼에서 이미 결제하고 오는 건인지 — 채널·결제방식·보증금 처리가 갈린다
+  const platformMode = templateName.includes("플랫폼") || !!platformKey;
+  const deposit = canAddLedger ? templateDeposit(prices, platformMode, chosen) : 0;
   const quote = pkgKey ? packageQuote(dateKey ? values[dateKey] ?? "" : "", pkg, prices, !feeKey) : null;
-  const autoTotal = quote?.base != null ? won(quoteTotal(quote.base, chosen, prices, pkg, people)) : "";
+  // 보증금은 할인 대상이 아니라 마지막에 더한다 (quoteTotal 안에서 더하면 지인할인이 보증금까지 깎는다)
+  const autoTotal = quote?.base != null ? won(quoteTotal(quote.base, chosen, prices, pkg, people) + deposit) : "";
   // [이용료] = 패키지 값 + 기준인원 초과 가산금. 보증금·할인 같은 옵션은 빼고 '쓴 값'만 보여준다
   // (플랫폼 문구가 '이용료 N원 결제완료' 로 쓰는 금액 — 인원이 늘면 플랫폼에서 더 결제하고 온다)
   const usageFee = quote?.base != null ? won(quote.base + extraPeopleFee(people, prices, pkg)) : "";
@@ -134,7 +138,6 @@ export function UseTemplate({ templateId, templateName, body, phone, initial = {
    *   · 플랫폼결제 확인 후 보증금 입금안내 → 고른 플랫폼 · 플랫폼결제 · 정산 완료(이미 결제됨)
    */
   const toPrefill = (): Prefill => {
-    const platformMode = templateName.includes("플랫폼") || !!platformKey;
     const platform = platformKey ? (values[platformKey] ?? "").trim() : "";
     const date = dateKey ? values[dateKey] ?? "" : "";
     const amount = Number((shown[slots.find((s) => isTotalKey(s.key))?.key ?? ""] ?? autoTotal).replace(/[^\d]/g, "")) || undefined;
