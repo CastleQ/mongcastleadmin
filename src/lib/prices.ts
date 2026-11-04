@@ -49,8 +49,11 @@ export function priceTokens(p: Prices): Record<string, string> {
   return out;
 }
 
-/** 본문의 {{자리표}}를 현재 가격으로. 모르는 자리표는 그대로 둠 */
-export function fillPrices(body: string, p: Prices): string {
-  const t = priceTokens(p);
+/**
+ * 본문의 {{자리표}}를 현재 값으로. 모르는 자리표는 그대로 둠.
+ * extra 는 '핵심 정보' 표에서 온 값({{출입 비밀번호}} 등) — 같은 이름이면 요금표가 이긴다
+ */
+export function fillPrices(body: string, p: Prices, extra: Record<string, string> = {}): string {
+  const t = { ...extra, ...priceTokens(p) };
   return body.replace(/\{\{\s*([^{}]+?)\s*\}\}/g, (whole, key: string) => t[key] ?? whole);
 }

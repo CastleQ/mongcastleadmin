@@ -5,6 +5,7 @@ import { fmtDate, type Template } from "@/lib/templates";
 import { TemplateList } from "./template-list";
 import { loadPrices } from "@/lib/settings";
 import { fillPrices } from "@/lib/prices";
+import { infoTokens } from "@/lib/markdown";
 import { customerKey, type Customer } from "@/lib/customers";
 import { CustomerWarning } from "@/app/(site)/customer-warning";
 
@@ -26,7 +27,10 @@ export default async function TemplatesPage({ searchParams }: PageProps<"/templa
   const { data } = await supabase.from("templates").select("*").order("sort_order").order("id");
   // 본문의 {{평일 낮}} 같은 가격 자리표를 현재 요금표로 채움 (편집 화면은 원문 유지)
   const prices = await loadPrices();
-  const rows: Template[] = (data ?? []).map((t: Template) => ({ ...t, body: fillPrices(t.body, prices) }));
+  // 출입 비밀번호·와이파이 같은 값은 '몽캐슬파티룸 정보'의 표가 원본이다 (한 곳만 고치면 문구가 따라온다)
+  const { data: info } = await supabase.from("info_sections").select("body").order("sort_order").limit(1).maybeSingle();
+  const tokens = infoTokens(info?.body ?? "");
+  const rows: Template[] = (data ?? []).map((t: Template) => ({ ...t, body: fillPrices(t.body, prices, tokens) }));
 
   return (
     <>
