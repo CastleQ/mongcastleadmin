@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { DEFAULT_PRICES } from "./prices.ts";
-import { extraPeopleFee, HEADCOUNT_OPTION, optionText, packageQuote, quoteTotal } from "./quote.ts";
+import { extraPeopleFee, HEADCOUNT_OPTION, optionText, packageQuote, quoteTotal, templateDeposit } from "./quote.ts";
 
 test("quote: 패키지 줄은 요일 대신 이용 시간을 보여준다", () => {
   const p = DEFAULT_PRICES;
@@ -42,6 +42,14 @@ test("quote: 전일 대관은 밤샘 무료", () => {
   assert.equal(quoteTotal(260_000, ["밤샘"], p, "전일"), 260_000);
   assert.equal(quoteTotal(170_000, ["밤샘"], p, "밤"), 170_000 + 30_000);
   assert.equal(quoteTotal(260_000, ["밤샘", "지인할인"], p, "전일"), 208_000);
+});
+
+test("quote: 입금안내 총액에 붙는 청소보증금", () => {
+  const p = DEFAULT_PRICES; // 보증금 50,000
+  assert.equal(templateDeposit(p, false, []), 50_000);        // 별도컨택·계좌이체 → 같이 받는다
+  assert.equal(templateDeposit(p, true, []), 0);              // 플랫폼 결제 건 → 보증금은 따로
+  assert.equal(templateDeposit(p, false, ["지인할인"]), 0);    // 지인은 보증금 없음
+  assert.equal(templateDeposit(p, false, ["청소보증금"]), 0);  // 옵션으로 이미 골랐으면 두 번 세지 않는다
 });
 
 test("quote: 인원추가 — 기준 10인까지 무료, 넘으면 1인당 10,000원", () => {

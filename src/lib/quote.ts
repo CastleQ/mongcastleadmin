@@ -68,6 +68,16 @@ export function packageQuote(date: string, pkg: string, p: Prices, withPrice = t
 }
 
 /**
+ * 입금안내 총액에 더할 청소보증금.
+ * 손님이 우리 계좌로 보내는 건(별도컨택)은 이용료와 보증금을 같이 받으므로 총액에 들어가야 한다.
+ * 0원인 경우: 플랫폼 결제 건(보증금은 따로 받는다) · 지인(보증금 없음) · 이미 옵션으로 고른 경우(두 번 셈).
+ */
+export function templateDeposit(p: Prices, platformMode: boolean, options: string[]): number {
+  if (platformMode || options.includes("지인할인") || options.includes("청소보증금")) return 0;
+  return p.보증금;
+}
+
+/**
  * 총액 = 기본가 + 옵션 금액 + 인원 가산금, 그 뒤 지인할인이 있으면 ×0.8.
  * 인원 가산금은 **인원수를 적기만 하면** 들어간다 (옵션으로 '인원추가'를 고르는 것은
  *  문구에 '이용인원 N인' 줄을 넣을지일 뿐이다 — 2026-10-31 사장님 요청으로 분리).
