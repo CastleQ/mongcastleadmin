@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { infoTokens } from "./markdown.ts";
+import { infoTokens, setInfoToken } from "./markdown.ts";
 import { DEFAULT_PRICES, fillPrices } from "./prices.ts";
 
 // 진짜 번호는 쓰지 않는다 — 공개 저장소에 올라간다 (CLAUDE.md 규칙 6)
@@ -25,6 +25,21 @@ test("infoTokens: 핵심 정보 표를 자리표로 읽는다", () => {
   assert.match(t["주소"], /네이버 지도/);
   assert.deepEqual(infoTokens(""), {});
   assert.deepEqual(infoTokens("표가 없는 글"), {});
+});
+
+test("setInfoToken: 응대 템플릿에서 고친 값을 핵심 정보 표에 되돌려 적는다", () => {
+  const next = setInfoToken(핵심정보, "출입 비밀번호", "3333*");
+  assert.ok(next);
+  assert.equal(infoTokens(next)["출입 비밀번호"], "3333*");
+  // 다른 줄은 그대로
+  assert.equal(infoTokens(next)["화장실"], "1층 단독 화장실 / 2222*");
+  assert.equal(infoTokens(next)["주소"], infoTokens(핵심정보)["주소"]);
+  // 표가 깨지지 않게 줄 수는 그대로
+  assert.equal(next.split("\n").length, 핵심정보.split("\n").length);
+  // 없는 항목이면 null (그래야 다른 섹션을 더 찾아보거나 템플릿에 적는다)
+  assert.equal(setInfoToken(핵심정보, "없는 항목", "x"), null);
+  // 값에 | 가 들어와도 표가 안 깨진다
+  assert.equal(infoTokens(setInfoToken(핵심정보, "화장실", "1층 | 2층")!)["화장실"], "1층  2층");
 });
 
 test("fillPrices: 핵심 정보 자리표도 채운다 (같은 이름이면 요금표가 이긴다)", () => {
