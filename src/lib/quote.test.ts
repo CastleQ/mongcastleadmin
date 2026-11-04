@@ -25,6 +25,16 @@ test("quote: 옵션 줄 · 총액(지인할인은 마지막에 ×0.8)", () => {
   assert.equal(quoteTotal(70_000, ["", "모르는 옵션"], p), 70_000);
 });
 
+test("quote: 밤+밤샘은 밤샘 값까지가 패키지 값이다", () => {
+  const p = DEFAULT_PRICES; // 밤 금요일 110,000 + 밤샘 30,000
+  assert.deepEqual(packageQuote("2026-09-18", "밤+밤샘", p), { text: "밤+밤샘 패키지(18:00~익일09:00) 140,000원", base: 140_000 });
+  // 옵션으로 밤샘을 또 골라도 두 번 더해지지 않는다
+  assert.equal(optionText("밤샘", p, "밤+밤샘"), "밤샘 포함 (무료)");
+  assert.equal(quoteTotal(140_000, ["밤샘"], p, "밤+밤샘"), 140_000);
+  // 인원 가산은 그대로 붙는다 (밤 패키지라 전일처럼 무료가 아니다)
+  assert.equal(quoteTotal(140_000, [], p, "밤+밤샘", 13), 170_000);
+});
+
 test("quote: 전일 대관은 밤샘 무료", () => {
   const p = DEFAULT_PRICES;
   assert.equal(optionText("밤샘", p, "전일"), "밤샘 포함 (무료)");
