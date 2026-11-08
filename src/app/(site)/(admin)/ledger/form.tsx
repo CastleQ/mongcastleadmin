@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useFormStatus } from "react-dom";
 import { CATEGORIES, CHANNELS, CONTENTS, OTHER, PACKAGES, PAYMENTS, calcMoney, type Ledger } from "@/lib/ledger";
 import { saveLedger } from "./actions";
 import { DeleteButton } from "./delete-button";
@@ -17,6 +18,21 @@ type Props = { row?: Ledger; defaultDate?: string; defaultPackage?: string; from
 const input = "w-full rounded border border-zinc-300 bg-white px-3 py-2 text-base focus:border-zinc-900 focus:outline-none";
 const label = "block text-sm text-zinc-600 mb-1";
 const won = (n: number) => n.toLocaleString("ko-KR") + "원";
+
+/**
+ * 저장 버튼. 누르면 '저장 중…' 으로 바뀌고 못 누르게 된다 — 응답이 없어 여러 번 눌러
+ * 거래가 여러 건 생기던 것을 막는다 (서버 쪽에도 같은 내용 재전송 차단이 있다).
+ * useFormStatus 는 form 안쪽 부품에서만 동작해서 따로 뺐다.
+ */
+function SubmitButton({ children }: { children: string }) {
+  const { pending } = useFormStatus();
+  return (
+    <button type="submit" disabled={pending} aria-busy={pending}
+      className="rounded bg-zinc-900 px-5 py-2.5 text-white hover:bg-zinc-700 focus-visible:ring-2 focus-visible:ring-zinc-400 disabled:bg-zinc-400">
+      {pending ? "저장 중…" : children}
+    </button>
+  );
+}
 
 /** 라디오를 버튼처럼 (드롭다운 대신 선택지를 펼쳐 보여줌) */
 function Choice({ name, options, value, onChange, required }: {
@@ -240,9 +256,7 @@ export function LedgerForm({ row, defaultDate, defaultPackage, from, flagged = [
       </details>
 
       <div className="flex items-center justify-between pt-2">
-        <button type="submit" className="rounded bg-zinc-900 px-5 py-2.5 text-white hover:bg-zinc-700 focus-visible:ring-2 focus-visible:ring-zinc-400">
-          {row ? "변경 저장" : "저장"}
-        </button>
+        <SubmitButton>{row ? "변경 저장" : "저장"}</SubmitButton>
         {row && <DeleteButton id={row.id} date={row.date} from={from} />}
       </div>
     </form>
