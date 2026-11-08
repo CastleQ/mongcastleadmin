@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { calcMoney, parseLedgerForm } from "./ledger.ts";
+import { sameLedgerRow, calcMoney, parseLedgerForm } from "./ledger.ts";
 
 test("calcMoney: 채널·결제방식별 수수료/실수령", () => {
   // 지인: 보증금 없음, 실수령 = 입금액
@@ -37,4 +37,19 @@ test("parseLedgerForm: 기타(직접입력), 매출 기본값, 매입은 예약�
   assert.equal(m.net, -775000);
   assert.equal(m.package, null);
   assert.equal(m.payment_method, "계좌이체");
+});
+
+test("sameLedgerRow: 저장 버튼을 두 번 눌러 생긴 중복을 가려낸다", () => {
+  const a = { date: "2026-11-11", kind: "매출" as const, category: "대여", amount: 110_000,
+              customer_name: "홍길동", package: "밤", channel: "별도컨택" };
+  assert.equal(sameLedgerRow(a, { ...a }), true);
+  // 손으로 고칠 수 있는 칸(비고·연락처)이 달라도 같은 건으로 본다
+  assert.equal(sameLedgerRow(a, { ...a, note: "메모 추가", customer_phone: "01011112222" }), true);
+  // 핵심 칸이 하나라도 다르면 다른 건
+  assert.equal(sameLedgerRow(a, { ...a, amount: 120_000 }), false);
+  assert.equal(sameLedgerRow(a, { ...a, package: "밤+밤샘" }), false);
+  assert.equal(sameLedgerRow(a, { ...a, customer_name: "김철수" }), false);
+  assert.equal(sameLedgerRow(a, { ...a, date: "2026-11-12" }), false);
+  // 빈 값과 없는 값은 같게 본다 (DB 는 null, 폼은 undefined 로 올 수 있다)
+  assert.equal(sameLedgerRow({ ...a, channel: null }, { ...a, channel: undefined }), true);
 });

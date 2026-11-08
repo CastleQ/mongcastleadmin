@@ -51,6 +51,17 @@ export function calcMoney(kind: Ledger["kind"], amount: number, channel: string 
   return { deposit, fee, net: amount - deposit - fee - other };
 }
 
+/**
+ * 두 거래가 '같은 건'인가 — 저장 버튼을 여러 번 눌러 생긴 중복을 가려내는 데 쓴다.
+ * 사람이 1분 안에 똑같은 날짜·구분·항목·금액·고객명·패키지로 두 건을 일부러 넣는 일은 없다고 본다.
+ * (비고·연락처처럼 손으로 고칠 수 있는 칸은 보지 않는다 — 중복 판정이 흔들린다)
+ */
+export function sameLedgerRow(a: Partial<Ledger>, b: Partial<Ledger>): boolean {
+  const same = (k: keyof Ledger) => (a[k] ?? null) === (b[k] ?? null);
+  return same("date") && same("kind") && same("category") && same("amount")
+    && same("customer_name") && same("package") && same("channel");
+}
+
 /** 드롭다운 값이 '기타'면 직접 입력값 사용 */
 export function pickOther(selected: string | null, typed: string | null): string | null {
   return selected === OTHER ? typed : selected;
