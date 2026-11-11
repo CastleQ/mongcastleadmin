@@ -121,7 +121,12 @@ export function UseTemplate({ templateId, templateName, body, phone, initial = {
     // 날짜는 뺀다 — '오늘'이 특정 날짜로 굳어 버린다
     for (const s of slots) {
       const v = (values[s.key] ?? "").trim();
-      if (s.def && !isDateKey(s.key) && v && v !== s.def) start(() => saveSlotDefault(templateId, s.key, v));
+      // 비밀번호 칸은 복사만으로 기억하지 않는다 — 한 손님에게만 알려준 번호가 기본값으로 굳으면
+      // '자주 바꾸니 연락주세요' 같은 안내 문구가 사라지고 다음 손님에게 옛 번호가 나간다.
+      // 정말 바꾸실 때는 칸 옆의 '이 값을 기본값으로 저장'을 누르시면 된다
+      if (s.def && !isDateKey(s.key) && !s.key.includes("비밀번호") && v && v !== s.def) {
+        start(() => saveSlotDefault(templateId, s.key, v));
+      }
     }
     if (canAddLedger) setAsk(true);
   };
