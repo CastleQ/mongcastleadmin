@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import type { Ledger } from "@/lib/ledger";
+import { kindLabel, type Ledger } from "@/lib/ledger";
 import { SettledToggle } from "./settled-toggle";
 
 const won = (n: number) => n.toLocaleString("ko-KR");
@@ -55,7 +55,7 @@ export function LedgerTable({ rows, rowLink = "ledger" }: { rows: Ledger[]; rowL
                 className={`cursor-pointer ${r.settled ? "hover:bg-zinc-50" : "bg-amber-50 hover:bg-amber-100"}`}>
                 <td className={`${td} text-zinc-400`}>{i + 1}</td>
                 <td className={td}>{r.date.slice(5).replace("-", "/")}</td>
-                <td className={td}><span className={`rounded px-1.5 py-0.5 text-xs ${sale ? "bg-zinc-900 text-white" : "bg-red-50 text-red-700"}`}>{r.kind}</span></td>
+                <td className={td}><span className={`rounded px-1.5 py-0.5 text-xs ${sale ? "bg-zinc-900 text-white" : "bg-red-50 text-red-700"}`}>{kindLabel(r.kind)}</span></td>
                 <td className={td}>{r.category}</td>
                 <td className={`${td} font-medium`}>{r.customer_name ?? "—"}</td>
                 <td className={`${td} text-zinc-500`}>{r.customer_phone ?? ""}</td>

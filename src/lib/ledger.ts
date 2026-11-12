@@ -30,8 +30,17 @@ export type Ledger = {
 export type LedgerInput = Omit<Ledger, "id">;
 
 export const OTHER = "기타";
-export const CATEGORIES = ["대여", "집기구매", "월세기타", "광고비"];
+/** DB 값은 '매입' 그대로, 화면 글자만 '지출' (2026-11-12 사장님 요청 — 기존 기록을 고치지 않으려고) */
+export const kindLabel = (kind: string) => (kind === "매입" ? "지출" : kind);
+export const SALE_CATEGORIES = ["대여"];
+export const EXPENSE_CATEGORIES = ["집기구매", "보드게임", "소모품", "인건비", "월세기타", "광고비"];
+export const CATEGORIES = [...SALE_CATEGORIES, ...EXPENSE_CATEGORIES];
+/** 파티룸에 남는 물건 — 권리금으로 돌려받을 돈이라 기본 미정산 (docs/운영규칙.md 1번) */
+export const KEEP_CATEGORIES = ["집기구매", "보드게임"];
+export const expenseSettledDefault = (category: string | null) => !KEEP_CATEGORIES.includes(category ?? "");
 export const CHANNELS = ["네이버플레이스", "스페이스클라우드", "별도컨택", "지인", "아워플레이스"];
+/** 지출의 '구매처'. DB 칸은 매출의 인입 채널과 같은 channel */
+export const SHOPS = ["당근마켓", "쿠팡", "네이버쇼핑", "테무", "지인"];
 export const PACKAGES = ["낮", "밤", "밤+밤샘", "전일", "기타"] as const;
 export const PAYMENTS = ["계좌이체", "플랫폼결제", "카드결제", "현금"] as const;
 export const CONTENTS = ["홀덤", "시계피", "머더미스터리", "보드게임"];

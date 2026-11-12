@@ -56,7 +56,7 @@ export function Chip({ r, className, alignRight, children, highlight = false, di
         <Link href={`/ledger/${r.id}`} data-popover className={`absolute top-full z-20 block w-max max-w-64 rounded-lg border p-2.5 text-left text-xs leading-relaxed shadow-lg hover:brightness-95 ${bg} ${alignRight ? "right-0" : "left-0"} [writing-mode:horizontal-tb]`}>
           {r.kind === "매입" ? (
             <>
-              <p className={line}><span className="font-semibold">매입 · {r.category}</span>{sep}<span className="tabular-nums">{won(r.amount)}</span></p>
+              <p className={line}><span className="font-semibold">지출 · {r.category}</span>{sep}<span className="tabular-nums">{won(r.amount)}</span></p>
               {r.channel && <p className="text-zinc-600">{r.channel}</p>}
             </>
           ) : (
@@ -99,7 +99,7 @@ export function BuyChip({ rows, className, alignRight, highlightId = null }: { r
   const single = rows.length === 1 ? rows[0] : null;
   const total = rows.reduce((s, r) => s + r.amount, 0);
   const ring = hit ? "ring-2 ring-blue-600 ring-offset-1" : highlightId !== null ? "opacity-40" : "";
-  const label = <><span className="font-semibold">매입</span>{rows.length > 1 && <span> {rows.length}<span className="hidden sm:inline">건</span></span>}</>;
+  const label = <><span className="font-semibold">지출</span>{rows.length > 1 && <span> {rows.length}<span className="hidden sm:inline">건</span></span>}</>;
 
   return (
     <div ref={box} className="relative"

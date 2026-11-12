@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { sameLedgerRow, calcMoney, parseLedgerForm } from "./ledger.ts";
+import { sameLedgerRow, calcMoney, parseLedgerForm, expenseSettledDefault, kindLabel } from "./ledger.ts";
 
 test("calcMoney: 채널·결제방식별 수수료/실수령", () => {
   // 지인: 보증금 없음, 실수령 = 입금액
@@ -52,4 +52,13 @@ test("sameLedgerRow: 저장 버튼을 두 번 눌러 생긴 중복을 가려낸�
   assert.equal(sameLedgerRow(a, { ...a, date: "2026-11-12" }), false);
   // 빈 값과 없는 값은 같게 본다 (DB 는 null, 폼은 undefined 로 올 수 있다)
   assert.equal(sameLedgerRow({ ...a, channel: null }, { ...a, channel: undefined }), true);
+});
+
+test("지출: 남는 물건(집기·보드게임)만 기본 미정산, 화면 글자는 '지출'", () => {
+  assert.equal(expenseSettledDefault("보드게임"), false);
+  assert.equal(expenseSettledDefault("집기구매"), false);
+  assert.equal(expenseSettledDefault("인건비"), true);
+  assert.equal(expenseSettledDefault(null), true);
+  assert.equal(kindLabel("매입"), "지출");
+  assert.equal(kindLabel("매출"), "매출");
 });
