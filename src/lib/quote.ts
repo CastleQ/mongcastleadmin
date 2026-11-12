@@ -1,4 +1,4 @@
-import { suggestAmount } from "./pricing.ts";
+import { depositFor, suggestAmount } from "./pricing.ts";
 import { FRIEND_DISCOUNT_RATE, type Prices } from "./prices.ts";
 import { PACKAGE_LABEL, packageTime, timeRange } from "./hours.ts";
 
@@ -75,6 +75,17 @@ export function packageQuote(date: string, pkg: string, p: Prices, withPrice = t
 export function templateDeposit(p: Prices, platformMode: boolean, options: string[]): number {
   if (platformMode || options.includes("지인할인") || options.includes("청소보증금")) return 0;
   return p.보증금;
+}
+
+/**
+ * 거래에 넣을 **입금액** = 이용료(패키지+옵션+인원) + 청소보증금.
+ * 문구에 보이는 총액과 다를 수 있다 — 플랫폼 건의 문구 총액은 '보증금만' 적지만,
+ * 거래의 입금액은 보증금까지 **포함**해야 한다(거래 화면이 거기서 다시 빼 수수료·실수령을 낸다).
+ * 보증금은 채널 규칙을 따르고(지정 채널만, 기타·미입력은 0), 지인할인이면 0.
+ */
+export function ledgerAmount(base: number, labels: string[], p: Prices, pkg = "", headcount: number | null = null, channel: string | null = null): number {
+  const deposit = labels.includes("지인할인") ? 0 : depositFor(channel, p.보증금);
+  return quoteTotal(base, labels, p, pkg, headcount) + deposit;
 }
 
 /**
