@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
-import { CATEGORIES, CHANNELS, CONTENTS, OTHER, PACKAGES, PAYMENTS, calcMoney, type Ledger } from "@/lib/ledger";
+import { CHANNELS, CONTENTS, EXPENSE_CATEGORIES, OTHER, PACKAGES, PAYMENTS, SALE_CATEGORIES, SHOPS, calcMoney, expenseSettledDefault, kindLabel, type Ledger } from "@/lib/ledger";
 import { saveLedger } from "./actions";
 import { DeleteButton } from "./delete-button";
 import { Switch } from "./controls";
@@ -54,13 +54,13 @@ function Choice({ name, options, value, onChange, required }: {
 }
 
 /** 좌우 토글: 두 선택지가 한 덩어리로 붙어 있고 선택된 쪽만 검정 */
-function Toggle({ name, options, value, onChange }: { name: string; options: readonly [string, string]; value: string; onChange: (v: string) => void }) {
+function Toggle({ name, options, value, onChange, label = (o) => o }: { name: string; options: readonly [string, string]; value: string; onChange: (v: string) => void; label?: (o: string) => string }) {
   return (
     <div className="inline-flex rounded border border-zinc-900 overflow-hidden">
       {options.map((o) => (
         <label key={o} className="relative cursor-pointer">
           <input type="radio" name={name} value={o} checked={value === o} onChange={() => onChange(o)} className="peer sr-only" />
-          <span className="block px-4 py-1.5 text-sm peer-checked:bg-zinc-900 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-zinc-400">{o}</span>
+          <span className="block px-4 py-1.5 text-sm peer-checked:bg-zinc-900 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-zinc-400">{label(o)}</span>
         </label>
       ))}
     </div>
@@ -95,6 +95,7 @@ export function LedgerForm({ row, defaultDate, defaultPackage, from, flagged = [
   const [category, setCategory] = useState<string | null>(v.category ?? (initial ? "대여" : null));
   const [channel, setChannel] = useState<string | null>(v.channel ?? null);
   const [pkg, setPkg] = useState<string | null>(v.package ?? (initial ? defaultPackage ?? null : null));
+  const [settled, setSettled] = useState(v.settled ?? (v.kind === "매입" ? expenseSettledDefault(v.category ?? null) : false));
   const [payment, setPayment] = useState<string | null>(v.payment_method ?? "계좌이체");
   const [date, setDate] = useState(v.date ?? defaultDate ?? "");
   const [amount, setAmount] = useState(v.amount ? String(v.amount) : initial ? String(initial.total) : "");
@@ -133,6 +134,18 @@ export function LedgerForm({ row, defaultDate, defaultPackage, from, flagged = [
     setTimes(t);
     setAutoTimes(`${t.start}-${t.end}`);
   };
+  // 새 거래만: 구분을 바꾸면 항목·채널을 비우고 정산 기본값을 맞춘다. 지출은 남는 물건(집기·보드게임)만 미정산
+  // (저장된 거래를 고칠 때는 사장님이 정해 둔 값을 건드리지 않는다)
+  const changeKind = (k: Ledger["kind"]) => {
+    setKind(k);
+    if (row) return;
+    setCategory(null); setChannel(null);
+    setSettled(k === "매입" ? expenseSettledDefault(null) : false);
+  };
+  const changeCategory = (c: string) => {
+    setCategory(c);
+    if (!row && !sale) setSettled(expenseSettledDefault(c));
+  };
   const setTime = (which: "start" | "end", value: string) => setTimes((t) => ({ ...t, [which]: value }));
   const rental = sale && (category ?? "대여") === "대여"; // 시간 칸은 대여 매출만
 
@@ -144,7 +157,7 @@ export function LedgerForm({ row, defaultDate, defaultPackage, from, flagged = [
       <div className="grid grid-cols-2 gap-3">
         <div>
           <span className={label}>구분 <b className="text-red-500">*</b></span>
-          <Toggle name="kind" options={["매출", "매입"]} value={kind} onChange={(v) => setKind(v as Ledger["kind"])} />
+          <Toggle name="kind" options={["매출", "매입"]} label={kindLabel} value={kind} onChange={(v) => changeKind(v as Ledger["kind"])} />
         </div>
         <div>
           <label className={label} htmlFor="date">{sale ? "예약일" : "날짜"} <b className="text-red-500">*</b></label>
@@ -154,7 +167,7 @@ export function LedgerForm({ row, defaultDate, defaultPackage, from, flagged = [
 
       <div>
         <span className={label}>항목</span>
-        <SelectOther name="category" options={CATEGORIES} value={category ?? (sale ? "대여" : null)} onChange={setCategory} />
+        <SelectOther name="category" options={sale ? SALE_CATEGORIES : EXPENSE_CATEGORIES} value={category ?? (sale ? "대여" : null)} onChange={changeCategory} />
       </div>
 
       {sale && (
@@ -177,13 +190,13 @@ export function LedgerForm({ row, defaultDate, defaultPackage, from, flagged = [
       )}
 
       <div>
-        <span className={label}>인입 채널</span>
-        <SelectOther name="channel" options={CHANNELS} value={channel} onChange={(v) => { setChannel(v); applySuggestion({ channel: v }); }} />
+        <span className={label}>{sale ? "인입 채널" : "구매처"}</span>
+        <SelectOther name="channel" options={sale ? CHANNELS : SHOPS} value={channel} onChange={(v) => { setChannel(v); applySuggestion({ channel: v }); }} />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className={label} htmlFor="customer_name">{sale ? "고객명" : "거래처"}</label>
+          <label className={label} htmlFor="customer_name">{sale ? "고객명" : "물품명"}</label>
           <input id="customer_name" name="customer_name" value={name} onChange={(e) => setName(e.target.value)} className={input} />
         </div>
         <div>
@@ -215,7 +228,7 @@ export function LedgerForm({ row, defaultDate, defaultPackage, from, flagged = [
         </dl>
       )}
 
-      <Switch name="settled" defaultChecked={v.settled ?? false}>정산 완료</Switch>
+      <Switch name="settled" checked={settled} onChange={setSettled}>정산 완료</Switch>
 
       <details className="rounded border border-zinc-200" open={!!row}>
         <summary className="cursor-pointer px-3 py-2 text-sm text-zinc-600 select-none">자세한 항목</summary>

@@ -40,7 +40,7 @@ export default async function LedgerListPage({ searchParams }: PageProps<"/ledge
 
       <dl className="mb-4 grid grid-cols-3 divide-x divide-zinc-200 rounded border border-zinc-200 text-center">
         <div className="p-3"><dt className="text-xs text-zinc-500">매출 실수령</dt><dd className="text-lg font-bold">{won(sales)}</dd></div>
-        <div className="p-3"><dt className="text-xs text-zinc-500">매입</dt><dd className="text-lg font-bold text-red-600">−{won(buys)}</dd></div>
+        <div className="p-3"><dt className="text-xs text-zinc-500">지출</dt><dd className="text-lg font-bold text-red-600">−{won(buys)}</dd></div>
         <div className="p-3 bg-zinc-50"><dt className="text-xs text-zinc-500">순수익</dt><dd className={`text-lg font-bold ${sales - buys < 0 ? "text-red-600" : ""}`}>{won(sales - buys)}</dd></div>
       </dl>
       {pending.length > 0 && (

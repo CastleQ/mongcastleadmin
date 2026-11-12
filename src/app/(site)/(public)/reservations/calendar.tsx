@@ -181,7 +181,7 @@ export function Calendar({ month: initialMonth, today, isAdmin, rows, flagged = 
             {(Object.keys(COLOR) as PackageKind[]).map((k) => (
               <span key={k} className="flex items-center gap-1"><span className={`inline-block h-3 w-3 rounded ${COLOR[k]}`} />{k}</span>
             ))}
-            <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded bg-orange-100" />매입</span>
+            <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded bg-orange-100" />지출</span>
             <span><span className="text-red-600">●</span> 미정산</span>
             <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded border border-emerald-200 bg-emerald-50" />가능 (눌러서 추가)</span>
             <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded bg-zinc-100" />불가</span>

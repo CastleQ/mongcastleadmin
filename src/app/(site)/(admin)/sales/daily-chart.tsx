@@ -49,7 +49,7 @@ export function DailyChart({ points, reserved, pendingIds = [], days, target, br
         <text x={x(days)} y={y(target) - 6} textAnchor="end" fontSize="10" fill="#2563eb">목표 매출 {won(target)}</text>
         {/* 손익분기: 매출이 이 선을 넘어야 순이익 0 이상 */}
         <line x1={L} x2={W - R} y1={y(breakEven)} y2={y(breakEven)} stroke="#71717a" strokeWidth="1" strokeDasharray="2 3" />
-        <text x={L + 4} y={y(breakEven) - 4} fontSize="10" fill="#71717a">손익분기 {won(breakEven)} (고정비+추가 매입)</text>
+        <text x={L + 4} y={y(breakEven) - 4} fontSize="10" fill="#71717a">손익분기 {won(breakEven)} (고정비+추가 지출)</text>
         {/* 예약 포함 누적 (회색 점선) — 실선과 벌어진 만큼이 들어올 예정인 돈 */}
         {reserved && reserved.length > 0 && <path d={pathOf(reserved)} fill="none" stroke="#71717a" strokeWidth="2" strokeDasharray="5 4" strokeLinejoin="round" />}
         {/* 실적 누적 */}
