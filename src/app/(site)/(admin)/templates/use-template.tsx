@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { Fragment, useState, useTransition } from "react";
 import { fmtDate, isDateKey, isDropKey, isOptionKey, isPackageKey, isPlatformKey, isTotalKey, placeholders, PLATFORMS, render } from "@/lib/templates";
-import { extraPeopleFee, optionText, packageQuote, QUOTE_PACKAGES, quoteOptions, quoteTotal, templateDeposit } from "@/lib/quote";
+import { extraPeopleFee, ledgerAmount, optionText, packageQuote, QUOTE_PACKAGES, quoteOptions, quoteTotal, templateDeposit } from "@/lib/quote";
 import { todayKST } from "@/lib/calendar";
 import { packageTime } from "@/lib/hours";
 import { prefillParams, type Prefill } from "@/lib/prefill";
@@ -145,7 +145,15 @@ export function UseTemplate({ templateId, templateName, body, phone, initial = {
   const toPrefill = (): Prefill => {
     const platform = platformKey ? (values[platformKey] ?? "").trim() : "";
     const date = dateKey ? values[dateKey] ?? "" : "";
-    const amount = Number((shown[slots.find((s) => isTotalKey(s.key))?.key ?? ""] ?? autoTotal).replace(/[^\d]/g, "")) || undefined;
+    const channel = platformMode ? platform || undefined : "별도컨택";
+    // 거래의 '입금액'은 **보증금까지 포함한 금액**이다 — 거래 화면이 거기서 보증금을 다시 빼
+    // 수수료·실수령을 계산한다(lib/ledger.ts calcMoney). 그래서 문구에 보이는 총액을 그대로
+    // 쓰면 안 된다: 플랫폼 문구의 총액은 '보증금만' 적는 글이라 이용료가 빠진다.
+    // 총액 칸에 손으로 적어 넣은 값이 있으면 그 값을 믿는다.
+    const typed = (values[slots.find((x) => isTotalKey(x.key))?.key ?? ""] ?? "").trim();
+    const amount = typed
+      ? Number(typed.replace(/[^\d]/g, "")) || undefined
+      : quote?.base != null ? ledgerAmount(quote.base, chosen, prices, pkg, people, channel ?? null) : undefined;
     // 밤 + 밤샘 옵션이면 거래의 패키지는 '밤+밤샘'
     const ledgerPkg = pkg === "밤" && chosen.includes("밤샘") ? "밤+밤샘" : pkg;
     const t = packageTime(ledgerPkg);
@@ -153,7 +161,7 @@ export function UseTemplate({ templateId, templateName, body, phone, initial = {
       date: /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : undefined,
       category: "대여",
       package: ledgerPkg || undefined,
-      channel: platformMode ? platform || undefined : "별도컨택",
+      channel,
       payment_method: platformMode ? "플랫폼결제" : "계좌이체",
       settled: platformMode,
       amount,

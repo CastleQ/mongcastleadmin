@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { DEFAULT_PRICES } from "./prices.ts";
-import { extraPeopleFee, HEADCOUNT_OPTION, optionText, packageQuote, quoteTotal, templateDeposit } from "./quote.ts";
+import { extraPeopleFee, HEADCOUNT_OPTION, ledgerAmount, optionText, packageQuote, quoteTotal, templateDeposit } from "./quote.ts";
 
 test("quote: 패키지 줄은 요일 대신 이용 시간을 보여준다", () => {
   const p = DEFAULT_PRICES;
@@ -76,4 +76,21 @@ test("quote: 인원추가 — 기준 10인까지 무료, 넘으면 1인당 10,00
   assert.equal(quoteTotal(260_000, [], p, "전일", 13), 260_000); // 하루종일은 그래도 무료
   assert.equal(quoteTotal(170_000, [], p, "밤", null), 170_000);
   assert.equal(quoteTotal(170_000, ["지인할인"], p, "밤", 13), 160_000); // (170+30)×0.8
+});
+
+test("ledgerAmount: 거래 입금액은 **보증금을 포함**한다 (문구의 총액과 다를 수 있다)", () => {
+  const p = DEFAULT_PRICES; // 보증금 50,000
+  // 플랫폼 건 — 문구 총액은 보증금만 적지만, 거래 입금액은 이용료 + 보증금
+  assert.equal(ledgerAmount(110_000, [], p, "밤", null, "네이버플레이스"), 160_000);
+  // 별도컨택도 같다 (여긴 전부터 맞게 들어가고 있었다)
+  assert.equal(ledgerAmount(110_000, [], p, "밤", null, "별도컨택"), 160_000);
+  // 인원 가산금도 함께
+  assert.equal(ledgerAmount(110_000, [], p, "밤", 13, "네이버플레이스"), 190_000);
+  // 밤+밤샘은 밤샘 값이 패키지 값에 들어 있다
+  assert.equal(ledgerAmount(140_000, [], p, "밤+밤샘", null, "스페이스클라우드"), 190_000);
+  // 지인은 보증금 없음 (할인도 적용)
+  assert.equal(ledgerAmount(110_000, ["지인할인"], p, "밤", null, "별도컨택"), 88_000);
+  // 채널을 모르면 보증금 0 (거래 화면도 같은 규칙으로 쪼갠다)
+  assert.equal(ledgerAmount(110_000, [], p, "밤", null, null), 110_000);
+  assert.equal(ledgerAmount(110_000, [], p, "밤", null, "땡큐캠핑"), 110_000);
 });
