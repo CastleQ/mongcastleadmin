@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Ledger } from "@/lib/ledger";
 import { LedgerForm } from "../form";
+import { CancelButton } from "../cancel-button";
 import type { Customer } from "@/lib/customers";
 import { loadPrices } from "@/lib/settings";
 import { parsePrefill } from "@/lib/prefill";
@@ -31,9 +32,17 @@ export default async function EditLedgerPage({ params, searchParams }: PageProps
           <span className="ml-2 text-sm font-normal text-zinc-500">{row.date}</span>
         </h2>
         {row.kind === "매출" && (
-          <Link href={`/templates?ledger=${row.id}`} className="rounded border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-50">✉ 문자 만들기</Link>
+          <div className="flex gap-1">
+            <Link href={`/templates?ledger=${row.id}`} className="rounded border border-zinc-300 px-3 py-1.5 text-sm whitespace-nowrap hover:bg-zinc-50">✉ 문자 만들기</Link>
+            <CancelButton id={row.id} cancelled={!!row.cancelled} />
+          </div>
         )}
       </div>
+      {row.cancelled && (
+        <p className="mb-4 rounded bg-red-50 px-3 py-2 text-sm text-red-800">
+          손님이 취소한 예약이에요. 합계·매출·달력에서 빠져 있고, 고객 정보만 남아 있어요.
+        </p>
+      )}
       <LedgerForm row={row} from={typeof from === "string" ? from : undefined} flagged={flagged} prices={prices} prefill={prefill} />
     </>
   );

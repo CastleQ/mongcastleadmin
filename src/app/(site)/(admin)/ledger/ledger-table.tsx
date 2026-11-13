@@ -52,7 +52,7 @@ export function LedgerTable({ rows, rowLink = "ledger" }: { rows: Ledger[]; rowL
             const sale = r.kind === "매출";
             return (
               <tr key={r.id} onClick={() => router.push(rowHref(r))}
-                className={`cursor-pointer ${r.settled ? "hover:bg-zinc-50" : "bg-amber-50 hover:bg-amber-100"}`}>
+                className={`cursor-pointer ${r.cancelled ? "text-zinc-400 line-through hover:bg-zinc-50" : r.settled ? "hover:bg-zinc-50" : "bg-amber-50 hover:bg-amber-100"}`}>
                 <td className={`${td} text-zinc-400`}>{i + 1}</td>
                 <td className={td}>{r.date.slice(5).replace("-", "/")}</td>
                 <td className={td}><span className={`rounded px-1.5 py-0.5 text-xs ${sale ? "bg-zinc-900 text-white" : "bg-red-50 text-red-700"}`}>{kindLabel(r.kind)}</span></td>
@@ -68,7 +68,9 @@ export function LedgerTable({ rows, rowLink = "ledger" }: { rows: Ledger[]; rowL
                 <td className={`${td} tabular-nums text-zinc-500`}>{r.other_expense ? won(r.other_expense) : ""}</td>
                 <td className={`${td} tabular-nums ${r.settled ? (sale ? "font-medium" : "text-red-600") : "text-zinc-400"}`}>{won(r.net)}</td>
                 {/* 스위치 칸은 행 클릭(상세 이동)과 분리 */}
-                <td className={td} onClick={(e) => e.stopPropagation()}><SettledToggle id={r.id} settled={r.settled} /></td>
+                {r.cancelled
+                  ? <td className={td}><span className="inline-block rounded bg-red-50 px-1.5 py-0.5 text-xs text-red-700 no-underline">예약취소</span></td>
+                  : <td className={td} onClick={(e) => e.stopPropagation()}><SettledToggle id={r.id} settled={r.settled} /></td>}
               </tr>
             );
           })}

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { monthInfo, todayKST } from "@/lib/calendar";
-import type { Ledger } from "@/lib/ledger";
+import { isActive, type Ledger } from "@/lib/ledger";
 import { LedgerTable } from "./ledger-table";
 
 const won = (n: number) => n.toLocaleString("ko-KR");
@@ -17,12 +17,14 @@ export default async function LedgerListPage({ searchParams }: PageProps<"/ledge
     .gte("date", info.start).lte("date", info.end)
     .order("date", { ascending: false }).order("id", { ascending: false });
   const rows: Ledger[] = data ?? [];
+  const active = rows.filter(isActive); // 취소된 예약은 표에만 보이고 계산엔 안 넣는다
+  const cancelled = rows.length - active.length;
 
   // 정산 완료된 것만 합계에 포함. 미정산은 '예정'으로 따로 표시
-  const done = rows.filter((r) => r.settled);
+  const done = active.filter((r) => r.settled);
   const sales = done.filter((r) => r.kind === "매출").reduce((s, r) => s + r.net, 0);
   const buys = done.filter((r) => r.kind === "매입").reduce((s, r) => s + r.amount, 0);
-  const pending = rows.filter((r) => !r.settled);
+  const pending = active.filter((r) => !r.settled);
   const pendingNet = pending.reduce((s, r) => s + r.net, 0);
   const btn = "rounded border border-zinc-300 px-3 py-1 text-sm whitespace-nowrap hover:bg-zinc-50";
 
@@ -54,7 +56,7 @@ export default async function LedgerListPage({ searchParams }: PageProps<"/ledge
       ) : (
         <LedgerTable rows={rows} />
       )}
-      <p className="mt-3 text-xs text-zinc-500">{rows.length}건 · 정산 {done.length}건 · 미정산 {pending.length}건 · 행을 누르면 수정, 헤더를 누르면 정렬</p>
+      <p className="mt-3 text-xs text-zinc-500">{rows.length}건 · 정산 {done.length}건 · 미정산 {pending.length}건{cancelled > 0 && ` · 예약취소 ${cancelled}건(계산 제외)`} · 행을 누르면 수정, 헤더를 누르면 정렬</p>
     </>
   );
 }
