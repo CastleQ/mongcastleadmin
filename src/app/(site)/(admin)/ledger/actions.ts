@@ -53,6 +53,14 @@ export async function deleteLedger(id: number, date: string, from: string | null
   redirect(backTo(from, date));
 }
 
+/** 예약취소 / 취소 되돌리기. 거래는 남기고 표시만 바꾼다. 구글 일정은 취소 시 지워지고, 되돌리면 다시 만들어진다 */
+export async function setCancelled(id: number, cancelled: boolean) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("ledger").update({ cancelled }).eq("id", id);
+  if (error) throw new Error(error.message);
+  after(() => pushLedgerRow(id)); // 구글 반영은 화면을 넘긴 뒤에
+}
+
 export async function setSettled(id: number, settled: boolean) {
   const supabase = await createClient();
   const { error } = await supabase.from("ledger").update({ settled }).eq("id", id);

@@ -51,6 +51,7 @@ test("isExportable: 대여 매출만 내보낸다", () => {
   assert.ok(!isExportable({ ...row, kind: "매입" }));          // 월세·집기는 캘린더에 안 올림
   assert.ok(!isExportable({ ...row, category: "집기구매" }));
   assert.ok(!isExportable({ ...row, date: "" }));
+  assert.ok(!isExportable({ ...row, cancelled: true }));       // 취소된 예약은 구글에서 치운다
 });
 
 test("mergeSlotHours: 설정이 비거나 깨져도 기본값으로 메운다", () => {

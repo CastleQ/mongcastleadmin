@@ -25,7 +25,13 @@ export type Ledger = {
   note: string | null;
   /** 구글캘린더에서 들어와 금액을 날짜·패키지로 추정한 건. 사장님이 확정하면 false (DB 기본값 false) */
   amount_estimated?: boolean;
+  /** 손님이 취소한 예약. 합계·분석·달력에선 빼고 고객 정보만 남긴다 (DB 기본값 false).
+   *  폼 저장(parseLedgerForm)엔 일부러 넣지 않음 → 내용을 고쳐 저장해도 취소 상태가 풀리지 않는다 */
+  cancelled?: boolean;
 };
+
+/** 합계·분석에 넣을 거래 (취소된 예약 제외) */
+export const isActive = (r: Pick<Ledger, "cancelled">) => !r.cancelled;
 
 export type LedgerInput = Omit<Ledger, "id">;
 

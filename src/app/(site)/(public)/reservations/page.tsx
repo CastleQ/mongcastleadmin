@@ -60,6 +60,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/reserva
       .from("ledger")
       .select(cols)
       .or("kind.eq.매입,and(kind.eq.매출,category.eq.대여)") // 대여 매출 + 매입(월세·집기 등, 주황 칩)
+      .eq("cancelled", false) // 취소된 예약은 빈자리로 (검색에선 여전히 찾아짐)
       .order("date");
 
   const [withTime, { data: fl }] = await Promise.all([

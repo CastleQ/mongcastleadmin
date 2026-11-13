@@ -36,3 +36,19 @@ test("summarize: 같은 연락처는 한 고객, 매입/익명은 제외, 저장
   assert.equal(hong.grade, "블랙");
   assert.equal(s[0].key, "name:성규"); // 최근 방문순
 });
+
+test("summarize: 취소된 예약은 고객은 남기고 방문·금액·최근방문엔 안 셈", () => {
+  const rows: Ledger[] = [
+    { ...base, id: 1, customer_name: "김취소", date: "2026-09-20", net: 50000, cancelled: true },
+    { ...base, id: 2, customer_name: "박", date: "2026-08-01", net: 70000 },
+    { ...base, id: 3, customer_name: "박", date: "2026-09-30", net: 80000, cancelled: true },
+  ];
+  const s = summarize(rows, []);
+  const kim = s.find((c) => c.key === "name:김취소")!;
+  assert.deepEqual([kim.visits, kim.total_net, kim.ledger_ids], [0, 0, [1]]);
+  const park = s.find((c) => c.key === "name:박")!;
+  assert.deepEqual([park.visits, park.total_net, park.last_date, park.ledger_ids], [1, 70000, "2026-08-01", [2, 3]]);
+  // 취소가 먼저 와도, 나중 실제 방문 날짜로 덮인다
+  const s2 = summarize([{ ...rows[2], date: "2026-07-01" }, rows[1]], []);
+  assert.equal(s2[0].last_date, "2026-08-01");
+});

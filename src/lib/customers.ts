@@ -51,11 +51,14 @@ export function summarize(rows: Ledger[], saved: Customer[]): CustomerSummary[] 
     const key = customerKey(r);
     if (!key) continue;
     const s = out.get(key);
+    const counts = !r.cancelled; // 취소된 예약: 고객은 남기되 방문·금액·최근방문엔 안 셈
     if (s) {
-      s.visits++;
-      s.total_net += r.net;
+      if (counts) {
+        s.visits++;
+        s.total_net += r.net;
+        if (r.date > s.last_date || s.visits === 1) s.last_date = r.date;
+      }
       s.ledger_ids.push(r.id);
-      if (r.date > s.last_date) s.last_date = r.date;
       if (r.channel && !s.channels.includes(r.channel)) s.channels.push(r.channel);
       if (!s.name && r.customer_name) s.name = r.customer_name;
     } else {
@@ -66,9 +69,9 @@ export function summarize(rows: Ledger[], saved: Customer[]): CustomerSummary[] 
         phone: normalizePhone(r.customer_phone),
         grade: c?.grade ?? "일반",
         memo: c?.memo ?? null,
-        visits: 1,
-        last_date: r.date,
-        total_net: r.net,
+        visits: counts ? 1 : 0,
+        last_date: r.date, // 취소만 있는 고객은 그 날짜가 기준 (다음 방문이 생기면 덮어씀)
+        total_net: counts ? r.net : 0,
         channels: r.channel ? [r.channel] : [],
         ledger_ids: [r.id],
       });

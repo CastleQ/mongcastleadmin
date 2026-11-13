@@ -20,7 +20,7 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
 
   const supabase = await createClient();
   const [{ data: ledger }, { data: settings }] = await Promise.all([
-    supabase.from("ledger").select("*").order("date"),
+    supabase.from("ledger").select("*").eq("cancelled", false).order("date"), // 취소된 예약은 분석에서 뺀다
     supabase.from("settings").select("key,value"),
   ]);
   const setting = Object.fromEntries((settings ?? []).map((r) => [r.key as string, r.value as unknown]));

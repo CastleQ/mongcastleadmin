@@ -122,7 +122,7 @@ export function contentHash(row: Ledger): string {
   return createHash("sha1").update(parts.join("\u0001")).digest("hex").slice(0, 16);
 }
 
-/** 구글에 내보낼 예약인가 — 대여 매출만. 매입(월세·집기)은 캘린더에 올리지 않는다 */
-export function isExportable(row: Pick<Ledger, "kind" | "category" | "date">): boolean {
-  return row.kind === "매출" && row.category === "대여" && !!row.date;
+/** 구글에 내보낼 예약인가 — 대여 매출만. 매입(월세·집기)·취소된 예약은 캘린더에 올리지 않는다 */
+export function isExportable(row: Pick<Ledger, "kind" | "category" | "date" | "cancelled">): boolean {
+  return row.kind === "매출" && row.category === "대여" && !!row.date && !row.cancelled;
 }
