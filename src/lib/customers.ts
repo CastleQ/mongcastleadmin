@@ -1,11 +1,15 @@
 import type { Ledger } from "./ledger.ts";
 
-export const GRADES = ["일반", "그레이", "블랙"] as const;
+export const GRADES = ["일반", "단골", "그레이", "블랙"] as const;
 export type Grade = (typeof GRADES)[number];
+/** 경고를 띄우는 등급 (단골은 표시만, 경고 없음) */
+export const WARN_GRADES = ["그레이", "블랙"] as const satisfies readonly Grade[];
+export const isWarnGrade = (g: Grade | null | undefined) => (WARN_GRADES as readonly string[]).includes(g ?? "");
 
 /** 등급 배지 색 */
 export const GRADE_STYLE: Record<Grade, string> = {
   일반: "",
+  단골: "bg-yellow-100 text-yellow-800",
   그레이: "bg-zinc-200 text-zinc-700",
   블랙: "bg-zinc-900 text-white",
 };

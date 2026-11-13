@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { summarize, type Customer } from "@/lib/customers";
+import { isWarnGrade, summarize, type Customer } from "@/lib/customers";
 import type { Ledger } from "@/lib/ledger";
 import { CustomerTable } from "./customer-table";
 
@@ -10,7 +10,7 @@ export default async function CustomersPage() {
     supabase.from("customers").select("*"),
   ]);
   const rows = summarize((ledger ?? []) as Ledger[], (saved ?? []) as Customer[]);
-  const flagged = rows.filter((c) => c.grade !== "일반").length;
+  const flagged = rows.filter((c) => isWarnGrade(c.grade)).length;
 
   return (
     <>
@@ -23,7 +23,7 @@ export default async function CustomersPage() {
       ) : (
         <CustomerTable rows={rows} />
       )}
-      <p className="mt-3 text-xs text-zinc-500">거래의 연락처(없으면 이름)가 같으면 한 고객으로 묶여요. 등급을 그레이·블랙으로 바꾸면 거래 입력·문자 화면에 경고가 떠요. 행을 누르면 이용 이력.</p>
+      <p className="mt-3 text-xs text-zinc-500">거래의 연락처(없으면 이름)가 같으면 한 고객으로 묶여요. 단골은 노란 줄로 표시돼요. 등급을 그레이·블랙으로 바꾸면 거래 입력·문자 화면에 경고가 떠요. 행을 누르면 이용 이력.</p>
     </>
   );
 }

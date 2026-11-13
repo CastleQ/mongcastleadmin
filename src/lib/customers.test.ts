@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { customerKey, normalizePhone, summarize } from "./customers.ts";
+import { customerKey, isWarnGrade, normalizePhone, summarize } from "./customers.ts";
 import type { Ledger } from "./ledger.ts";
 
 const base: Ledger = {
@@ -51,4 +51,8 @@ test("summarize: 취소된 예약은 고객은 남기고 방문·금액·최근�
   // 취소가 먼저 와도, 나중 실제 방문 날짜로 덮인다
   const s2 = summarize([{ ...rows[2], date: "2026-07-01" }, rows[1]], []);
   assert.equal(s2[0].last_date, "2026-08-01");
+});
+
+test("경고 등급: 그레이·블랙만, 단골·일반은 경고 없음", () => {
+  assert.deepEqual(["일반", "단골", "그레이", "블랙"].map((g) => isWarnGrade(g as never)), [false, false, true, true]);
 });
