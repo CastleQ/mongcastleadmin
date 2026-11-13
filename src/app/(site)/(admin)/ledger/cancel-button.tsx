@@ -16,7 +16,7 @@ export function CancelButton({ id, cancelled }: { id: number; cancelled: boolean
       type="button"
       disabled={pending}
       onClick={() => { if (confirm(ask)) start(async () => { await setCancelled(id, !cancelled); router.refresh(); }); }}
-      className={`rounded border px-3 py-1.5 text-sm disabled:opacity-50 ${cancelled ? "border-zinc-300 hover:bg-zinc-50" : "border-red-300 text-red-700 hover:bg-red-50"}`}
+      className={`rounded border px-5 py-2.5 disabled:opacity-50 ${cancelled ? "border-zinc-300 hover:bg-zinc-50" : "border-red-300 text-red-700 hover:bg-red-50"}`}
     >
       {pending ? "바꾸는 중…" : cancelled ? "취소 되돌리기" : "예약취소"}
     </button>
