@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 import { loadPublicSettings } from "@/lib/settings";
 import { todayKST, type Reservation } from "@/lib/calendar";
-import type { Customer } from "@/lib/customers";
+import { WARN_GRADES, type Customer } from "@/lib/customers";
 import { Calendar } from "./calendar";
 import { SearchBox } from "./search-box";
 import { LedgerTable } from "@/app/(site)/(admin)/ledger/ledger-table";
@@ -65,7 +65,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/reserva
 
   const [withTime, { data: fl }] = await Promise.all([
     load(`${COLS},start_time,end_time`),
-    supabase.from("customers").select("*").neq("grade", "일반"),
+    supabase.from("customers").select("*").in("grade", WARN_GRADES),
   ]);
   const { data } = isMissingColumn(withTime.error) ? await load(COLS) : withTime;
 

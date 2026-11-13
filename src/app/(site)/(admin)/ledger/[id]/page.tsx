@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Ledger } from "@/lib/ledger";
 import { LedgerForm } from "../form";
-import type { Customer } from "@/lib/customers";
+import { WARN_GRADES, type Customer } from "@/lib/customers";
 import { loadPrices } from "@/lib/settings";
 import { parsePrefill } from "@/lib/prefill";
 
@@ -17,7 +17,7 @@ export default async function EditLedgerPage({ params, searchParams }: PageProps
   const supabase = await createClient();
   const [{ data }, { data: fl }] = await Promise.all([
     supabase.from("ledger").select("*").eq("id", Number(id)).maybeSingle(),
-    supabase.from("customers").select("*").neq("grade", "일반"),
+    supabase.from("customers").select("*").in("grade", WARN_GRADES),
   ]);
   const flagged: Customer[] = fl ?? [];
   const prices = await loadPrices();

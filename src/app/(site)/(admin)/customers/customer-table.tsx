@@ -6,7 +6,7 @@ import { GRADES, GRADE_STYLE, type CustomerSummary, type Grade } from "@/lib/cus
 import { saveCustomer } from "./actions";
 
 const won = (n: number) => n.toLocaleString("ko-KR");
-const ROW_STYLE: Record<Grade, string> = { 일반: "hover:bg-zinc-50", 그레이: "bg-zinc-100 hover:bg-zinc-200", 블랙: "bg-red-50 hover:bg-red-100" };
+const ROW_STYLE: Record<Grade, string> = { 일반: "hover:bg-zinc-50", 단골: "bg-yellow-50 hover:bg-yellow-100", 그레이: "bg-zinc-100 hover:bg-zinc-200", 블랙: "bg-red-50 hover:bg-red-100" };
 
 function MemoCell({ c }: { c: CustomerSummary }) {
   const [v, setV] = useState(c.memo ?? "");
