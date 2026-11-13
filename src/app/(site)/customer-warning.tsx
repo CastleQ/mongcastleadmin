@@ -1,9 +1,9 @@
 import Link from "next/link";
-import type { Customer } from "@/lib/customers";
+import { isWarnGrade, type Customer } from "@/lib/customers";
 
-/** 그레이/블랙 고객 경고 띠. 일반이면 아무것도 안 그림 */
+/** 그레이/블랙 고객 경고 띠. 일반·단골이면 아무것도 안 그림 */
 export function CustomerWarning({ c }: { c: Customer | null | undefined }) {
-  if (!c || c.grade === "일반") return null;
+  if (!c || !isWarnGrade(c.grade)) return null;
   const black = c.grade === "블랙";
   return (
     <div role="alert" className={`flex flex-wrap items-center gap-2 rounded px-3 py-2 text-sm ${black ? "bg-red-600 text-white" : "bg-zinc-800 text-white"}`}>
