@@ -29,7 +29,7 @@ function SubmitButton({ children }: { children: string }) {
   const { pending } = useFormStatus();
   return (
     <button type="submit" disabled={pending} aria-busy={pending}
-      className="rounded bg-zinc-900 px-5 py-2.5 text-white hover:bg-zinc-700 focus-visible:ring-2 focus-visible:ring-zinc-400 disabled:bg-zinc-400">
+      className="rounded border border-transparent bg-zinc-900 px-5 py-2.5 text-white hover:bg-zinc-700 focus-visible:ring-2 focus-visible:ring-zinc-400 disabled:bg-zinc-400">
       {pending ? "저장 중…" : children}
     </button>
   );
