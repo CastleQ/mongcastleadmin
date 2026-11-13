@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import { CHANNELS, CONTENTS, EXPENSE_CATEGORIES, OTHER, PACKAGES, PAYMENTS, SALE_CATEGORIES, SHOPS, calcMoney, expenseSettledDefault, kindLabel, type Ledger } from "@/lib/ledger";
 import { saveLedger } from "./actions";
 import { DeleteButton } from "./delete-button";
+import { CancelButton } from "./cancel-button";
 import { Switch } from "./controls";
 import { customerKey, type Customer } from "@/lib/customers";
 import { CustomerWarning } from "@/app/(site)/customer-warning";
@@ -269,7 +270,10 @@ export function LedgerForm({ row, defaultDate, defaultPackage, from, flagged = [
       </details>
 
       <div className="flex items-center justify-between pt-2">
-        <SubmitButton>{row ? "변경 저장" : "저장"}</SubmitButton>
+        <div className="flex items-center gap-2">
+          <SubmitButton>{row ? "변경 저장" : "저장"}</SubmitButton>
+          {row?.kind === "매출" && <CancelButton id={row.id} cancelled={!!row.cancelled} />}
+        </div>
         {row && <DeleteButton id={row.id} date={row.date} from={from} />}
       </div>
     </form>
