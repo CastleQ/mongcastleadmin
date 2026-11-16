@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "몽캐슬 파티룸 관리자",
+  title: "몽캐슬 파티룸",
   description: "몽캐슬 파티룸 운영관리",
 };
 
