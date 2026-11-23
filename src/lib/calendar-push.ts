@@ -56,7 +56,7 @@ export function descriptionOf(row: Ledger): string {
     row.settled ? "정산: 완료" : "정산: 미정산",
     row.note ? `메모: ${row.note}` : "",
     "",
-    "— 몽캐슬 admin에서 자동으로 만든 일정입니다. 여기서 고치면 admin에도 반영됩니다.",
+    "— 몽캐슬 admin에서 자동으로 만든 일정입니다. 고칠 때는 admin에서 고쳐 주세요. 여기서 고치면 다음 동기화 때 admin 내용으로 되돌아갑니다.",
   ];
   return lines.filter((l) => l !== "").join("\n");
 }
@@ -116,10 +116,22 @@ export function eventFromLedger(row: Ledger, hours: SlotHours = DEFAULT_SLOT_HOU
  */
 export function contentHash(row: Ledger): string {
   const parts = [
+    "v2", // 설명 문구를 바꾸면 올린다 — 이미 올라간 일정도 다음 동기화 때 새 문구로 고쳐진다
     row.date, row.package ?? "", row.customer_name ?? "", row.channel ?? "", row.content ?? "",
     row.customer_phone ?? "", String(row.headcount ?? ""), String(row.amount), String(row.settled), row.note ?? "",
   ];
   return createHash("sha1").update(parts.join("\u0001")).digest("hex").slice(0, 16);
+}
+
+/**
+ * 구글 일정이 마지막 동기화 뒤에 고쳐졌나.
+ * 글자로 비교하면 안 된다: 구글은 '...Z', DB 는 '...+00:00' 으로 돌려줘 같은 시각도 늘 '고쳐짐'으로 보였다
+ * (2026-11 까지 동기화 때마다 30여 건을 구글 내용으로 덮어쓴 원인).
+ */
+export function changedSince(googleUpdated: string | null | undefined, lastSynced: string | null | undefined): boolean {
+  if (!googleUpdated) return false;
+  if (!lastSynced) return true;
+  return Date.parse(googleUpdated) > Date.parse(lastSynced);
 }
 
 /** 구글에 내보낼 예약인가 — 대여 매출만. 매입(월세·집기)·취소된 예약은 캘린더에 올리지 않는다 */

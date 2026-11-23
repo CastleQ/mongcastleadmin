@@ -19,9 +19,11 @@ export function SyncButton() {
       try {
         const r = await syncNow();
         const bits = [
-          r.created ? `새 예약 ${r.created}건` : "",
-          r.updated ? `수정 ${r.updated}건` : "",
-          r.markedDeleted ? `구글에서 삭제됨 ${r.markedDeleted}건` : "",
+          r.created ? `구글에서 새 예약 ${r.created}건` : "",
+          r.pushedCreated ? `구글에 올림 ${r.pushedCreated}건` : "",
+          r.pushedUpdated ? `구글을 홈페이지대로 고침 ${r.pushedUpdated}건` : "",
+          r.pushedDeleted ? `취소 반영 ${r.pushedDeleted}건` : "",
+          r.errors.length ? `실패 ${r.errors.length}건` : "",
         ].filter(Boolean);
         setResult(bits.length ? bits.join(" · ") : "바뀐 것 없음");
         router.refresh();
