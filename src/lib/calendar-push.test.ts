@@ -31,6 +31,28 @@ test("eventFromLedger: 패키지별 시각 (전일은 익일 09시에 끝남)", 
   assert.deepEqual(over.end, { dateTime: "2026-11-22T09:00:00", timeZone: "Asia/Seoul" });
 });
 
+test("eventFromLedger: 장부의 예약 시간이 있으면 그 시간, 없으면 패키지 시간", () => {
+  const custom = eventFromLedger({ ...row, package: "낮", start_time: "11:00:00", end_time: "13:00:00" });
+  assert.deepEqual(custom.start, { dateTime: "2026-11-21T11:00:00", timeZone: "Asia/Seoul" });
+  assert.deepEqual(custom.end, { dateTime: "2026-11-21T13:00:00", timeZone: "Asia/Seoul" });
+
+  // 끝이 시작보다 이르면 다음날
+  const late = eventFromLedger({ ...row, package: "전일", start_time: "14:00:00", end_time: "09:00:00" });
+  assert.deepEqual(late.start, { dateTime: "2026-11-21T14:00:00", timeZone: "Asia/Seoul" });
+  assert.deepEqual(late.end, { dateTime: "2026-11-22T09:00:00", timeZone: "Asia/Seoul" });
+
+  // 한쪽만 적혀 있으면 나머지는 패키지 시간
+  const half = eventFromLedger({ ...row, package: "밤", start_time: "19:00:00", end_time: null });
+  assert.deepEqual(half.start, { dateTime: "2026-11-21T19:00:00", timeZone: "Asia/Seoul" });
+  assert.deepEqual(half.end, { dateTime: "2026-11-21T23:00:00", timeZone: "Asia/Seoul" });
+
+  // 패키지를 몰라도 시간이 적혀 있으면 그 시간
+  const other = eventFromLedger({ ...row, package: "기타", start_time: "14:00:00", end_time: "16:00:00" });
+  assert.deepEqual(other.start, { dateTime: "2026-11-21T14:00:00", timeZone: "Asia/Seoul" });
+
+  assert.notEqual(contentHash(row), contentHash({ ...row, start_time: "11:00:00" })); // 시간을 바꾸면 다시 올린다
+});
+
 test("eventFromLedger: 패키지를 모르면 종일 일정 (하루를 막는 쪽이 안전)", () => {
   const e = eventFromLedger({ ...row, package: "기타" });
   assert.deepEqual(e.start, { date: "2026-11-21" });

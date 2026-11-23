@@ -93,11 +93,17 @@ export type GoogleEventBody = {
 export function eventFromLedger(row: Ledger, hours: SlotHours = DEFAULT_SLOT_HOURS, colorId: string | null = null): GoogleEventBody {
   const slot = hours[row.package ?? ""] ?? null;
   const tz = "Asia/Seoul";
-  const start = slot
-    ? { dateTime: `${row.date}T${slot.start}:00`, timeZone: tz }
-    : { date: row.date }; // 패키지를 모르면(기타) 종일 일정으로 — 하루를 막는 쪽이 안전
-  const end = slot
-    ? { dateTime: `${slot.endNextDay ? nextDay(row.date) : row.date}T${slot.end}:00`, timeZone: tz }
+  // 장부에 적힌 예약 시간이 기준, 비어 있으면 패키지 기본 시간 (사장님 결정 2026-11-23). DB 는 '10:00:00' 꼴이라 앞 5자만 쓴다
+  const startAt = row.start_time?.slice(0, 5) || slot?.start;
+  const endAt = row.end_time?.slice(0, 5) || slot?.end;
+  const timed = !!startAt && !!endAt;
+  // 끝이 시작보다 이르거나 같으면 다음날 끝난다 (전일 10:00~09:00, 밤샘 18:00~09:00)
+  const endNextDay = timed && endAt <= startAt;
+  const start = timed
+    ? { dateTime: `${row.date}T${startAt}:00`, timeZone: tz }
+    : { date: row.date }; // 패키지도 시간도 모르면(기타) 종일 일정으로 — 하루를 막는 쪽이 안전
+  const end = timed
+    ? { dateTime: `${endNextDay ? nextDay(row.date) : row.date}T${endAt}:00`, timeZone: tz }
     : { date: nextDay(row.date) }; // 구글 종일 일정의 끝은 '다음날'이다
 
   return {
@@ -119,6 +125,7 @@ export function contentHash(row: Ledger): string {
     "v2", // 설명 문구를 바꾸면 올린다 — 이미 올라간 일정도 다음 동기화 때 새 문구로 고쳐진다
     row.date, row.package ?? "", row.customer_name ?? "", row.channel ?? "", row.content ?? "",
     row.customer_phone ?? "", String(row.headcount ?? ""), String(row.amount), String(row.settled), row.note ?? "",
+    row.start_time ?? "", row.end_time ?? "", // 예약 시간을 바꾸면 구글 일정 시각도 따라 바뀐다
   ];
   return createHash("sha1").update(parts.join("\u0001")).digest("hex").slice(0, 16);
 }
