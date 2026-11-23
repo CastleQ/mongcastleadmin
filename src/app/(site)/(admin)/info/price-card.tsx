@@ -21,7 +21,7 @@ export function PriceCard({ prices }: { prices: Prices }) {
           <thead><tr><th></th>{DAYS.map((d) => <th key={d}>{DAY_LABEL[d]}</th>)}</tr></thead>
           <tbody>
             {PKGS.map((pkg) => (
-              <tr key={pkg}><td><strong>{pkg}</strong></td>{prices[pkg].map((v, i) => <td key={i} style={{ textAlign: "right" }}>{won(v)}</td>)}</tr>
+              <tr key={pkg}><td><strong>{pkg}</strong><br /><span style={{ fontSize: "0.8em", color: "#71717a", whiteSpace: "nowrap" }}>{timeRange(packageTime(pkg)?.start, packageTime(pkg)?.end)}</span></td>{prices[pkg].map((v, i) => <td key={i} style={{ textAlign: "right" }}>{won(v)}</td>)}</tr>
             ))}
             <tr><td>밤샘 옵션</td><td colSpan={3}>밤 패키지 +{won(prices.밤샘)} · <strong>전일 대관은 밤샘 무료</strong></td></tr>
             <tr><td>청소보증금</td><td colSpan={3}>+{won(prices.보증금)} (입금액에 포함, 퇴실 확인 후 환급 · 지인·기타 채널은 없음)</td></tr>
