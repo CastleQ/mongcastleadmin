@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { Ledger } from "./ledger.ts";
-import { titleOf, eventFromLedger, contentHash, isExportable, mergeSlotHours, DEFAULT_SLOT_HOURS } from "./calendar-push.ts";
+import { titleOf, eventFromLedger, contentHash, isExportable, mergeSlotHours, DEFAULT_SLOT_HOURS, changedSince } from "./calendar-push.ts";
 import { isOurs, parseEvent, eventTime } from "./calendar-parse.ts";
 
 const row: Ledger = {
@@ -44,6 +44,14 @@ test("contentHash: 보이는 내용이 바뀌면 달라지고, 안 바뀌면 같
   assert.notEqual(contentHash(row), contentHash({ ...row, settled: true }));
   // 캘린더에 안 보이는 칸은 지문에 영향이 없다
   assert.equal(contentHash(row), contentHash({ ...row, fee: 9999, inquiry_date: "2026-11-01" }));
+});
+
+test("changedSince: 시각 표기가 달라도(Z / +00:00) 같은 시각이면 안 고쳐진 것", () => {
+  assert.equal(changedSince("2026-11-21T07:24:37.592Z", "2026-11-21T07:24:37.592+00:00"), false);
+  assert.equal(changedSince("2026-11-21T07:30:00.000Z", "2026-11-21T07:24:37.592+00:00"), true);
+  assert.equal(changedSince("2026-11-21T07:00:00.000Z", "2026-11-21T07:24:37.592+00:00"), false);
+  assert.equal(changedSince("2026-11-21T07:00:00.000Z", null), true);   // 기록이 없으면 맞춰 본다
+  assert.equal(changedSince(undefined, "2026-11-21T07:00:00+00:00"), false);
 });
 
 test("isExportable: 대여 매출만 내보낸다", () => {

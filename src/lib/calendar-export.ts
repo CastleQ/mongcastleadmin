@@ -53,12 +53,13 @@ export async function removeFromGoogle(id: number): Promise<void> {
 
 /**
  * 거래 한 줄을 구글에 반영 (없으면 만들고, 있으면 고치고, 대상이 아니면 지운다).
- * 던지지 않는다. 실패는 sync_log 에 남기고 조용히 돌아간다.
+ * 던지지 않는다. 실패는 sync_log 에 남기고 조용히 돌아간다. 무엇을 했는지 돌려준다 (아무것도 안 했으면 null).
+ * force: 장부 내용이 그대로여도 구글을 장부대로 다시 쓴다 — 구글에서 일정을 손댔을 때 (기준은 홈페이지).
  */
-export async function pushLedgerRow(id: number): Promise<void> {
+export async function pushLedgerRow(id: number, { force = false } = {}): Promise<LogRow["action"] | null> {
   try {
     const cfg = await loadCalendarSync();
-    if (!cfg || !cfg.startedAt) return; // 연동을 켜기 전에는 아무것도 하지 않는다
+    if (!cfg || !cfg.startedAt) return null; // 연동을 켜기 전에는 아무것도 하지 않는다
 
     const supabase = await createClient();
     const { data: row } = await supabase.from("ledger").select("*").eq("id", id).maybeSingle();
@@ -70,13 +71,14 @@ export async function pushLedgerRow(id: number): Promise<void> {
         await deleteEvent(link.calendar_id as string, link.google_event_id as string);
         await supabase.from("calendar_links").delete().eq("ledger_id", id);
         await log({ direction: "ledger_to_google", action: "deleted", ledger_id: id, google_event_id: link.google_event_id as string });
+        return "deleted";
       }
-      return;
+      return null;
     }
 
     const ledger = row as Ledger;
     const hash = contentHash(ledger);
-    if (link && link.content_hash === hash) return; // 보이는 내용이 그대로면 구글을 건드리지 않는다 (메아리 방지)
+    if (link && link.content_hash === hash && !force) return null; // 보이는 내용이 그대로면 구글을 건드리지 않는다 (메아리 방지)
 
     const body = eventFromLedger(ledger, await slotHours(), cfg.eventColorId);
 
@@ -86,7 +88,7 @@ export async function pushLedgerRow(id: number): Promise<void> {
         .update({ content_hash: hash, google_updated: updated, synced_at: new Date().toISOString(), deleted_in_google: false })
         .eq("ledger_id", id);
       await log({ direction: "ledger_to_google", action: "updated", ledger_id: id, google_event_id: link.google_event_id as string });
-      return;
+      return "updated";
     }
 
     const created = await createEvent(cfg.writeCalendarId, body);
@@ -98,6 +100,7 @@ export async function pushLedgerRow(id: number): Promise<void> {
       google_updated: created.updated,
     });
     await log({ direction: "ledger_to_google", action: "created", ledger_id: id, google_event_id: created.id });
+    return "created";
   } catch (e) {
     // 장부 저장을 막지 않는다. 무엇이 실패했는지는 기록에 남긴다
     await log({
@@ -106,5 +109,6 @@ export async function pushLedgerRow(id: number): Promise<void> {
       ledger_id: id,
       message: e instanceof Error ? e.message : String(e),
     }).catch(() => {});
+    return "error";
   }
 }
