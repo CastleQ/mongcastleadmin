@@ -31,6 +31,8 @@ export type ImportResult = {
   pushedCreated: number;
   pushedUpdated: number;
   pushedDeleted: number;
+  /** 시간이 모자라 이번에 못 맞춘 예약 수 — 한 번 더 누르면 이어서 한다 */
+  remaining: number;
   errors: string[];
 };
 
@@ -61,8 +63,28 @@ function toLedgerInput(date: string, parsed: ReturnType<typeof parseEvent>, amou
   };
 }
 
+/** 동시에 두 번 돌지 않게 거는 표시 (settings 표의 한 줄). 2026-11-23 두 번 겹쳐 돌아 구글에 같은 일정이 두 개씩 생겼다 */
+const LOCK_KEY = "calendar_sync_running";
+/** 이보다 오래된 표시는 중간에 죽은 동기화가 남긴 것으로 보고 치운다 */
+const LOCK_STALE_MS = 5 * 60_000;
+/** 구글 올리기는 이 시간 안에서만. 넘으면 멈추고 '한 번 더 눌러 주세요'로 — 응답 없이 기다리게 두지 않는다 */
+const PUSH_BUDGET_MS = 40_000;
+
 export async function importFromGoogle(): Promise<ImportResult> {
-  const out: ImportResult = { created: 0, pushedCreated: 0, pushedUpdated: 0, pushedDeleted: 0, errors: [] };
+  const supabase = await createClient();
+  const now = new Date();
+  await supabase.from("settings").delete().eq("key", LOCK_KEY).lt("updated_at", new Date(now.getTime() - LOCK_STALE_MS).toISOString());
+  const { error: busy } = await supabase.from("settings").insert({ key: LOCK_KEY, value: { at: now.toISOString() }, updated_at: now.toISOString() });
+  if (busy) throw new Error("동기화가 이미 진행 중입니다. 1~2분 뒤 다시 눌러 주세요");
+  try {
+    return await syncOnce(Date.now());
+  } finally {
+    await supabase.from("settings").delete().eq("key", LOCK_KEY);
+  }
+}
+
+async function syncOnce(startedMs: number): Promise<ImportResult> {
+  const out: ImportResult = { created: 0, pushedCreated: 0, pushedUpdated: 0, pushedDeleted: 0, remaining: 0, errors: [] };
 
   const cfg = await loadCalendarSync();
   if (!cfg) throw new Error("연동 설정이 없습니다");
@@ -154,8 +176,9 @@ export async function importFromGoogle(): Promise<ImportResult> {
 
   // ── 3. 장부 → 구글: 기간 안의 예약을 장부대로 맞춘다 (바뀐 게 없으면 pushLedgerRow 가 건드리지 않는다) ──
   const linkedIds = new Set([...links.values()].map((l) => l.ledger_id as number));
-  for (const [id, row] of inRange) {
-    if (!isExportable(row) && !linkedIds.has(id)) continue; // 지출·취소이면서 구글에 없는 것은 볼 필요 없다
+  const targets = [...inRange].filter(([id, row]) => isExportable(row) || linkedIds.has(id)); // 지출·취소이면서 구글에 없는 것은 볼 필요 없다
+  for (const [i, [id, row]] of targets.entries()) {
+    if (Date.now() - startedMs > PUSH_BUDGET_MS) { out.remaining = targets.length - i; break; }
     const did = await pushLedgerRow(id, { force: touchedInGoogle.has(id) });
     if (did === "created") out.pushedCreated++;
     else if (did === "updated") out.pushedUpdated++;

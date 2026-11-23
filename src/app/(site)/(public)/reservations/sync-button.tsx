@@ -24,6 +24,7 @@ export function SyncButton() {
           r.pushedUpdated ? `구글을 홈페이지대로 고침 ${r.pushedUpdated}건` : "",
           r.pushedDeleted ? `취소 반영 ${r.pushedDeleted}건` : "",
           r.errors.length ? `실패 ${r.errors.length}건` : "",
+          r.remaining ? `남은 ${r.remaining}건 — 한 번 더 눌러 주세요` : "",
         ].filter(Boolean);
         setResult(bits.length ? bits.join(" · ") : "바뀐 것 없음");
         router.refresh();

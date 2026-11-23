@@ -131,6 +131,16 @@ export function contentHash(row: Ledger): string {
 }
 
 /**
+ * 고치기(PATCH)용 본문. 구글은 start/end 안을 **합치기** 때문에, 종일 일정을 시각 일정으로 고치면
+ * 옛 date 와 새 dateTime 이 함께 남아 "Invalid start time" 으로 거절된다 (반대도 같다).
+ * 쓰지 않는 쪽을 null 로 보내 지운다.
+ */
+export function forPatch(body: GoogleEventBody) {
+  const clear = (t: GoogleEventBody["start"]) => ("dateTime" in t ? { date: null, ...t } : { dateTime: null, timeZone: null, ...t });
+  return { ...body, start: clear(body.start), end: clear(body.end) };
+}
+
+/**
  * 구글 일정이 마지막 동기화 뒤에 고쳐졌나.
  * 글자로 비교하면 안 된다: 구글은 '...Z', DB 는 '...+00:00' 으로 돌려줘 같은 시각도 늘 '고쳐짐'으로 보였다
  * (2026-11 까지 동기화 때마다 30여 건을 구글 내용으로 덮어쓴 원인).

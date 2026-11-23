@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { Ledger } from "./ledger.ts";
-import { titleOf, eventFromLedger, contentHash, isExportable, mergeSlotHours, DEFAULT_SLOT_HOURS, changedSince } from "./calendar-push.ts";
+import { titleOf, eventFromLedger, contentHash, isExportable, mergeSlotHours, DEFAULT_SLOT_HOURS, changedSince, forPatch } from "./calendar-push.ts";
 import { isOurs, parseEvent, eventTime } from "./calendar-parse.ts";
 
 const row: Ledger = {
@@ -66,6 +66,13 @@ test("contentHash: 보이는 내용이 바뀌면 달라지고, 안 바뀌면 같
   assert.notEqual(contentHash(row), contentHash({ ...row, settled: true }));
   // 캘린더에 안 보이는 칸은 지문에 영향이 없다
   assert.equal(contentHash(row), contentHash({ ...row, fee: 9999, inquiry_date: "2026-11-01" }));
+});
+
+test("forPatch: 종일 ↔ 시각 일정으로 바뀔 때 안 쓰는 쪽을 지운다 (Invalid start time 방지)", () => {
+  const timed = forPatch(eventFromLedger(row));
+  assert.deepEqual(timed.start, { date: null, dateTime: "2026-11-21T10:00:00", timeZone: "Asia/Seoul" });
+  const allDay = forPatch(eventFromLedger({ ...row, package: "기타" }));
+  assert.deepEqual(allDay.start, { dateTime: null, timeZone: null, date: "2026-11-21" });
 });
 
 test("changedSince: 시각 표기가 달라도(Z / +00:00) 같은 시각이면 안 고쳐진 것", () => {
