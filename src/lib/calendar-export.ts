@@ -1,7 +1,7 @@
 import { createClient } from "./supabase/server";
 import { loadCalendarSync } from "./settings";
 import { createEvent, patchEvent, deleteEvent } from "./google-calendar";
-import { contentHash, eventFromLedger, isExportable, mergeSlotHours, type SlotHours } from "./calendar-push";
+import { contentHash, eventFromLedger, forPatch, isExportable, mergeSlotHours, type SlotHours } from "./calendar-push";
 import type { Ledger } from "./ledger";
 
 /**
@@ -83,7 +83,7 @@ export async function pushLedgerRow(id: number, { force = false } = {}): Promise
     const body = eventFromLedger(ledger, await slotHours(), cfg.eventColorId);
 
     if (link) {
-      const updated = await patchEvent(link.calendar_id as string, link.google_event_id as string, body);
+      const updated = await patchEvent(link.calendar_id as string, link.google_event_id as string, forPatch(body));
       await supabase.from("calendar_links")
         .update({ content_hash: hash, google_updated: updated, synced_at: new Date().toISOString(), deleted_in_google: false })
         .eq("ledger_id", id);
@@ -92,13 +92,19 @@ export async function pushLedgerRow(id: number, { force = false } = {}): Promise
     }
 
     const created = await createEvent(cfg.writeCalendarId, body);
-    await supabase.from("calendar_links").insert({
+    const { error: linkError } = await supabase.from("calendar_links").insert({
       ledger_id: id,
       google_event_id: created.id,
       calendar_id: cfg.writeCalendarId,
       content_hash: hash,
       google_updated: created.updated,
     });
+    if (linkError) {
+      // 짝을 못 적으면(같은 거래를 동시에 올린 경우 등) 방금 만든 일정이 고아로 남아
+      // 다음 동기화 때 새 예약으로 다시 들어온다 — 바로 치운다 (2026-11-23 중복 2건)
+      await deleteEvent(cfg.writeCalendarId, created.id);
+      throw new Error(`짝 기록 실패로 만든 일정을 되돌렸습니다: ${linkError.message}`);
+    }
     await log({ direction: "ledger_to_google", action: "created", ledger_id: id, google_event_id: created.id });
     return "created";
   } catch (e) {
