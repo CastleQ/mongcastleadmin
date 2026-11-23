@@ -190,7 +190,7 @@ export function Calendar({ month: initialMonth, today, isAdmin, rows, flagged = 
         ) : (
           <>
             {SLOTS.map((s) => <span key={s} className="flex items-center gap-1"><span className={`inline-block h-3 w-3 rounded ${OPEN_COLOR[s]}`} />{s} 가능</span>)}
-            <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded bg-zinc-200" />예약 불가</span>
+            <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded bg-zinc-200" />예약있음 · 마감</span>
             <span className="text-zinc-400">색 있는 칸을 누르면 가격과 문의 연락처가 나와요. 전일은 낮·밤이 모두 비어 있을 때만 가능해요.</span>
           </>
         )}
