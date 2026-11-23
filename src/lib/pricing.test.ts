@@ -38,6 +38,8 @@ test("suggestAmount: 공휴일·공휴일 전날·기타 채널", async () => {
   assert.match(suggestAmount("2026-10-08", "밤", null)!.label, /^공휴일 전일 밤 /); // 목요일
   assert.match(suggestAmount("2027-02-05", "낮", null)!.label, /^공휴일 전일 낮 /); // 금요일이어도
   assert.match(suggestAmount("2026-11-27", "밤", null)!.label, /^금요일 밤 /);
+  assert.match(suggestAmount("2026-10-08", "전일", null)!.label, /^공휴일 전일 하루종일 /);
+  assert.match(suggestAmount("2026-11-27", "전일", null)!.label, /^금요일 전일 /);
 });
 
 test("prices: 자리표 치환·설정값 반영", async () => {

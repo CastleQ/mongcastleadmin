@@ -17,6 +17,7 @@ export function suggestAmount(date: string, pkg: string | null, channel: string 
   const day = dayType(date);
   // 다음 날이 공휴일이면 금요일이어도 "공휴일 전일" (요금은 금요일 칸 그대로)
   const dayLabel = day === "금요일" && isHoliday(nextDay(date)) ? "공휴일 전일" : day;
+  const pkgLabel = dayLabel === "공휴일 전일" && key === "전일" ? "하루종일" : key; // '공휴일 전일 전일' 겹침 방지
   const col = day === "평일" ? 0 : day === "금요일" ? 1 : 2;
   const base = prices[key][col];
   const extra = overnight ? prices.밤샘 : 0;
@@ -30,6 +31,6 @@ export function suggestAmount(date: string, pkg: string | null, channel: string 
   return {
     base, overnight: extra, extraPeople, deposit,
     total: (friend ? Math.round(subtotal * FRIEND_DISCOUNT_RATE) : subtotal) + deposit,
-    label: `${dayLabel} ${key} ${won(base)}${extra ? ` + 밤샘 ${won(extra)}` : ""}${extraPeople ? ` + 인원 ${over}명 ${won(extraPeople)}` : ""}${deposit ? ` + 보증금 ${won(deposit)}` : ""}${friend ? ` − 지인할인 ${friendDiscountPct()}%` : ""}`,
+    label: `${dayLabel} ${pkgLabel} ${won(base)}${extra ? ` + 밤샘 ${won(extra)}` : ""}${extraPeople ? ` + 인원 ${over}명 ${won(extraPeople)}` : ""}${deposit ? ` + 보증금 ${won(deposit)}` : ""}${friend ? ` − 지인할인 ${friendDiscountPct()}%` : ""}`,
   };
 }
