@@ -1,5 +1,5 @@
 import { CHANNELS } from "./ledger.ts";
-import { dayType } from "./holidays.ts";
+import { dayType, isHoliday, nextDay } from "./holidays.ts";
 import { DEFAULT_PRICES, FRIEND_DISCOUNT_RATE, friendDiscountPct, type Prices } from "./prices.ts";
 
 export type Suggestion = { base: number; overnight: number; extraPeople: number; deposit: number; total: number; label: string };
@@ -15,9 +15,8 @@ export function suggestAmount(date: string, pkg: string | null, channel: string 
   const key = overnight ? "밤" : pkg;
   if (key !== "낮" && key !== "밤" && key !== "전일") return null;
   const day = dayType(date);
-  const [y, m, d] = date.split("-").map(Number);
-  const isFri = new Date(y, m - 1, d).getDay() === 5;
-  const dayLabel = day === "금요일" && !isFri ? "공휴일 전날" : day;
+  // 다음 날이 공휴일이면 금요일이어도 "공휴일 전일" (요금은 금요일 칸 그대로)
+  const dayLabel = day === "금요일" && isHoliday(nextDay(date)) ? "공휴일 전일" : day;
   const col = day === "평일" ? 0 : day === "금요일" ? 1 : 2;
   const base = prices[key][col];
   const extra = overnight ? prices.밤샘 : 0;

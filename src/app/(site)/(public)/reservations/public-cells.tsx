@@ -5,6 +5,7 @@ import { Modal } from "../../modal";
 import { OPEN_COLOR, SLOTS, slotStates, type Slot } from "@/lib/availability";
 import { TODAY_MARK } from "@/lib/calendar";
 import { HOLIDAYS } from "@/lib/holidays";
+import { packageTime, timeRange } from "@/lib/hours";
 import { suggestAmount } from "@/lib/pricing";
 import type { Prices } from "@/lib/prices";
 import type { Contact } from "@/lib/settings";
@@ -27,6 +28,7 @@ export function PublicCells({ cells, byDate, today, prices, contact }: Props) {
   };
 
   const sg = sel ? suggestAmount(sel.date, sel.slot, null, prices) : null;
+  const time = sel ? packageTime(sel.slot) : null;
   const selLabel = (() => {
     if (!sel) return "";
     const [y, m, d] = sel.date.split("-").map(Number);
@@ -56,7 +58,7 @@ export function PublicCells({ cells, byDate, today, prices, contact }: Props) {
                 {SLOTS.map((s) => {
                   const open = !past && states[s] === "가능";
                   const cls = `flex-1 rounded text-[10px] leading-tight sm:px-1 sm:py-0.5 sm:text-xs sm:text-left ${open ? OPEN_COLOR[s] : CLOSED}`;
-                  const label = <><span className="font-semibold">{s}</span><span className="hidden sm:inline"> {open ? "가능" : "불가"}</span></>;
+                  const label = <><span className="font-semibold">{s}</span><span className="hidden sm:inline"> {open ? "가능" : past ? "마감" : "예약있음"}</span></>;
                   return open
                     ? <button key={s} type="button" onClick={() => setSel({ date, slot: s })} className={`${cls} flex h-12 items-center justify-center [writing-mode:vertical-rl] sm:block sm:h-auto sm:[writing-mode:horizontal-tb]`} title={`${s} 예약 문의`}>{label}</button>
                     : <div key={s} className={`${cls} flex h-12 items-center justify-center [writing-mode:vertical-rl] sm:block sm:h-auto sm:[writing-mode:horizontal-tb]`}>{label}</div>;
@@ -72,6 +74,7 @@ export function PublicCells({ cells, byDate, today, prices, contact }: Props) {
           <div className="p-5 text-sm">
             <p className="text-base font-bold">{selLabel} · {sel.slot} 패키지</p>
             {sg && <p className="mt-1 text-2xl font-bold tabular-nums">{won(sg.base)}<span className="text-sm font-normal text-zinc-500">원 · {sg.label.replace(/\s[\d,]+$/, "")} 요금</span></p>}
+            {time && <p className="mt-1 text-zinc-700">이용 시간 <span className="font-semibold tabular-nums">{timeRange(time.start, time.end)}</span></p>}
             <p className="mt-4 font-semibold">예약 문의하기</p>
             {contact ? (
               <ul className="mt-2 space-y-2">

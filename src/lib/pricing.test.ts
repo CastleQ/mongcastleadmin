@@ -35,6 +35,9 @@ test("suggestAmount: 공휴일·공휴일 전날·기타 채널", async () => {
   assert.equal(suggestAmount("2026-10-09", "낮", "네이버플레이스")?.total, 100_000 + 50_000);
   assert.equal(suggestAmount("2026-09-16", "낮", "인스타")?.deposit, 0); // 기타 채널은 보증금 없음
   assert.equal(suggestAmount("2026-09-16", "낮", null)?.deposit, 0);
+  assert.match(suggestAmount("2026-10-08", "밤", null)!.label, /^공휴일 전일 밤 /); // 목요일
+  assert.match(suggestAmount("2027-02-05", "낮", null)!.label, /^공휴일 전일 낮 /); // 금요일이어도
+  assert.match(suggestAmount("2026-11-27", "밤", null)!.label, /^금요일 밤 /);
 });
 
 test("prices: 자리표 치환·설정값 반영", async () => {
