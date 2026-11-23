@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import type { Game } from "@/lib/games";
 import { GameList } from "./game-list";
+
+export const metadata: Metadata = {
+  title: "몽캐슬 파티룸 - 보유 게임",
+  description: "몽캐슬에 준비된 보드게임·닌텐도 스위치·머더미스터리 목록이에요.",
+};
 
 /** 공개: 로그인 없이 누구나 (RLS games_public_read). 머더미스터리만 이미지가 있는 것으로 제한 */
 export default async function GamesPage() {

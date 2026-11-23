@@ -1,4 +1,6 @@
-import type { Template } from "@/lib/templates";
+"use client";
+
+import { placeholders, type Template } from "@/lib/templates";
 import { saveTemplate } from "./actions";
 import { DeleteTemplateButton } from "./delete-button";
 
@@ -7,7 +9,12 @@ const label = "block text-sm text-zinc-600 mb-1";
 
 export function TemplateForm({ row, nextOrder }: { row?: Template; nextOrder?: number }) {
   return (
-    <form action={saveTemplate.bind(null, row?.id ?? null)} className="max-w-2xl space-y-4">
+    <form action={saveTemplate.bind(null, row?.id ?? null)} onSubmit={(e) => {
+      // 미리보기 글을 붙여넣으면 비운 [플랫폼] 같은 칸이 통째로 빠진다 (2026-11-16 실제로 겪음)
+      const now = new Set(placeholders(new FormData(e.currentTarget).get("body") as string).map((s) => s.key));
+      const lost = placeholders(row?.body ?? "").map((s) => s.key).filter((k) => !now.has(k));
+      if (lost.length && !confirm(`${lost.map((k) => `[${k}]`).join(", ")} 칸이 빠집니다. 저장할까요?`)) e.preventDefault();
+    }} className="max-w-2xl space-y-4">
       <div className="grid grid-cols-[1fr_auto] gap-3">
         <div>
           <label className={label} htmlFor="name">상황 <b className="text-red-500">*</b></label>

@@ -1,9 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { loadPublishedGuide } from "@/lib/guide";
 import { loadPublicSettings } from "@/lib/settings";
 import { renderMd } from "@/lib/markdown";
 import { fillPrices } from "@/lib/prices";
 import { GuidePrices } from "./prices-table";
+
+export const metadata: Metadata = {
+  title: "몽캐슬 파티룸 - 이용 가이드",
+  description: "공간 이용 방법, 오시는 길, 주차, 유의사항을 안내해 드려요.",
+};
 
 /**
  * 공개 이용 가이드. 내용은 guide_sections 표(관리자 › 이용 가이드 편집)에서 오고,

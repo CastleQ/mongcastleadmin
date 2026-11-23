@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 import { loadPublicSettings } from "@/lib/settings";
@@ -9,6 +10,11 @@ import { LedgerTable } from "@/app/(site)/(admin)/ledger/ledger-table";
 import { searchLedger } from "@/lib/search";
 import { isMissingColumn } from "@/lib/missing-column";
 import type { Ledger } from "@/lib/ledger";
+
+export const metadata: Metadata = {
+  title: "몽캐슬 파티룸 - 예약 현황",
+  description: "날짜별로 낮·밤·전일 예약 가능한 시간을 확인하세요.",
+};
 
 /**
  * 누구나 보는 달력. 관리자는 고객명·미정산·수정 링크까지, 그 외는 낮·밤·전일 빈자리 + 문의 창.

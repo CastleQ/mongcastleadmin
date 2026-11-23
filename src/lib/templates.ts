@@ -34,6 +34,9 @@ export function fill(body: string, values: Record<string, string>, drop?: (key: 
  */
 export const isDropKey = (key: string) => key.includes("옵션") || key.startsWith("기타") || key.includes("플랫폼");
 
+/** 칸 뒤에 띄어쓰기 없이 붙은 조사(에서는·에서·으로…). 뒤가 띄어쓰기·문장부호·줄 끝일 때만 — "[플랫폼]이용" 같은 낱말은 안 건드림 */
+const PARTICLES = "(?:(?:에서|에게|으로|에|의|로|을|를|이|가|은|는|와|과|도|만)+(?=[\\s.,!?)]|$))?";
+
 /**
  * 보낼 문구 만들기. 빈 drop 칸은 지우고, **그 칸만 있던 줄은 줄째로** 지운다.
  * 글 중간에 있던 칸(예: "[플랫폼] 예약 확인되어")은 칸만 빠지고 남는 두 칸 띄어쓰기를 하나로 줄인다.
@@ -48,7 +51,8 @@ export function render(body: string, values: Record<string, string>): string {
   });
   // 사라지는 칸은 **뒤에 붙은 띄어쓰기 한 칸까지** 함께 지운다
   // ("[플랫폼] 예약 확인되어" → "예약 확인되어". 안 그러면 줄 맨 앞에 공백이 남는다)
-  const trimmed = lines.join("\n").replace(new RegExp(`${SLOT.source}[^\\S\\n]?`, "g"), (whole, k: string) =>
+  // 칸에 바로 붙은 조사도 함께 ("아쉽게도 [플랫폼]에서 [날짜]" → "아쉽게도 [날짜]", 2026-11-16 사장님 요청)
+  const trimmed = lines.join("\n").replace(new RegExp(`${SLOT.source}${PARTICLES}[^\\S\\n]?`, "g"), (whole, k: string) =>
     isDropKey(k) && empty(k) ? "" : whole);
   return fill(trimmed, values, isDropKey).replace(/[^\S\n]+$/gm, ""); // 줄 끝 공백 제거
 }
